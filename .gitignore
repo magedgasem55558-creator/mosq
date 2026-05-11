@@ -1,0 +1,17 @@
+# Firebase options with keys
+*.firebase_options.dart
+firebase_options.dart
+
+# Firebase emulator data
+.firebase/
+
+# Build folders
+build/
+web/
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Node modules and environment
+node_modules/
+functions/node_modules/
+.env
