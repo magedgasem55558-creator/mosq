@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="students.css">
+</head>
+<body>
+    <h1>👥 إضافة طالب وولي أمر</h1>
+    <p class="subtitle">📌 لإضافة أخ لنفس الحساب، استخدم نفس البريد الإلكتروني وكلمة المرور</p>
+    <div class="card">
+        <div class="section-badge">📖 بيانات الطالب</div>
+        <input type="text" id="studentName" placeholder="اسم الطالب الرباعي">
+        <label>اختر الحلقة:</label>
+        <select id="halaqaSelect"><option value="">جاري التحميل...</option></select>
+        
+        <hr>
+        
+        <div class="section-badge">👨‍👩‍👦 حساب ولي الأمر</div>
+        <input type="email" id="parentEmail" placeholder="البريد الإلكتروني">
+        <input type="password" id="parentPass" placeholder="كلمة المرور">
+        
+        <button id="addBtn" class="btn-save">✅ حفظ البيانات</button>
+    </div>
+    <script type="module" src="students.js"></script>
+</body>
+</html>

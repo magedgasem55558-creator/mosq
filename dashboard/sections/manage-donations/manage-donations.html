@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="manage-donations.css">
+</head>
+<body>
+    <h1>💳 إدارة بيانات التبرعات</h1>
+    <p class="subtitle">تحديث معلومات الحسابات البنكية وطرق التبرع</p>
+    <div class="card">
+        <label>🏦 اسم البنك:</label>
+        <input type="text" id="bankName" placeholder="مثلاً: بنك الكريمي">
+        
+        <label>🔢 رقم الحساب:</label>
+        <input type="text" id="accountNumber" placeholder="رقم الحساب البنكي">
+        
+        <label>📝 اسم المستفيد (للحوالات):</label>
+        <input type="text" id="transferName" placeholder="باسم إدارة مسجدنا">
+        
+        <label>📞 رقم التواصل:</label>
+        <input type="text" id="phone" placeholder="رقم هاتف لجنة المسجد">
+        
+        <label>📖 حديث التبرع:</label>
+        <textarea id="hadith" placeholder="حديث أو آية عن فضل بناء المساجد"></textarea>
+        
+        <button id="updateBtn" class="btn-primary">💾 حفظ وتحديث البيانات</button>
+    </div>
+
+    <script type="module" src="manage-donations.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="halaqat.css">
+</head>
+<body>
+    <h1>📖 رصد التسميع والمتابعة</h1>
+    <div class="card">
+        <label>1. اختيار الطالب:</label>
+        <div class="grid-inputs">
+            <select id="halaqaFilter"><option value="">اختر الحلقة أولاً...</option></select>
+            <select id="studentIdSelect"><option value="">اختر الطالب...</option></select>
+        </div>
+        <hr>
+        <label>2. حالة الحضور:</label>
+        <select id="attendanceStatus" class="status-select">
+            <option value="حاضر">✅ حاضر (تسميع جديد)</option>
+            <option value="غائب">❌ غائب</option>
+            <option value="إجازة">🔵 إجازة رسمية</option>
+        </select>
+        <div id="recitationFields">
+            <hr>
+            <label>3. تقييم الأداء:</label>
+            <div class="checkbox-group">
+                <label class="check-label"><input type="checkbox" class="eval-check" value="إتقان"> <span>إتقان ✅</span></label>
+                <label class="check-label"><input type="checkbox" class="eval-check" value="تجويد"> <span>تجويد 📖</span></label>
+                <label class="check-label"><input type="checkbox" class="eval-check" value="حفظ"> <span>حفظ 🧠</span></label>
+            </div>
+            <hr>
+            <label>4. تفاصيل التسميع:</label>
+            <input type="text" id="currentSurah" placeholder="اسم السورة">
+            <div class="grid-inputs">
+                <input type="number" id="fromAya" placeholder="من آية">
+                <input type="number" id="toAya" placeholder="إلى آية">
+            </div>
+            <hr>
+            <label>5. عدد النقاط الممنوحة:</label>
+            <div class="grid-inputs">
+                <input type="number" id="pointsGiven" placeholder="عدد النقاط" value="10" step="1">
+                <small class="field-hint">✨ النقاط الافتراضية: 10</small>
+            </div>
+        </div>
+        <hr>
+        <label>6. خطة الغد والملاحظات:</label>
+        <input type="text" id="tomorrowReq" placeholder="المطلوب غداً">
+        <textarea id="teacherNotes" placeholder="ملاحظات لولي الأمر"></textarea>
+        <button id="saveRecitationBtn" class="btn-primary">📤 إرسال التحديث للأهل</button>
+    </div>
+    <script type="module" src="halaqat.js"></script>
+</body>
+</html>

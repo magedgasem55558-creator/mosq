@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="manage-lectures.css">
+</head>
+<body>
+    <h1>📋 إدارة المحاضرات</h1>
+    <p class="subtitle">تعديل أو حذف المحاضرات</p>
+    <div class="card">
+        <div id="manageLecturesList" class="manage-list">
+            <div class="loading">جاري تحميل المحاضرات...</div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل المحاضرة -->
+    <div id="editLectureModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ تعديل بيانات المحاضرة</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editLectureId">
+                <div class="form-group">
+                    <label>🎤 عنوان المحاضرة:</label>
+                    <input type="text" id="editLectureTitle" placeholder="عنوان المحاضرة">
+                </div>
+                <div class="form-group">
+                    <label>👨‍🏫 اسم المحاضر:</label>
+                    <input type="text" id="editLectureSpeaker" placeholder="اسم المحاضر">
+                </div>
+                <div class="form-group">
+                    <label>⏰ الوقت والتاريخ:</label>
+                    <input type="datetime-local" id="editLectureTime">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelEditBtn">إلغاء</button>
+                <button class="btn-save" id="saveLectureBtn">💾 حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="manage-lectures.js"></script>
+</body>
+</html>

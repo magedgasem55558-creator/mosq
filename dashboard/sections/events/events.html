@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="events.css">
+</head>
+<body>
+    <h1>📅 الفعاليات والأنشطة القادمة</h1>
+    <div class="card">
+        <label>عنوان الفعالية:</label>
+        <input type="text" id="eventTitle" placeholder="مثلاً: مسابقة حفظ القرآن السنوية">
+        <label>المكان:</label>
+        <input type="text" id="eventLocation" placeholder="مثلاً: قاعة المناسبات الكبرى">
+        <label>التاريخ والوقت:</label>
+        <input type="datetime-local" id="eventDate">
+        <button id="updateBtn" class="btn-primary">📢 تحديث الفعالية</button>
+        <button id="deleteBtn" class="btn-danger">🗑️ حذف الفعالية</button>
+    </div>
+    <script type="module" src="events.js"></script>
+</body>
+</html>

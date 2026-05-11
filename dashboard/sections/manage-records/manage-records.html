@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="manage-records.css">
+</head>
+<body>
+    <h1>📋 إدارة سجلات التسميع</h1>
+    <p class="subtitle">عرض وتعديل وحذف سجلات التسميع</p>
+    <div class="card">
+        <div id="manageRecordsList" class="manage-list">
+            <div class="loading">جاري تحميل السجلات...</div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل السجل -->
+    <div id="editRecordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ تعديل بيانات السجل</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editRecordId">
+                <div class="form-group">
+                    <label>👨‍🎓 الطالب:</label>
+                    <input type="text" id="editRecordStudentName" readonly>
+                </div>
+                <div class="form-group">
+                    <label>📅 التاريخ:</label>
+                    <input type="text" id="editRecordDate" readonly>
+                </div>
+                <div class="form-group">
+                    <label>📌 الحالة:</label>
+                    <select id="editRecordStatus">
+                        <option value="حاضر">✅ حاضر</option>
+                        <option value="غائب">❌ غائب</option>
+                        <option value="إجازة">🔵 إجازة</option>
+                    </select>
+                </div>
+                <div id="recordSurahFields">
+                    <div class="form-group">
+                        <label>📖 السورة:</label>
+                        <input type="text" id="editRecordSurah" placeholder="اسم السورة">
+                    </div>
+                    <div class="grid-inputs">
+                        <div class="form-group">
+                            <label>من آية:</label>
+                            <input type="number" id="editRecordFromAyah">
+                        </div>
+                        <div class="form-group">
+                            <label>إلى آية:</label>
+                            <input type="number" id="editRecordToAyah">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>⭐ النقاط:</label>
+                    <input type="number" id="editRecordPoints" step="1">
+                </div>
+                <div class="form-group">
+                    <label>📖 الأسطر:</label>
+                    <input type="number" id="editRecordLines" step="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelEditBtn">إلغاء</button>
+                <button class="btn-save" id="saveRecordBtn">💾 حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="manage-records.js"></script>
+</body>
+</html>

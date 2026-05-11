@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style.css">
+    <link rel="stylesheet" href="manage-students.css">
+</head>
+<body>
+    <h1>📋 إدارة الطلاب</h1>
+    <p class="subtitle">تعديل أو حذف بيانات الطلاب</p>
+    <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+    <label style="margin:0;">🔍 ابحث عن طالب:</label>
+    <input type="text" id="studentSearchInput" placeholder="اكتب اسم الطالب هنا..." style="flex:1;">
+    <button id="resetAllPointsBtn" class="btn-warning">🔄 تصفير نقاط الجميع</button>
+</div>
+        <div id="manageStudentsList" class="manage-list">
+            <div class="loading">جاري تحميل الطلاب...</div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل الطالب -->
+    <div id="editStudentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>✏️ تعديل بيانات الطالب</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editStudentId">
+                <div class="form-group">
+                    <label>👨‍🎓 اسم الطالب:</label>
+                    <input type="text" id="editStudentName">
+                </div>
+                <div class="form-group">
+                    <label>🏫 الحلقة:</label>
+                    <select id="editStudentHalaqa">
+                        <option value="">اختر الحلقة...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>⭐ النقاط:</label>
+                    <input type="number" id="editStudentPoints" step="1">
+                </div>
+                <div class="form-group">
+                    <label>✅ الحالة:</label>
+                    <select id="editStudentStatus">
+                        <option value="true">نشط</option>
+                        <option value="false">غير نشط</option>
+                    </select>
+                </div>
+                <hr>
+                <h4>👨‍👩‍👦 بيانات ولي الأمر</h4>
+                <div class="form-group">
+                    <label>📧 البريد الإلكتروني:</label>
+                    <input type="email" id="editParentEmail" readonly>
+                    <small style="color:#6b7280;">(للتذكير فقط – لا يمكن تغييره هنا)</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancelEditBtn">إلغاء</button>
+                <button class="btn-save" id="saveStudentBtn">💾 حفظ التعديلات</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="manage-students.js"></script>
+</body>
+</html>

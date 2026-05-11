@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم المسجد</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ضبط إطار iframe ليملأ المحتوى */
+        #contentFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            min-height: 80vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>🏛️ إدارة المسجد</h2>
+                <p>نظام متابعة الحلقات</p>
+            </div>
+            <div class="user-info" id="userInfo">
+                📧 <span id="currentUserEmail">جاري التحميل...</span>
+            </div>
+            <div class="section-title">━━━ الرئيسية ━━━</div>
+            <ul>
+                
+                <li id="nav-students" onclick="navigate('students')">👥 إضافة طالب جديد</li>
+                <li id="nav-halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</li>
+                <li id="nav-events" onclick="navigate('events')">📅 الفعاليات القادمة</li>
+                <li id="nav-khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</li>
+                <li id="nav-add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة جديدة</li>
+                <li id="nav-manage-donations" onclick="navigate('manage-donations')">💳 إدارة التبرعات</li>
+                <li id="nav-lectures" onclick="navigate('lectures')">🎤 المحاضرات</li>
+            </ul>
+            <div class="section-title">━━━ الإدارة ━━━</div>
+            <ul>
+                <li id="nav-manage-students" onclick="navigate('manage-students')">📋 إدارة الطلاب</li>
+                <li id="nav-manage-halaqat" onclick="navigate('manage-halaqat')">📋 إدارة الحلقات</li>
+                <li id="nav-manage-records" onclick="navigate('manage-records')">📋 إدارة سجلات التسميع</li>
+                <li id="nav-manage-lectures" onclick="navigate('manage-lectures')">📋 إدارة المحاضرات</li>
+            </ul>
+            <div class="logout-btn" onclick="logout()">🚪 تسجيل الخروج</div>
+        </nav>
+        <main class="content">
+            <!-- سيتم تعيين src بواسطة JavaScript بعد التحقق من الصلاحيات -->
+            <iframe id="contentFrame" src="about:blank"></iframe>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const teacherAllowedSections = ['nav-students', 'nav-halaqat'];
+        const iframe = document.getElementById('contentFrame');
+
+        function applyRoleRestrictions(email) {
+            let defaultSection = 'students'; // افتراضي للمدير
+
+            if (email !== 'hammed@gmail.com') {
+                // إخفاء أقسام المدير
+                const allSectionIds = [
+                    'nav-prayers', 'nav-students', 'nav-halaqat', 'nav-events',
+                    'nav-khutba', 'nav-add-halaqa', 'nav-lectures',
+                    'nav-manage-students','nav-manage-donations', 'nav-manage-halaqat', 'nav-manage-records',
+                    'nav-manage-lectures'
+                ];
+                allSectionIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        if (teacherAllowedSections.includes(id)) {
+                            el.style.display = '';
+                        } else {
+                            el.style.display = 'none';
+                        }
+                    }
+                });
+                defaultSection = 'students'; // المعلم يبدأ بقسم الطلاب
+            }
+
+            // تعيين القسم الافتراضي
+            navigate(defaultSection);
+        }
+
+        // التنقل وتحميل صفحة القسم المطلوب
+        window.navigate = function(sectionId) {
+            iframe.src = `sections/${sectionId}/${sectionId}.html`;
+        }
+
+        // مراقبة المستخدم
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                document.getElementById('currentUserEmail').innerText = user.email;
+                applyRoleRestrictions(user.email);
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        window.logout = async function() {
+            await signOut(auth);
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
