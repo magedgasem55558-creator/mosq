@@ -1,4 +1,4 @@
-import { db, loadAllStudents, loadHalaqatList } from '../../firebase.js';
+import { db, loadAllStudents, loadHalaqatList } from '../firebase.js';
 import { doc, updateDoc, deleteDoc, query, collection, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const listContainer = document.getElementById('manageStudentsList');

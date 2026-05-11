@@ -1,4 +1,4 @@
-import { db, loadHalaqatList } from '../../firebase.js';
+import { db, loadHalaqatList } from '../../../firebase.js';
 import { doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // العناصر الرئيسية

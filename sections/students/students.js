@@ -1,4 +1,4 @@
-import { db, auth, loadHalaqatList } from '../../firebase.js';
+import { db, auth, loadHalaqatList } from '../firebase.js';
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { collection, addDoc, query, where, getDocs, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
