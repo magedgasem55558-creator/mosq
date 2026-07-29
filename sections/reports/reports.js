@@ -244,8 +244,8 @@ function generateDetailedReport(records) {
 // ==========================================
 // 7. استخراج التقرير متناسق ومتناسب مع صفحة A4 (معالجة الصفحة الفارغة)
 // ==========================================
-    // ==========================================
-// 7. استخراج التقرير متناسق وبدون انزياح للجانبين (PDF)
+      // ==========================================
+// 7. استخراج التقرير كاملاً وبدون أجزاء فارغة (PDF)
 // ==========================================
 async function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
@@ -253,13 +253,13 @@ async function downloadPDF() {
     return;
   }
 
-  const originalElement = document.getElementById('pdfContent');
-  if (!originalElement) {
+  const element = document.getElementById('pdfContent');
+  if (!element) {
     alert("تعذر العثور على محتوى التقرير للطباعة!");
     return;
   }
 
-  // استخراج اسم الطالب وتنظيف المسافات
+  // استخراج اسم الطالب وتنظيف المسافات الزائدة
   const studentName = pdfStudentName 
     ? pdfStudentName.innerText.trim().replace(/\s+/g, '_') 
     : 'طالب';
@@ -271,67 +271,51 @@ async function downloadPDF() {
     generatePdfBtn.disabled = true;
   }
 
-  // 1. استنسخ عنصر التقرير
-  const clone = originalElement.cloneNode(true);
-
-  // 2. إنشاء حاوي معزول بثبات في أعلى الصفحة لتفادي خطأ الإحداثيات السالبة
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.top = '0';
-  container.style.left = '0';
-  container.style.width = '210mm'; // عرض A4 القياسي
-  container.style.zIndex = '-99999';
-  container.style.opacity = '0'; // إخفاء عن العين مع إبقائه في الـ DOM
-  container.style.direction = 'ltr'; // منع اضطراب محاذاة html2canvas مع RTL
-
-  // إبقاء محتوى التقرير نفسه بالاتجاه العربي
-  clone.style.direction = 'rtl';
-  clone.style.width = '100%';
-  clone.style.margin = '0';
-
-  container.appendChild(clone);
-  document.body.appendChild(container);
-
-  // 3. إعدادات خيارات الاستخراج
-  const opt = {
-    margin: [5, 5, 5, 5],
-    filename: fileName,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { 
-      scale: 2, 
-      useCORS: true, 
+  try {
+    // 1. تحويل العنصر كاملاً إلى صورة Canvas عالية الدقة بـ scale 2
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
       allowTaint: true,
       logging: false,
-      x: 0,
-      y: 0,
-      scrollX: 0,
-      scrollY: 0,
-      width: container.offsetWidth
-    },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-  };
+      backgroundColor: '#ffffff'
+    });
 
-  try {
+    // 2. تحويل الـ Canvas إلى بيانات صورة JPEG
+    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+
+    // 3. إنشاء ملف jsPDF بحجم A4
+    const { jsPDF } = window.jspdf || {};
+    
+    // في حال استخدام html2pdf المدمجة مع jsPDF
     if (typeof html2pdf !== 'undefined') {
-      await html2pdf().set(opt).from(clone).save();
+      const opt = {
+        margin:       [5, 5, 5, 5],
+        filename:     fileName,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      // استخدام الصورة مباشرة داخل PDF يمنع انزياح النصوص العربي
+      await html2pdf().set(opt).from(element).save();
     } else {
       throw new Error("المكتبة غير متوفرة");
     }
+
   } catch (err) {
-    console.warn("⚠️ استخدام نافذة الطباعة المباشرة...", err);
+    console.warn("⚠️ تعذر التصدير المباشر، جاري استخدام الطباعة المباشرة...", err);
     
+    // خطة احتياطية بديلة تضمن عدم ضياع التقرير
     const originalTitle = document.title;
     document.title = studentName;
     window.print();
-    setTimeout(() => { document.title = originalTitle; }, 1000);
+    
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
 
   } finally {
-    // 4. حذف الحاوي المؤقت وإعادة الزر لحالته
-    if (document.body.contains(container)) {
-      document.body.removeChild(container);
-    }
-
     if (generatePdfBtn) {
       generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
       generatePdfBtn.disabled = false;
