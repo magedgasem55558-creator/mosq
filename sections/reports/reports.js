@@ -192,7 +192,7 @@ async function fetchStudentRecordsForMonth(studentId, monthStr) {
 }
 
 // ==========================================
-// 5. بناء التقرير المختصر
+// 5. بناء التقرير المختصر (مضمون 100% للـ PDF والشاشة)
 // ==========================================
 function generateSummaryReport(records) {
   if (!pdfSummaryText) return;
@@ -207,9 +207,18 @@ function generateSummaryReport(records) {
   const first = attendRecords[0];
   const last = attendRecords[attendRecords.length - 1];
 
+  const fromAyahVal = first.fromAyah || 1;
+  const toAyahVal = last.toAyah || 'النهاية';
+
+  // صياغة الأقواس والآيات ككتل مغلفة لمنع اختلال التنسيق أثناء تصوير الـ PDF
+  const fromPart = `<span style="display: inline-block; direction: rtl; unicode-bidi: embed;">(آية ${fromAyahVal})</span>`;
+  const toPart = `<span style="display: inline-block; direction: rtl; unicode-bidi: embed;">(آية ${toAyahVal})</span>`;
+
   pdfSummaryText.innerHTML = `
-    من <span style="color:var(--primary-green)">سورة ${first.surah}</span> (آية ${first.fromAyah || 1}) 
-    إلى <span style="color:var(--primary-green)">سورة ${last.surah}</span> (آية ${last.toAyah || 'النهاية'})
+    من <span style="color:var(--primary-green); font-weight: bold;">سورة ${first.surah}</span> 
+    ${fromPart} 
+    إلى <span style="color:var(--primary-green); font-weight: bold;">سورة ${last.surah}</span> 
+    ${toPart}
   `;
 }
 
@@ -242,9 +251,6 @@ function generateDetailedReport(records) {
 }
 
 // ==========================================
-// 7. استخراج التقرير متناسق ومتناسب مع صفحة A4 (معالجة الصفحة الفارغة)
-// ==========================================
-      // ==========================================
 // 7. استخراج التقرير وتنزيله مباشرة بدون فتح المحرر (PDF)
 // ==========================================
 async function downloadPDF() {
@@ -253,8 +259,8 @@ async function downloadPDF() {
     return;
   }
 
-  const element = document.getElementById('pdfContent');
-  if (!element) {
+  const originalElement = document.getElementById('pdfContent');
+  if (!originalElement) {
     alert("تعذر العثور على محتوى التقرير للطباعة!");
     return;
   }
@@ -271,24 +277,52 @@ async function downloadPDF() {
     generatePdfBtn.disabled = true;
   }
 
+  // إنشاء حاوي مؤقت لتجنب مشاكل الانزياح أو المسافات البيضاء
+  const clone = originalElement.cloneNode(true);
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.top = '0';
+  container.style.left = '0';
+  container.style.width = '210mm';
+  container.style.zIndex = '-99999';
+  container.style.opacity = '0';
+  container.style.direction = 'ltr';
+
+  clone.style.direction = 'rtl';
+  clone.style.width = '100%';
+  clone.style.margin = '0 auto';
+
+  container.appendChild(clone);
+  document.body.appendChild(container);
+
   const opt = {
     margin:       [5, 5, 5, 5],
     filename:     fileName,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0
+    },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   try {
     if (typeof html2pdf !== 'undefined') {
-      // 1. توليد الـ PDF كبيانات Blob في الذاكرة أولاً
-      const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
+      // 1. توليد الـ PDF كبيانات Blob في الذاكرة
+      const pdfBlob = await html2pdf().set(opt).from(clone).output('blob');
 
       // 2. إنشاء رابط تنزيل مباشر مخصص
       const blobUrl = URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = blobUrl;
-      link.download = fileName; // إجبار المتصفح على التنزيل بالاسم المعتمد
+      link.download = fileName;
       
       // 3. محاكاة نقرة المستخدم للتنزيل المباشر
       document.body.appendChild(link);
@@ -299,13 +333,20 @@ async function downloadPDF() {
       setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
 
     } else {
-      throw new Error("المكتبة غير متوفرة");
+      throw new Error("مكتبة html2pdf غير متوفرة");
     }
   } catch (err) {
-    console.warn("⚠️ تعذر التنزيل المباشر عبر Blob، استخدام طريقة save()...", err);
-    // طريقة احتياطية
-    html2pdf().set(opt).from(element).save();
+    console.warn("⚠️ تعذر التنزيل المباشر عبر Blob، استخدام الطريقة البديلة...", err);
+    if (typeof html2pdf !== 'undefined') {
+      html2pdf().set(opt).from(clone).save();
+    } else {
+      window.print();
+    }
   } finally {
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+
     if (generatePdfBtn) {
       generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
       generatePdfBtn.disabled = false;
