@@ -244,6 +244,9 @@ function generateDetailedReport(records) {
 // ==========================================
 // 7. استخراج التقرير متناسق ومتناسب مع صفحة A4 (معالجة الصفحة الفارغة)
 // ==========================================
+    // ==========================================
+// 7. استخراج التقرير متناسق وبدون انزياح للجانبين (PDF)
+// ==========================================
 async function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
     alert("يرجى اختيار طالب أولاً!");
@@ -256,7 +259,7 @@ async function downloadPDF() {
     return;
   }
 
-  // استخراج اسم الطالب وتنظيف المسافات الزائدة
+  // استخراج اسم الطالب وتنظيف المسافات
   const studentName = pdfStudentName 
     ? pdfStudentName.innerText.trim().replace(/\s+/g, '_') 
     : 'طالب';
@@ -268,23 +271,30 @@ async function downloadPDF() {
     generatePdfBtn.disabled = true;
   }
 
-  // 1. استنسخ العنصر لتجنب المشاكل المتعلّقة بـ overflow/scroll في الصفحة الأصلية
+  // 1. استنسخ عنصر التقرير
   const clone = originalElement.cloneNode(true);
 
-  // 2. تجهيز حاوي مؤقت خارج الشاشة لضمان رسم العناصر بأبعاد A4 الحقيقية
+  // 2. إنشاء حاوي معزول بثبات في أعلى الصفحة لتفادي خطأ الإحداثيات السالبة
   const container = document.createElement('div');
-  container.style.position = 'absolute';
-  container.style.left = '-9999px';
+  container.style.position = 'fixed';
   container.style.top = '0';
-  container.style.width = '210mm'; // عرض A4
-  container.style.background = '#ffffff';
+  container.style.left = '0';
+  container.style.width = '210mm'; // عرض A4 القياسي
+  container.style.zIndex = '-99999';
+  container.style.opacity = '0'; // إخفاء عن العين مع إبقائه في الـ DOM
+  container.style.direction = 'ltr'; // منع اضطراب محاذاة html2canvas مع RTL
+
+  // إبقاء محتوى التقرير نفسه بالاتجاه العربي
+  clone.style.direction = 'rtl';
+  clone.style.width = '100%';
+  clone.style.margin = '0';
 
   container.appendChild(clone);
   document.body.appendChild(container);
 
-  // إعدادات html2pdf المحسّنة
+  // 3. إعدادات خيارات الاستخراج
   const opt = {
-    margin: [8, 8, 8, 8],
+    margin: [5, 5, 5, 5],
     filename: fileName,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { 
@@ -292,9 +302,11 @@ async function downloadPDF() {
       useCORS: true, 
       allowTaint: true,
       logging: false,
+      x: 0,
+      y: 0,
       scrollX: 0,
       scrollY: 0,
-      windowWidth: 1024
+      width: container.offsetWidth
     },
     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
@@ -302,24 +314,20 @@ async function downloadPDF() {
 
   try {
     if (typeof html2pdf !== 'undefined') {
-      // تنفيذ التحويل على العنصر المستنسخ
       await html2pdf().set(opt).from(clone).save();
     } else {
-      throw new Error("مكتبة html2pdf غير متوفرة في الصفحة.");
+      throw new Error("المكتبة غير متوفرة");
     }
   } catch (err) {
-    console.warn("⚠️ تعذر استخراج التقرير عبر html2pdf، استخدام طباعة المتصفح...", err);
+    console.warn("⚠️ استخدام نافذة الطباعة المباشرة...", err);
     
-    // حل بديل: استخدام طباعة المتصفح إذا فشلت المكتبة
     const originalTitle = document.title;
     document.title = studentName;
     window.print();
-    
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 1000);
+    setTimeout(() => { document.title = originalTitle; }, 1000);
+
   } finally {
-    // 3. تنظيف الـ DOM وحذف العنصر المؤقت
+    // 4. حذف الحاوي المؤقت وإعادة الزر لحالته
     if (document.body.contains(container)) {
       document.body.removeChild(container);
     }
