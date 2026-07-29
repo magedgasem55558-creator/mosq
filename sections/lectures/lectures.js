@@ -7,14 +7,10 @@ document.getElementById('addBtn').addEventListener('click', async () => {
     const time = document.getElementById('lectureTime').value;
     if (!title || !speaker || !time) return alert("يرجى ملء جميع الحقول");
     try {
-        await addDoc(collection(db, "lectures"), {
-            title, speaker, time, createdAt: serverTimestamp()
-        });
+        await addDoc(collection(db, "lectures"), { title, speaker, time, createdAt: serverTimestamp() });
         alert("تم نشر المحاضرة بنجاح ✅");
         document.getElementById('lectureTitle').value = '';
         document.getElementById('speakerName').value = '';
         document.getElementById('lectureTime').value = '';
-    } catch (e) {
-        alert("خطأ: " + e.message);
-    }
+    } catch (e) { alert("خطأ: " + e.message); }
 });

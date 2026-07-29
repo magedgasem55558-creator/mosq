@@ -7,14 +7,10 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
     const teacherPhone = document.getElementById('newTeacherPhone').value.trim();
     if (!name || !teacherName || !teacherPhone) return alert("يرجى إكمال كافة البيانات");
     try {
-        await addDoc(collection(db, "halaqat"), {
-            name, teacherName, teacherPhone, createdAt: serverTimestamp()
-        });
+        await addDoc(collection(db, "halaqat"), { name, teacherName, teacherPhone, createdAt: serverTimestamp() });
         alert("تمت إضافة الحلقة بنجاح ✅");
         document.getElementById('newHalaqaName').value = '';
         document.getElementById('newTeacherName').value = '';
         document.getElementById('newTeacherPhone').value = '';
-    } catch (e) {
-        alert("خطأ أثناء إضافة الحلقة: " + e.message);
-    }
+    } catch (e) { alert("خطأ: " + e.message); }
 });

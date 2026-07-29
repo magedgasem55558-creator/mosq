@@ -6,28 +6,111 @@
     <title>لوحة تحكم المسجد</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* ضبط إطار iframe ليملأ المحتوى */
-        #contentFrame {
-            width: 100%;
-            height: 100%;
-            border: none;
-            min-height: 80vh;
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+        body { background: #f0fdf4; }
+        .container { display: flex; height: 100vh; }
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #022c22 0%, #064e3b 100%);
+            color: white;
+            padding: 1.8rem 1rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+            position: relative;
+            overflow-y: auto;
         }
+        .sidebar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #d4af37, #f5d76e, #d4af37);
+        }
+        .sidebar-header h2 { font-size: 1.3rem; font-weight: 800; color: #f5d76e; }
+        .sidebar-header p { font-size: 0.75rem; color: #a7f3d0; margin-top: 0.2rem; }
+        .user-info { background: rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 0.8rem; margin: 1.2rem 0; font-size: 0.85rem; }
+        .section-title { font-size: 0.7rem; color: #6ee7b7; margin: 1.2rem 0 0.5rem; letter-spacing: 2px; text-align: center; }
+        .sidebar ul { list-style: none; }
+        .sidebar li {
+            padding: 0.75rem 1rem;
+            margin: 0.3rem 0;
+            border-radius: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+        .sidebar li:hover { background: rgba(255,255,255,0.1); transform: translateX(-4px); }
+        .logout-btn {
+            margin-top: auto;
+            background: rgba(220,38,38,0.2);
+            padding: 0.75rem;
+            text-align: center;
+            border-radius: 0.7rem;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 1px solid rgba(220,38,38,0.4);
+        }
+        /* زر الهامبرغر - يظهر فقط في الجوال */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 2000;
+    background: var(--emerald-700);
+    color: white;
+    border: none;
+    font-size: 1.8rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* تحويل الشريط الجانبي لطبقة عائمة في الجوال */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    .sidebar {
+        position: fixed;
+        right: -100%;
+        top: 0;
+        height: 100vh;
+        width: 85%;
+        max-width: 300px;
+        z-index: 1500;
+        transition: right 0.3s ease;
+    }
+    .sidebar.open {
+        right: 0;
+    }
+    .menu-toggle {
+        display: block;
+    }
+    .content {
+        width: 100%;
+        height: calc(100vh - 60px);
+        margin-top: 60px;
+    }
+}
+        .logout-btn:hover { background: rgba(220,38,38,0.5); }
+        .content { flex: 1; padding: 0; }
+        #contentFrame { width: 100%; height: 100%; border: none; display: block; }
     </style>
 </head>
 <body>
     <div class="container">
         <nav class="sidebar">
-            <div class="sidebar-header">
-                <h2>🏛️ إدارة المسجد</h2>
-                <p>نظام متابعة الحلقات</p>
-            </div>
-            <div class="user-info" id="userInfo">
-                📧 <span id="currentUserEmail">جاري التحميل...</span>
-            </div>
+            <div class="sidebar-header"><h2>🏛️ إدارة المسجد</h2><p>نظام متابعة الحلقات</p></div>
+            <div class="user-info">📧 <span id="currentUserEmail">جاري التحميل...</span></div>
             <div class="section-title">━━━ الرئيسية ━━━</div>
             <ul>
-                
                 <li id="nav-students" onclick="navigate('students')">👥 إضافة طالب جديد</li>
                 <li id="nav-halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</li>
                 <li id="nav-events" onclick="navigate('events')">📅 الفعاليات القادمة</li>
@@ -46,65 +129,73 @@
             <div class="logout-btn" onclick="logout()">🚪 تسجيل الخروج</div>
         </nav>
         <main class="content">
-            <!-- سيتم تعيين src بواسطة JavaScript بعد التحقق من الصلاحيات -->
             <iframe id="contentFrame" src="about:blank"></iframe>
         </main>
     </div>
 
     <script type="module">
+        console.log("✅ بدء تحميل index.html module");
+
+        // استيراد Firebase
         import { auth } from './firebase.js';
         import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const teacherAllowedSections = ['nav-students', 'nav-halaqat'];
         const iframe = document.getElementById('contentFrame');
+        const userEmailSpan = document.getElementById('currentUserEmail');
 
+        // تعريف navigate مباشرة على window لتكون متاحة من الـ HTML
+        window.navigate = function(sectionId) {
+            const url = `sections/${sectionId}/${sectionId}.html`;
+            console.log("🧭 التنقل إلى:", url);
+            iframe.src = url;
+        };
+
+        // دالة تطبيق صلاحيات المستخدم
         function applyRoleRestrictions(email) {
-            let defaultSection = 'students'; // افتراضي للمدير
+            console.log("🔐 تطبيق الصلاحيات لـ:", email);
+            let defaultSection = 'students';
 
             if (email !== 'hammed@gmail.com') {
-                // إخفاء أقسام المدير
                 const allSectionIds = [
                     'nav-prayers', 'nav-students', 'nav-halaqat', 'nav-events',
                     'nav-khutba', 'nav-add-halaqa', 'nav-lectures',
-                    'nav-manage-students',nav-students, 'nav-manage-halaqat', 'nav-manage-records',
+                    'nav-manage-students', 'nav-manage-halaqat', 'nav-manage-records',
                     'nav-manage-lectures'
                 ];
                 allSectionIds.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) {
-                        if (teacherAllowedSections.includes(id)) {
-                            el.style.display = '';
-                        } else {
-                            el.style.display = 'none';
-                        }
+                        el.style.display = teacherAllowedSections.includes(id) ? '' : 'none';
                     }
                 });
-                defaultSection = 'students'; // المعلم يبدأ بقسم الطلاب
+                defaultSection = 'students';
             }
-
-            // تعيين القسم الافتراضي
             navigate(defaultSection);
         }
 
-        // التنقل وتحميل صفحة القسم المطلوب
-        window.navigate = function(sectionId) {
-            iframe.src = `sections/${sectionId}/${sectionId}.html`;
-        }
-
-        // مراقبة المستخدم
-        onAuthStateChanged(auth, async (user) => {
+        // مراقبة حالة تسجيل الدخول
+        console.log("👂 انتظار حالة المستخدم...");
+        onAuthStateChanged(auth, (user) => {
+            console.log("👤 حالة المستخدم تغيرت:", user ? user.email : "غير مسجل");
             if (user) {
-                document.getElementById('currentUserEmail').innerText = user.email;
+                userEmailSpan.innerText = user.email;
                 applyRoleRestrictions(user.email);
             } else {
                 window.location.href = 'login.html';
             }
+        }, (error) => {
+            console.error("❌ خطأ في onAuthStateChanged:", error);
         });
 
+        // تسجيل الخروج
         window.logout = async function() {
+            console.log("🚪 تسجيل الخروج...");
             await signOut(auth);
             window.location.href = 'login.html';
-        }
+        };
+
+        console.log("✅ انتهى تحميل module index.html");
     </script>
 </body>
 </html>
