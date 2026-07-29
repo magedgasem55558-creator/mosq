@@ -1,105 +1,103 @@
+// firebase.js
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-    getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc, 
-    query, where, serverTimestamp, increment, orderBy 
+import {
+  getFirestore, collection, addDoc, getDocs, getDoc, doc, setDoc, updateDoc, deleteDoc,
+  query, where, serverTimestamp, increment, orderBy
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { 
-    getAuth, createUserWithEmailAndPassword, onAuthStateChanged, signOut 
+import {
+  getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  onAuthStateChanged, signOut
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyC06KKxkehT1uPBT9k-r-d6MmB4RUuVy9Y",
-    authDomain: "mosque-system.firebaseapp.com",
-    projectId: "mosque-system",
-    storageBucket: "mosque-system.firebasestorage.app",
-    messagingSenderId: "905816133159",
-    appId: "1:905816133159:web:3b95d858815f91780e0802"
+  apiKey: "AIzaSyC06KKxkehT1uPBT9k-r-d6MmB4RUuVy9Y",
+  authDomain: "mosque-system.firebaseapp.com",
+  projectId: "mosque-system",
+  storageBucket: "mosque-system.firebasestorage.app",
+  messagingSenderId: "905816133159",
+  appId: "1:905816133159:web:3b95d858815f91780e0802"
 };
 
 export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 
-// نظام المصادقة
-export function checkIfUserIsAdmin(user) {
-    return getDoc(doc(db, "users", user.uid)).then(docSnap => {
-        if (docSnap.exists()) {
-            const userData = docSnap.data();
-            if (userData.role !== 'admin') throw new Error("not-admin");
-            return true;
-        } else {
-            throw new Error("no-record");
-        }
-    });
+// --- صلاحيات المدير ---
+export async function checkIfUserIsAdmin(user) {
+  const docSnap = await getDoc(doc(db, "users", user.uid));
+  if (docSnap.exists() && docSnap.data().role === 'admin') return true;
+  throw new Error("not-admin");
 }
 
 export async function logoutUser() {
-    await signOut(auth);
-    window.location.href = 'login.html';
+  await signOut(auth);
+  window.location.href = 'login.html';
 }
 
-// دوال جلب البيانات العامة
+// --- دوال البيانات (تم تحسين السرعة بشكل فوري) ---
+
 export async function loadHalaqatList() {
-    const querySnapshot = await getDocs(collection(db, "halaqat"));
-    const halaqat = [];
-    querySnapshot.forEach(doc => halaqat.push({ id: doc.id, ...doc.data() }));
-    return halaqat;
+  const snap = await getDocs(collection(db, "halaqat"));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 }
 
 export async function loadCurrentEvent() {
-    const eventDoc = await getDoc(doc(db, "settings", "next_event"));
-    return eventDoc.exists() ? eventDoc.data() : null;
+  const docSnap = await getDoc(doc(db, "settings", "next_event"));
+  return docSnap.exists() ? docSnap.data() : null;
 }
 
 export async function loadCurrentKhutba() {
-    const khutbaDoc = await getDoc(doc(db, "settings", "next_khutba"));
-    return khutbaDoc.exists() ? khutbaDoc.data() : null;
+  const docSnap = await getDoc(doc(db, "settings", "next_khutba"));
+  return docSnap.exists() ? docSnap.data() : null;
 }
 
-export async function loadCurrentPrayerTimes() {
-    const timesDoc = await getDoc(doc(db, "prayer_times", "today"));
-    return timesDoc.exists() ? timesDoc.data() : null;
+export async function loadDonationInfo() {
+  const docSnap = await getDoc(doc(db, "settings", "donation_info"));
+  return docSnap.exists() ? docSnap.data() : null;
 }
 
+// ⚡ جلب الطلاب بطلب واحد مجمع وسريع جداً بدون حلقات بطيئة
 export async function loadAllStudents() {
-    const querySnapshot = await getDocs(collection(db, "students"));
-    const students = [];
-    for (const docSnap of querySnapshot.docs) {
-        const student = docSnap.data();
-        student.id = docSnap.id;
-        if (student.halaqaId) {
-            const halaqaDoc = await getDoc(doc(db, "halaqat", student.halaqaId));
-            student.halaqaName = halaqaDoc.exists() ? halaqaDoc.data().name : 'بدون حلقة';
-        } else {
-            student.halaqaName = 'بدون حلقة';
-        }
-        students.push(student);
-    }
-    return students;
+  const snap = await getDocs(collection(db, "students"));
+  return snap.docs.map(docSnap => ({
+    id: docSnap.id,
+    ...docSnap.data()
+  }));
 }
 
+export async function loadStudentsByHalaqa(halaqaId) {
+  const q = query(collection(db, "students"), where("halaqaId", "==", halaqaId));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+
+// ⚡ جلب السجلات بطلب واحد سريع
 export async function loadAllRecords() {
+  try {
     const q = query(collection(db, "records"), orderBy("timestamp", "desc"));
-    const querySnapshot = await getDocs(q);
-    const records = [];
-    for (const docSnap of querySnapshot.docs) {
-        const record = docSnap.data();
-        record.id = docSnap.id;
-        if (record.studentId) {
-            const studentDoc = await getDoc(doc(db, "students", record.studentId));
-            record.studentName = studentDoc.exists() ? studentDoc.data().name : 'طالب محذوف';
-        } else {
-            record.studentName = 'طالب غير معروف';
-        }
-        records.push(record);
-    }
-    return records;
+    const snap = await getDocs(q);
+    return snap.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+  } catch (e) {
+    // في حال عدم وجود الفهرس (Index) لـ orderBy("timestamp")
+    console.warn("جلب السجلات بدون ترتيب لتفادي خطأ الفهرس:", e);
+    const snap = await getDocs(collection(db, "records"));
+    return snap.docs.map(docSnap => ({
+      id: docSnap.id,
+      ...docSnap.data()
+    }));
+  }
 }
 
 export async function loadAllLectures() {
+  try {
     const q = query(collection(db, "lectures"), orderBy("createdAt", "desc"));
-    const querySnapshot = await getDocs(q);
-    const lectures = [];
-    querySnapshot.forEach(doc => lectures.push({ id: doc.id, ...doc.data() }));
-    return lectures;
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (e) {
+    const snap = await getDocs(collection(db, "lectures"));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  }
 }
