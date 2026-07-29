@@ -7,10 +7,24 @@
   <link rel="stylesheet" href="style.css">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-    body { background: #f0fdf4; height: 100vh; overflow: hidden; }
-    .container { display: flex; height: 100vh; }
     
-    /* === القائمة الجانبية للكمبيوتر (Desktop Sidebar) === */
+    /* جعل الصفحة تأخذ الارتفاع الكامل بدقة دون سكرول خارجي */
+    html, body { 
+      height: 100%; 
+      width: 100%; 
+      overflow: hidden; 
+      background: #f0fdf4; 
+    }
+
+    /* الحاوية الرئيسية */
+    .container { 
+      display: flex; 
+      width: 100%; 
+      height: 100vh; 
+      height: 100dvh; /* لدعم شاشات الجوال الحديثة بدقة */
+    }
+    
+    /* === القائمة الجانبية للشاشات الكبيرة === */
     .sidebar {
       width: 280px;
       background: linear-gradient(180deg, #022c22 0%, #064e3b 100%);
@@ -20,6 +34,7 @@
       flex-direction: column;
       box-shadow: 10px 0 30px rgba(0,0,0,0.2);
       overflow-y: auto;
+      flex-shrink: 0;
     }
     .sidebar-header h2 { font-size: 1.3rem; font-weight: 800; color: #f5d76e; }
     .sidebar-header p { font-size: 0.75rem; color: #a7f3d0; }
@@ -48,9 +63,22 @@
     }
     .logout-btn:hover { background: rgba(220,38,38,0.5); }
     
-    /* === محتوى الصفحة (iFrame) === */
-    .content { flex: 1; padding: 0; height: 100vh; }
-    #contentFrame { width: 100%; height: 100%; border: none; display: block; }
+    /* === محتوى الصفحة الإطار الحاوي === */
+    .content { 
+      flex: 1; 
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #contentFrame { 
+      width: 100%; 
+      height: 100%; 
+      flex: 1;
+      border: none; 
+      display: block; 
+    }
     
     /* === عناصر الجوال (تنشط فقط في الجوال) === */
     .mobile-navbar {
@@ -58,6 +86,7 @@
       background: #022c22;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       z-index: 1000;
+      flex-shrink: 0; /* منع انكماش الشريط العلوي */
     }
     
     .mobile-header-top {
@@ -78,15 +107,15 @@
       cursor: pointer;
     }
 
-    /* شريط التنقل الأفقي السريع بالسحب */
+    /* شريط التنقل الأفقي السريع */
     .mobile-scroll-tabs {
       display: flex;
       overflow-x: auto;
       white-space: nowrap;
       padding: 0.5rem 0.6rem;
       gap: 0.5rem;
-      -webkit-overflow-scrolling: touch; /* سحب سلس للجوال */
-      scrollbar-width: none; /* إخفاء شريط التمرير */
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
     .mobile-scroll-tabs::-webkit-scrollbar { display: none; }
 
@@ -109,44 +138,52 @@
       box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4);
     }
 
-    /* === استجابة الشاشات الصغرى (الجوال) === */
+    /* === تعديلات الجوال الخاصة بالمساحة === */
     @media (max-width: 768px) {
-      .container { flex-direction: column; }
+      .container { 
+        flex-direction: column; 
+        height: 100vh;
+        height: 100dvh;
+      }
       .sidebar { display: none; } /* إخفاء السايدبار */
-      .mobile-navbar { display: block; } /* إظهار شريط الجوال الأفقي */
-      .content { height: calc(100vh - 90px); } /* تخصيص الارتفاع الكامل للإطار */
+      .mobile-navbar { display: block; } /* إظهار شريط الجوال */
+      
+      /* جعل منطقة المحتوى تمتد تلقائياً لتغطي كامل المساحة المتبقية تحت الشريط */
+      .content { 
+        flex: 1; 
+        height: 0; /* تحايل Flexbox لجعل الـ iframe يأخذ المساحة المتبقية فقط */
+        min-height: 0;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- شريط التنقل السريع الخاص بالجوال -->
-  <nav class="mobile-navbar">
-    <div class="mobile-header-top">
-      <h2>🏛️ إدارة المسجد</h2>
-      <button class="mobile-logout-btn" onclick="logout()">🚪 خروج</button>
-    </div>
-    
-    <!-- الأزرار الأفقية القابلة بالسحب -->
-    <div class="mobile-scroll-tabs">
-      <button class="tab-btn active" data-id="students" onclick="navigate('students')">👥 إضافة طالب</button>
-      <button class="tab-btn" data-id="halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</button>
-      <button class="tab-btn" data-id="events" onclick="navigate('events')">📅 الفعاليات</button>
-      <button class="tab-btn" data-id="khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</button>
-      <button class="tab-btn" data-id="add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة</button>
-      <button class="tab-btn" data-id="manage-donations" onclick="navigate('manage-donations')">💳 التبرعات</button>
-      <button class="tab-btn" data-id="lectures" onclick="navigate('lectures')">🎤 المحاضرات</button>
-
-      <!-- أقسام الإدارة (تظهر فقط للمدير) -->
-      <button class="tab-btn admin-tab" data-id="manage-students" onclick="navigate('manage-students')">📋 إ.الطلاب</button>
-      <button class="tab-btn admin-tab" data-id="manage-halaqat" onclick="navigate('manage-halaqat')">📋 إ.الحلقات</button>
-      <button class="tab-btn admin-tab" data-id="manage-records" onclick="navigate('manage-records')">📋 إ.السجلات</button>
-      <button class="tab-btn admin-tab" data-id="manage-lectures" onclick="navigate('manage-lectures')">📋 إ.المحاضرات</button>
-    </div>
-  </nav>
-
   <div class="container">
-    <!-- السايدبار المخصص للشاشات الكبيرة (PC) -->
+    <!-- شريط الجوال العلوي مع التبويبات -->
+    <nav class="mobile-navbar">
+      <div class="mobile-header-top">
+        <h2>🏛️ إدارة المسجد</h2>
+        <button class="mobile-logout-btn" onclick="logout()">🚪 خروج</button>
+      </div>
+      
+      <div class="mobile-scroll-tabs">
+        <button class="tab-btn active" data-id="students" onclick="navigate('students')">👥 إضافة طالب</button>
+        <button class="tab-btn" data-id="halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</button>
+        <button class="tab-btn" data-id="events" onclick="navigate('events')">📅 الفعاليات</button>
+        <button class="tab-btn" data-id="khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</button>
+        <button class="tab-btn" data-id="add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة</button>
+        <button class="tab-btn" data-id="manage-donations" onclick="navigate('manage-donations')">💳 التبرعات</button>
+        <button class="tab-btn" data-id="lectures" onclick="navigate('lectures')">🎤 المحاضرات</button>
+
+        <button class="tab-btn admin-tab" data-id="manage-students" onclick="navigate('manage-students')">📋 إ.الطلاب</button>
+        <button class="tab-btn admin-tab" data-id="manage-halaqat" onclick="navigate('manage-halaqat')">📋 إ.الحلقات</button>
+        <button class="tab-btn admin-tab" data-id="manage-records" onclick="navigate('manage-records')">📋 إ.السجلات</button>
+        <button class="tab-btn admin-tab" data-id="manage-lectures" onclick="navigate('manage-lectures')">📋 إ.المحاضرات</button>
+      </div>
+    </nav>
+
+    <!-- السايدبار للكمبيوتر -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>🏛️ إدارة المسجد</h2>
@@ -176,7 +213,7 @@
       <div class="logout-btn" onclick="logout()">🚪 تسجيل الخروج</div>
     </aside>
 
-    <!-- إطار محتوى الصفحات -->
+    <!-- منطقة عرض المحتوى الرئيسي -->
     <main class="content">
       <iframe id="contentFrame" src="about:blank"></iframe>
     </main>
@@ -192,15 +229,12 @@
     const adminTabs = document.querySelectorAll('.admin-tab');
     const adminTitle = document.querySelector('.admin-title');
 
-    // دالة التنقل وإبراز الزر النشط
     window.navigate = function(sectionId) {
       iframe.src = `sections/${sectionId}/${sectionId}.html`;
 
-      // تحديث الأزرار المحددة (سواء في السايدبار أو التبويبات)
       document.querySelectorAll('.tab-btn, .sidebar li').forEach(el => {
         if (el.getAttribute('data-id') === sectionId) {
           el.classList.add('active');
-          // التمرير التلقائي للتبويب النشط في الجوال ليصبح ظاهراً
           if (el.classList.contains('tab-btn')) {
             el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
           }
@@ -210,14 +244,12 @@
       });
     };
 
-    // التحقق من حالة المستخدم والصلاحيات
     onAuthStateChanged(auth, (user) => {
       if (user) {
         if (userEmailSpan) userEmailSpan.innerText = user.email;
 
         const isAdmin = user.email === 'hammed@gmail.com';
 
-        // إخفاء/إظهار خيارات الإدارة بناءً على الصلاحيات
         if (!isAdmin) {
           if (adminMenu) adminMenu.style.display = 'none';
           if (adminTitle) adminTitle.style.display = 'none';
@@ -228,14 +260,12 @@
           adminTabs.forEach(tab => tab.style.display = '');
         }
 
-        // فتح قسم الطلاب كبداية
         navigate('students');
       } else {
         window.location.href = 'login.html';
       }
     });
 
-    // تسجيل الخروج
     window.logout = async () => {
       await signOut(auth);
       window.location.href = 'login.html';
