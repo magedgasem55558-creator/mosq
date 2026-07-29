@@ -1,201 +1,245 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم المسجد</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-        body { background: #f0fdf4; }
-        .container { display: flex; height: 100vh; }
-        .sidebar {
-            width: 280px;
-            background: linear-gradient(180deg, #022c22 0%, #064e3b 100%);
-            color: white;
-            padding: 1.8rem 1rem;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.2);
-            position: relative;
-            overflow-y: auto;
-        }
-        .sidebar::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(180deg, #d4af37, #f5d76e, #d4af37);
-        }
-        .sidebar-header h2 { font-size: 1.3rem; font-weight: 800; color: #f5d76e; }
-        .sidebar-header p { font-size: 0.75rem; color: #a7f3d0; margin-top: 0.2rem; }
-        .user-info { background: rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 0.8rem; margin: 1.2rem 0; font-size: 0.85rem; }
-        .section-title { font-size: 0.7rem; color: #6ee7b7; margin: 1.2rem 0 0.5rem; letter-spacing: 2px; text-align: center; }
-        .sidebar ul { list-style: none; }
-        .sidebar li {
-            padding: 0.75rem 1rem;
-            margin: 0.3rem 0;
-            border-radius: 0.7rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-            font-size: 0.95rem;
-        }
-        .sidebar li:hover { background: rgba(255,255,255,0.1); transform: translateX(-4px); }
-        .logout-btn {
-            margin-top: auto;
-            background: rgba(220,38,38,0.2);
-            padding: 0.75rem;
-            text-align: center;
-            border-radius: 0.7rem;
-            cursor: pointer;
-            transition: 0.3s;
-            border: 1px solid rgba(220,38,38,0.4);
-        }
-        /* زر الهامبرغر - يظهر فقط في الجوال */
-.menu-toggle {
-    display: none;
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 2000;
-    background: var(--emerald-700);
-    color: white;
-    border: none;
-    font-size: 1.8rem;
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-}
-
-/* تحويل الشريط الجانبي لطبقة عائمة في الجوال */
-@media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-    }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>لوحة تحكم المسجد</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
+    body { background: #f0fdf4; height: 100vh; overflow: hidden; }
+    .container { display: flex; height: 100vh; }
+    
+    /* === القائمة الجانبية للكمبيوتر (Desktop Sidebar) === */
     .sidebar {
-        position: fixed;
-        right: -100%;
-        top: 0;
-        height: 100vh;
-        width: 85%;
-        max-width: 300px;
-        z-index: 1500;
-        transition: right 0.3s ease;
+      width: 280px;
+      background: linear-gradient(180deg, #022c22 0%, #064e3b 100%);
+      color: white;
+      padding: 1.8rem 1rem;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+      overflow-y: auto;
     }
-    .sidebar.open {
-        right: 0;
+    .sidebar-header h2 { font-size: 1.3rem; font-weight: 800; color: #f5d76e; }
+    .sidebar-header p { font-size: 0.75rem; color: #a7f3d0; }
+    .user-info { background: rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 0.8rem; margin: 1.2rem 0; font-size: 0.85rem; }
+    .section-title { font-size: 0.7rem; color: #6ee7b7; margin: 1.2rem 0 0.5rem; letter-spacing: 2px; text-align: center; }
+    .sidebar ul { list-style: none; }
+    .sidebar li {
+      padding: 0.75rem 1rem;
+      margin: 0.3rem 0;
+      border-radius: 0.7rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+      font-size: 0.95rem;
     }
-    .menu-toggle {
-        display: block;
+    .sidebar li:hover, .sidebar li.active { background: rgba(255,255,255,0.15); transform: translateX(-4px); }
+    .logout-btn {
+      margin-top: auto;
+      background: rgba(220,38,38,0.2);
+      padding: 0.75rem;
+      text-align: center;
+      border-radius: 0.7rem;
+      cursor: pointer;
+      transition: 0.3s;
+      border: 1px solid rgba(220,38,38,0.4);
     }
-    .content {
-        width: 100%;
-        height: calc(100vh - 60px);
-        margin-top: 60px;
+    .logout-btn:hover { background: rgba(220,38,38,0.5); }
+    
+    /* === محتوى الصفحة (iFrame) === */
+    .content { flex: 1; padding: 0; height: 100vh; }
+    #contentFrame { width: 100%; height: 100%; border: none; display: block; }
+    
+    /* === عناصر الجوال (تنشط فقط في الجوال) === */
+    .mobile-navbar {
+      display: none;
+      background: #022c22;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 1000;
     }
-}
-        .logout-btn:hover { background: rgba(220,38,38,0.5); }
-        .content { flex: 1; padding: 0; }
-        #contentFrame { width: 100%; height: 100%; border: none; display: block; }
-    </style>
+    
+    .mobile-header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .mobile-header-top h2 { font-size: 1rem; color: #f5d76e; }
+    .mobile-logout-btn {
+      background: rgba(220,38,38,0.8);
+      color: white;
+      border: none;
+      padding: 0.3rem 0.7rem;
+      border-radius: 0.4rem;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
+    /* شريط التنقل الأفقي السريع بالسحب */
+    .mobile-scroll-tabs {
+      display: flex;
+      overflow-x: auto;
+      white-space: nowrap;
+      padding: 0.5rem 0.6rem;
+      gap: 0.5rem;
+      -webkit-overflow-scrolling: touch; /* سحب سلس للجوال */
+      scrollbar-width: none; /* إخفاء شريط التمرير */
+    }
+    .mobile-scroll-tabs::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      background: rgba(255,255,255,0.08);
+      color: #a7f3d0;
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 0.45rem 0.9rem;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .tab-btn.active {
+      background: #059669;
+      color: #ffffff;
+      border-color: #34d399;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4);
+    }
+
+    /* === استجابة الشاشات الصغرى (الجوال) === */
+    @media (max-width: 768px) {
+      .container { flex-direction: column; }
+      .sidebar { display: none; } /* إخفاء السايدبار */
+      .mobile-navbar { display: block; } /* إظهار شريط الجوال الأفقي */
+      .content { height: calc(100vh - 90px); } /* تخصيص الارتفاع الكامل للإطار */
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <nav class="sidebar">
-            <div class="sidebar-header"><h2>🏛️ إدارة المسجد</h2><p>نظام متابعة الحلقات</p></div>
-            <div class="user-info">📧 <span id="currentUserEmail">جاري التحميل...</span></div>
-            <div class="section-title">━━━ الرئيسية ━━━</div>
-            <ul>
-                <li id="nav-students" onclick="navigate('students')">👥 إضافة طالب جديد</li>
-                <li id="nav-halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</li>
-                <li id="nav-events" onclick="navigate('events')">📅 الفعاليات القادمة</li>
-                <li id="nav-khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</li>
-                <li id="nav-add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة جديدة</li>
-                <li id="nav-manage-donations" onclick="navigate('manage-donations')">💳 إدارة التبرعات</li>
-                <li id="nav-lectures" onclick="navigate('lectures')">🎤 المحاضرات</li>
-            </ul>
-            <div class="section-title">━━━ الإدارة ━━━</div>
-            <ul>
-                <li id="nav-manage-students" onclick="navigate('manage-students')">📋 إدارة الطلاب</li>
-                <li id="nav-manage-halaqat" onclick="navigate('manage-halaqat')">📋 إدارة الحلقات</li>
-                <li id="nav-manage-records" onclick="navigate('manage-records')">📋 إدارة سجلات التسميع</li>
-                <li id="nav-manage-lectures" onclick="navigate('manage-lectures')">📋 إدارة المحاضرات</li>
-            </ul>
-            <div class="logout-btn" onclick="logout()">🚪 تسجيل الخروج</div>
-        </nav>
-        <main class="content">
-            <iframe id="contentFrame" src="about:blank"></iframe>
-        </main>
+
+  <!-- شريط التنقل السريع الخاص بالجوال -->
+  <nav class="mobile-navbar">
+    <div class="mobile-header-top">
+      <h2>🏛️ إدارة المسجد</h2>
+      <button class="mobile-logout-btn" onclick="logout()">🚪 خروج</button>
     </div>
+    
+    <!-- الأزرار الأفقية القابلة بالسحب -->
+    <div class="mobile-scroll-tabs">
+      <button class="tab-btn active" data-id="students" onclick="navigate('students')">👥 إضافة طالب</button>
+      <button class="tab-btn" data-id="halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</button>
+      <button class="tab-btn" data-id="events" onclick="navigate('events')">📅 الفعاليات</button>
+      <button class="tab-btn" data-id="khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</button>
+      <button class="tab-btn" data-id="add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة</button>
+      <button class="tab-btn" data-id="manage-donations" onclick="navigate('manage-donations')">💳 التبرعات</button>
+      <button class="tab-btn" data-id="lectures" onclick="navigate('lectures')">🎤 المحاضرات</button>
 
-    <script type="module">
-        console.log("✅ بدء تحميل index.html module");
+      <!-- أقسام الإدارة (تظهر فقط للمدير) -->
+      <button class="tab-btn admin-tab" data-id="manage-students" onclick="navigate('manage-students')">📋 إ.الطلاب</button>
+      <button class="tab-btn admin-tab" data-id="manage-halaqat" onclick="navigate('manage-halaqat')">📋 إ.الحلقات</button>
+      <button class="tab-btn admin-tab" data-id="manage-records" onclick="navigate('manage-records')">📋 إ.السجلات</button>
+      <button class="tab-btn admin-tab" data-id="manage-lectures" onclick="navigate('manage-lectures')">📋 إ.المحاضرات</button>
+    </div>
+  </nav>
 
-        // استيراد Firebase
-        import { auth } from './firebase.js';
-        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  <div class="container">
+    <!-- السايدبار المخصص للشاشات الكبيرة (PC) -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>🏛️ إدارة المسجد</h2>
+        <p>نظام متابعة الحلقات</p>
+      </div>
+      <div class="user-info">📧 <span id="currentUserEmail">جاري التحميل...</span></div>
+      
+      <div class="section-title">━━━ الرئيسية ━━━</div>
+      <ul>
+        <li data-id="students" onclick="navigate('students')">👥 إضافة طالب جديد</li>
+        <li data-id="halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</li>
+        <li data-id="events" onclick="navigate('events')">📅 الفعاليات القادمة</li>
+        <li data-id="khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</li>
+        <li data-id="add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة جديدة</li>
+        <li data-id="manage-donations" onclick="navigate('manage-donations')">💳 إدارة التبرعات</li>
+        <li data-id="lectures" onclick="navigate('lectures')">🎤 المحاضرات</li>
+      </ul>
+      
+      <div class="section-title admin-title">━━━ الإدارة ━━━</div>
+      <ul id="adminMenu">
+        <li data-id="manage-students" onclick="navigate('manage-students')">📋 إدارة الطلاب</li>
+        <li data-id="manage-halaqat" onclick="navigate('manage-halaqat')">📋 إدارة الحلقات</li>
+        <li data-id="manage-records" onclick="navigate('manage-records')">📋 إدارة سجلات التسميع</li>
+        <li data-id="manage-lectures" onclick="navigate('manage-lectures')">📋 إدارة المحاضرات</li>
+      </ul>
+      
+      <div class="logout-btn" onclick="logout()">🚪 تسجيل الخروج</div>
+    </aside>
 
-        const teacherAllowedSections = ['nav-students', 'nav-halaqat'];
-        const iframe = document.getElementById('contentFrame');
-        const userEmailSpan = document.getElementById('currentUserEmail');
+    <!-- إطار محتوى الصفحات -->
+    <main class="content">
+      <iframe id="contentFrame" src="about:blank"></iframe>
+    </main>
+  </div>
 
-        // تعريف navigate مباشرة على window لتكون متاحة من الـ HTML
-        window.navigate = function(sectionId) {
-            const url = `sections/${sectionId}/${sectionId}.html`;
-            console.log("🧭 التنقل إلى:", url);
-            iframe.src = url;
-        };
+  <script type="module">
+    import { auth } from './firebase.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // دالة تطبيق صلاحيات المستخدم
-        function applyRoleRestrictions(email) {
-            console.log("🔐 تطبيق الصلاحيات لـ:", email);
-            let defaultSection = 'students';
+    const iframe = document.getElementById('contentFrame');
+    const userEmailSpan = document.getElementById('currentUserEmail');
+    const adminMenu = document.getElementById('adminMenu');
+    const adminTabs = document.querySelectorAll('.admin-tab');
+    const adminTitle = document.querySelector('.admin-title');
 
-            if (email !== 'hammed@gmail.com') {
-                const allSectionIds = [
-                    'nav-prayers', 'nav-students', 'nav-halaqat', 'nav-events',
-                    'nav-khutba', 'nav-add-halaqa', 'nav-lectures',
-                    'nav-manage-students', 'nav-manage-halaqat', 'nav-manage-records',
-                    'nav-manage-lectures'
-                ];
-                allSectionIds.forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) {
-                        el.style.display = teacherAllowedSections.includes(id) ? '' : 'none';
-                    }
-                });
-                defaultSection = 'students';
-            }
-            navigate(defaultSection);
+    // دالة التنقل وإبراز الزر النشط
+    window.navigate = function(sectionId) {
+      iframe.src = `sections/${sectionId}/${sectionId}.html`;
+
+      // تحديث الأزرار المحددة (سواء في السايدبار أو التبويبات)
+      document.querySelectorAll('.tab-btn, .sidebar li').forEach(el => {
+        if (el.getAttribute('data-id') === sectionId) {
+          el.classList.add('active');
+          // التمرير التلقائي للتبويب النشط في الجوال ليصبح ظاهراً
+          if (el.classList.contains('tab-btn')) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        } else {
+          el.classList.remove('active');
+        }
+      });
+    };
+
+    // التحقق من حالة المستخدم والصلاحيات
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (userEmailSpan) userEmailSpan.innerText = user.email;
+
+        const isAdmin = user.email === 'hammed@gmail.com';
+
+        // إخفاء/إظهار خيارات الإدارة بناءً على الصلاحيات
+        if (!isAdmin) {
+          if (adminMenu) adminMenu.style.display = 'none';
+          if (adminTitle) adminTitle.style.display = 'none';
+          adminTabs.forEach(tab => tab.style.display = 'none');
+        } else {
+          if (adminMenu) adminMenu.style.display = '';
+          if (adminTitle) adminTitle.style.display = '';
+          adminTabs.forEach(tab => tab.style.display = '');
         }
 
-        // مراقبة حالة تسجيل الدخول
-        console.log("👂 انتظار حالة المستخدم...");
-        onAuthStateChanged(auth, (user) => {
-            console.log("👤 حالة المستخدم تغيرت:", user ? user.email : "غير مسجل");
-            if (user) {
-                userEmailSpan.innerText = user.email;
-                applyRoleRestrictions(user.email);
-            } else {
-                window.location.href = 'login.html';
-            }
-        }, (error) => {
-            console.error("❌ خطأ في onAuthStateChanged:", error);
-        });
+        // فتح قسم الطلاب كبداية
+        navigate('students');
+      } else {
+        window.location.href = 'login.html';
+      }
+    });
 
-        // تسجيل الخروج
-        window.logout = async function() {
-            console.log("🚪 تسجيل الخروج...");
-            await signOut(auth);
-            window.location.href = 'login.html';
-        };
-
-        console.log("✅ انتهى تحميل module index.html");
-    </script>
+    // تسجيل الخروج
+    window.logout = async () => {
+      await signOut(auth);
+      window.location.href = 'login.html';
+    };
+  </script>
 </body>
 </html>
