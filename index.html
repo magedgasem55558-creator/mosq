@@ -8,7 +8,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
     
-    /* جعل الصفحة تأخذ الارتفاع الكامل بدقة دون سكرول خارجي */
     html, body { 
       height: 100%; 
       width: 100%; 
@@ -16,12 +15,11 @@
       background: #f0fdf4; 
     }
 
-    /* الحاوية الرئيسية */
     .container { 
       display: flex; 
       width: 100%; 
       height: 100vh; 
-      height: 100dvh; /* لدعم شاشات الجوال الحديثة بدقة */
+      height: 100dvh; 
     }
     
     /* === القائمة الجانبية للشاشات الكبيرة === */
@@ -80,13 +78,13 @@
       display: block; 
     }
     
-    /* === عناصر الجوال (تنشط فقط في الجوال) === */
+    /* === عناصر الجوال === */
     .mobile-navbar {
       display: none;
       background: #022c22;
       box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       z-index: 1000;
-      flex-shrink: 0; /* منع انكماش الشريط العلوي */
+      flex-shrink: 0;
     }
     
     .mobile-header-top {
@@ -107,7 +105,6 @@
       cursor: pointer;
     }
 
-    /* شريط التنقل الأفقي السريع */
     .mobile-scroll-tabs {
       display: flex;
       overflow-x: auto;
@@ -138,20 +135,21 @@
       box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4);
     }
 
-    /* === تعديلات الجوال الخاصة بالمساحة === */
+    /* === استجابة الجوال === */
     @media (max-width: 768px) {
       .container { 
         flex-direction: column; 
         height: 100vh;
         height: 100dvh;
       }
-      .sidebar { display: none; } /* إخفاء السايدبار */
-      .mobile-navbar { display: block; } /* إظهار شريط الجوال */
+      .sidebar { display: none; }
       
-      /* جعل منطقة المحتوى تمتد تلقائياً لتغطي كامل المساحة المتبقية تحت الشريط */
+      /* إظهار هيدر الجوال شرط ألا يكون مخفياً بواسطة كلاس الخروج المعلم */
+      .mobile-navbar:not(.teacher-mode) { display: block; }
+      
       .content { 
         flex: 1; 
-        height: 0; /* تحايل Flexbox لجعل الـ iframe يأخذ المساحة المتبقية فقط */
+        height: 0; 
         min-height: 0;
       }
     }
@@ -161,13 +159,13 @@
 
   <div class="container">
     <!-- شريط الجوال العلوي مع التبويبات -->
-    <nav class="mobile-navbar">
+    <nav class="mobile-navbar" id="mobileNavbar">
       <div class="mobile-header-top">
         <h2>🏛️ إدارة المسجد</h2>
         <button class="mobile-logout-btn" onclick="logout()">🚪 خروج</button>
       </div>
       
-      <div class="mobile-scroll-tabs">
+      <div class="mobile-scroll-tabs" id="mobileTabs">
         <button class="tab-btn active" data-id="students" onclick="navigate('students')">👥 إضافة طالب</button>
         <button class="tab-btn" data-id="halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</button>
         <button class="tab-btn" data-id="events" onclick="navigate('events')">📅 الفعاليات</button>
@@ -184,7 +182,7 @@
     </nav>
 
     <!-- السايدبار للكمبيوتر -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="desktopSidebar">
       <div class="sidebar-header">
         <h2>🏛️ إدارة المسجد</h2>
         <p>نظام متابعة الحلقات</p>
@@ -225,9 +223,8 @@
 
     const iframe = document.getElementById('contentFrame');
     const userEmailSpan = document.getElementById('currentUserEmail');
-    const adminMenu = document.getElementById('adminMenu');
-    const adminTabs = document.querySelectorAll('.admin-tab');
-    const adminTitle = document.querySelector('.admin-title');
+    const desktopSidebar = document.getElementById('desktopSidebar');
+    const mobileNavbar = document.getElementById('mobileNavbar');
 
     window.navigate = function(sectionId) {
       iframe.src = `sections/${sectionId}/${sectionId}.html`;
@@ -248,19 +245,26 @@
       if (user) {
         if (userEmailSpan) userEmailSpan.innerText = user.email;
 
-        const isAdmin = user.email === 'hammed@gmail.com';
-
-        if (!isAdmin) {
-          if (adminMenu) adminMenu.style.display = 'none';
-          if (adminTitle) adminTitle.style.display = 'none';
-          adminTabs.forEach(tab => tab.style.display = 'none');
+        // التحقق مما إذا كان المستخدم هو المدير hammed@gmail.com
+        if (user.email === 'hammed@gmail.com') {
+          // المدير: إظهار كامل القوائم والتحكم
+          if (desktopSidebar) desktopSidebar.style.display = '';
+          if (mobileNavbar) {
+            mobileNavbar.classList.remove('teacher-mode');
+            mobileNavbar.style.display = '';
+          }
+          // فتح قسم الطلاب افتراضياً للمدير
+          navigate('students');
         } else {
-          if (adminMenu) adminMenu.style.display = '';
-          if (adminTitle) adminTitle.style.display = '';
-          adminTabs.forEach(tab => tab.style.display = '');
+          // أي بريد آخر (المعلمون): إخفاء جميع عناصر وشريط التنقل كلياً
+          if (desktopSidebar) desktopSidebar.style.display = 'none';
+          if (mobileNavbar) {
+            mobileNavbar.classList.add('teacher-mode');
+            mobileNavbar.style.display = 'none';
+          }
+          // فتح صفحة رصد التسميع مباشرة كصفحة كاملة بدون تنقل
+          navigate('halaqat');
         }
-
-        navigate('students');
       } else {
         window.location.href = 'login.html';
       }
