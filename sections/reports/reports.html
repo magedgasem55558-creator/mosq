@@ -1,1 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>استخراج تقارير الطلاب - مسجد الخلفاء الراشدين</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="reports.css">
+  
+  <!-- مكتبة html2pdf لتوليد الـ PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
 
+  <div class="app-container">
+    <!-- لوحة التحكم بالجانب -->
+    <div class="control-panel no-print">
+      <h2>📊 استخراج تقارير الطلاب</h2>
+      <p class="subtitle">اختر البيانات المطلوب استخراج التقرير لها</p>
+
+      <div class="form-group">
+        <label for="studentSelect">👨‍🎓 اختر الطالب:</label>
+        <select id="studentSelect">
+          <option value="">جاري التحميل...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="monthSelect">📅 اختر الشهر:</label>
+        <input type="month" id="monthSelect">
+      </div>
+
+      <div class="form-group">
+        <label for="reportType">📝 نوع التقرير:</label>
+        <select id="reportType">
+          <option value="detailed">تفصيلي (شامل لجميع الأيام والتسميع)</option>
+          <option value="summary">مختصر (ملخص من أول لآخر رصد)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="reportNotes">✍️ ملاحظات للتسجيل في التقرير:</label>
+        <textarea id="reportNotes" rows="3" placeholder="أدخل أي ملاحظات إضافية ترغب بظهورها أسفل التقرير..."></textarea>
+      </div>
+
+      <button id="generatePdfBtn" class="btn btn-primary">⚡ استخراج التقرير PDF</button>
+    </div>
+
+    <!-- منطقة المعاينة والطباعة (التقرير) -->
+    <div class="preview-panel">
+      <div id="pdfContent" class="pdf-template">
+        
+        <!-- الترويسة الفخمة -->
+        <div class="pdf-header">
+          <div class="header-decoration left"></div>
+          <div class="header-text">
+            <h1 class="mosque-title">مسجد الخلفاء الراشدين</h1>
+            <h3 class="sub-title">برنامج الحلقات القرآنية والخدمات التعليمية</h3>
+            <div class="report-badge" id="pdfReportBadge">تقرير أداء الطالب</div>
+          </div>
+          <div class="header-decoration right"></div>
+        </div>
+
+        <div class="divider-gold"></div>
+
+        <!-- معلومات الطالب والحلقة -->
+        <div class="student-info-grid">
+          <div class="info-box">
+            <span class="label">اسم الطالب:</span>
+            <span class="value" id="pdfStudentName">-</span>
+          </div>
+          <div class="info-box">
+            <span class="label">اسم الحلقة:</span>
+            <span class="value" id="pdfHalaqaName">-</span>
+          </div>
+          <div class="info-box">
+            <span class="label">التاريخ/الشهر:</span>
+            <span class="value" id="pdfMonth">-</span>
+          </div>
+          <div class="info-box highlight">
+            <span class="label">النقاط الحالية:</span>
+            <span class="value gold-text" id="pdfPoints">0</span>
+          </div>
+        </div>
+
+        <!-- الملخص الأحصائي -->
+        <div class="stats-cards">
+          <div class="stat-card green">
+            <span class="stat-title">أيام الحضور</span>
+            <span class="stat-num" id="pdfAttendCount">0</span>
+          </div>
+          <div class="stat-card red">
+            <span class="stat-title">أيام الغياب</span>
+            <span class="stat-num" id="pdfAbsentCount">0</span>
+          </div>
+        </div>
+
+        <!-- عرض ملخص التسميع (للتقرير المختصر) -->
+        <div id="summarySection" class="summary-box">
+          <div class="summary-title">📖 الإنجاز الشامل لمستويات التسميع بالشهر</div>
+          <div class="summary-content" id="pdfSummaryText">
+            لا توجد بيانات رصد لهذا الشهر
+          </div>
+        </div>
+
+        <!-- الجدول التفصيلي (للتقرير التفصيلي) -->
+        <div id="detailedSection" class="table-container">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>الحالة</th>
+                <th>السورة</th>
+                <th>من آية</th>
+                <th>إلى آية</th>
+                <th>الدرجة</th>
+                <th>النقاط</th>
+              </tr>
+            </thead>
+            <tbody id="pdfTableBody">
+              <!-- يتم ملؤها ديناميكياً -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- قسم الملاحظات -->
+        <div class="notes-section" id="pdfNotesContainer">
+          <div class="notes-title">📌 ملاحظات إدارة الحلقة:</div>
+          <div class="notes-content" id="pdfNotesText">لا توجد ملاحظات.</div>
+        </div>
+
+        <!-- التوقيع والختام -->
+        <div class="pdf-footer">
+          <div class="signature">
+            <span>توقيع مشرف الحلقة</span>
+            <div class="sig-line"></div>
+          </div>
+          <div class="signature">
+            <span>ختم المسجد</span>
+            <div class="sig-circle"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="reports.js"></script>
+</body>
+</html>
