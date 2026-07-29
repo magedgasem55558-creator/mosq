@@ -257,9 +257,9 @@ function generateDetailedReport(records) {
 }
 
 // ==========================================
-// 7. استخراج وتنزيل ملف الـ PDF
+// 7. استخراج وتنزيل ملف الـ PDF (معدل ومتوافق مع Chrome)
 // ==========================================
-function downloadPDF() {
+async function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
     alert("يرجى اختيار طالب أولاً!");
     return;
@@ -273,15 +273,21 @@ function downloadPDF() {
 
   const studentName = pdfStudentName ? pdfStudentName.innerText.replace(/\s+/g, '_') : 'طالب';
   const month = monthSelect ? monthSelect.value : '';
+  const fileName = `تقرير_${studentName}_${month}.pdf`;
+
+  if (generatePdfBtn) {
+    generatePdfBtn.innerText = '⏳ جاري استخراج PDF...';
+    generatePdfBtn.disabled = true;
+  }
 
   const opt = {
     margin:       [5, 5, 5, 5],
-    filename:     `تقرير_${studentName}_${month}.pdf`,
-    image:        { type: 'jpeg', quality: 0.98 },
+    filename:     fileName,
+    image:        { type: 'jpeg', quality: 0.95 },
     html2canvas:  { 
-      scale: 2, 
+      scale: 1.5, 
       useCORS: true, 
-      allowTaint: true, 
+      allowTaint: true,
       logging: false,
       scrollX: 0,
       scrollY: 0
@@ -289,31 +295,33 @@ function downloadPDF() {
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  if (generatePdfBtn) {
-    generatePdfBtn.innerText = '⏳ جاري استخراج PDF...';
-    generatePdfBtn.disabled = true;
+  try {
+    // 1. محاولة الحفظ المباشر
+    await html2pdf().set(opt).from(element).save();
+  } catch (err) {
+    console.warn("⚠️ فشل الحفظ المباشر، جاري استخدام طريقة فتح الملف برابط Blob...", err);
+    
+    // 2. طريقة احتياطية (Fallback) لمتصفحات Chrome على الموبايل
+    try {
+      const worker = html2pdf().set(opt).from(element);
+      const blob = await worker.output('blob');
+      
+      const fileUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = fileUrl;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 10000);
+    } catch (fallbackErr) {
+      console.error("❌ خطأ التصدير الكامل:", fallbackErr);
+      alert("حدث خطأ أثناء تصدير الـ PDF، يرجى إعادة المحاولة.");
+    }
+  } finally {
+    if (generatePdfBtn) {
+      generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
+      generatePdfBtn.disabled = false;
+    }
   }
-
-  html2pdf()
-    .set(opt)
-    .from(element)
-    .toPdf()
-    .get('pdf')
-    .then((pdf) => {
-      pdf.save(`تقرير_${studentName}_${month}.pdf`);
-    })
-    .then(() => {
-      if (generatePdfBtn) {
-        generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
-        generatePdfBtn.disabled = false;
-      }
-    })
-    .catch(err => {
-      console.error("❌ خطأ أثناء التصدير:", err);
-      if (generatePdfBtn) {
-        generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
-        generatePdfBtn.disabled = false;
-      }
-      alert("حدث خطأ أثناء تصدير الـ PDF. تفقد وحدات التحكم (Console).");
-    });
 }
