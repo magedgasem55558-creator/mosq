@@ -242,7 +242,7 @@ function generateDetailedReport(records) {
 }
 
 // ==========================================
-// 7. استخراج التقرير متناسق ومتناسب مع صفحة A4
+// 7. استخراج التقرير متناسق ومتناسب مع صفحة A4 (معالجة الصفحة الفارغة)
 // ==========================================
 async function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
@@ -250,8 +250,8 @@ async function downloadPDF() {
     return;
   }
 
-  const element = document.getElementById('pdfContent');
-  if (!element) {
+  const originalElement = document.getElementById('pdfContent');
+  if (!originalElement) {
     alert("تعذر العثور على محتوى التقرير للطباعة!");
     return;
   }
@@ -268,40 +268,62 @@ async function downloadPDF() {
     generatePdfBtn.disabled = true;
   }
 
-  // إعدادات محسّنة جداً لمنع تقطيع الصفحة
+  // 1. استنسخ العنصر لتجنب المشاكل المتعلّقة بـ overflow/scroll في الصفحة الأصلية
+  const clone = originalElement.cloneNode(true);
+
+  // 2. تجهيز حاوي مؤقت خارج الشاشة لضمان رسم العناصر بأبعاد A4 الحقيقية
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '210mm'; // عرض A4
+  container.style.background = '#ffffff';
+
+  container.appendChild(clone);
+  document.body.appendChild(container);
+
+  // إعدادات html2pdf المحسّنة
   const opt = {
-    margin:       [5, 5, 5, 5], // هوامش صغيرة لضمان احتواء كامل المحتوى
-    filename:     fileName,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { 
+    margin: [8, 8, 8, 8],
+    filename: fileName,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { 
       scale: 2, 
       useCORS: true, 
       allowTaint: true,
       logging: false,
-      windowWidth: 1200 // تقييد العرض لضمان ملاءمة النسب
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: 1024
     },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // منع قص الجداول والبطاقات
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
   };
 
   try {
     if (typeof html2pdf !== 'undefined') {
-      await html2pdf().set(opt).from(element).save();
+      // تنفيذ التحويل على العنصر المستنسخ
+      await html2pdf().set(opt).from(clone).save();
     } else {
-      throw new Error("المكتبة غير متوفرة");
+      throw new Error("مكتبة html2pdf غير متوفرة في الصفحة.");
     }
   } catch (err) {
-    console.warn("⚠️ استخدام نافذة الطباعة المباشرة للتقرير...", err);
+    console.warn("⚠️ تعذر استخراج التقرير عبر html2pdf، استخدام طباعة المتصفح...", err);
     
+    // حل بديل: استخدام طباعة المتصفح إذا فشلت المكتبة
     const originalTitle = document.title;
     document.title = studentName;
-    
     window.print();
     
     setTimeout(() => {
       document.title = originalTitle;
     }, 1000);
   } finally {
+    // 3. تنظيف الـ DOM وحذف العنصر المؤقت
+    if (document.body.contains(container)) {
+      document.body.removeChild(container);
+    }
+
     if (generatePdfBtn) {
       generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
       generatePdfBtn.disabled = false;
