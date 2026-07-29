@@ -1,5 +1,7 @@
-import { db, loadAllStudents, loadHalaqatList } from '../firebase.js';
-import { doc, updateDoc, deleteDoc, query, collection, where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db, loadAllStudents, loadHalaqatList } from '../../../firebase.js';
+import { 
+  doc, updateDoc, deleteDoc, query, collection, where, getDocs, getDoc, writeBatch 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const listContainer = document.getElementById('manageStudentsList');
 const searchInput = document.getElementById('studentSearchInput');
@@ -8,157 +10,239 @@ const saveBtn = document.getElementById('saveStudentBtn');
 const closeModalBtn = document.getElementById('closeModalBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const halaqaSelect = document.getElementById('editStudentHalaqa');
+const resetPointsBtn = document.getElementById('resetAllPointsBtn');
 
 let currentStudentId = null;
+let allStudentsCache = [];
 
-// إغلاق النافذة
 function closeModal() {
-    modal.style.display = 'none';
+  if (modal) modal.style.display = 'none';
 }
-closeModalBtn.addEventListener('click', closeModal);
-cancelEditBtn.addEventListener('click', closeModal);
+
+if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeModal);
 window.addEventListener('click', (event) => {
-    if (event.target === modal) closeModal();
+  if (event.target === modal) closeModal();
 });
 
-// تحميل الحلقات
 async function init() {
-    const halaqat = await loadHalaqatList();
-    halaqaSelect.innerHTML = '<option value="">اختر الحلقة...</option>';
-    halaqat.forEach(h => {
-        halaqaSelect.innerHTML += `<option value="${h.id}">${h.name} - (${h.teacherName})</option>`;
+  if (!listContainer) return;
+
+  try {
+    listContainer.innerHTML = '<div class="loading">جاري تحميل الطلاب...</div>';
+
+    // 1. جلب الحلقات والطلاب معاً
+    const halaqat = await loadHalaqatList().catch(err => {
+      console.warn("فشل جلب الحلقات:", err);
+      return [];
     });
 
-    const allStudents = await loadAllStudents();
-    renderStudents(allStudents);
+    // إنشاء الخريطة
+    const halaqatMap = {};
+    if (halaqaSelect && Array.isArray(halaqat)) {
+      let options = '<option value="">اختر الحلقة...</option>';
+      halaqat.forEach(h => {
+        halaqatMap[h.id] = h.name;
+        options += `<option value="${h.id}">${h.name} - (${h.teacherName || 'غير محدد'})</option>`;
+      });
+      halaqaSelect.innerHTML = options;
+    }
 
-    searchInput.addEventListener('keyup', (e) => {
-        renderStudents(allStudents, e.target.value);
-    });
+    // 2. جلب الطلاب
+    const rawStudents = await loadAllStudents();
 
-    saveBtn.addEventListener('click', handleSave);
+    if (!Array.isArray(rawStudents)) {
+      throw new Error("البيانات القادمة من الفايربيس ليست مصفوفة.");
+    }
+
+    // ربط اسم الحلقة مع كل طالب
+    allStudentsCache = rawStudents.map(student => ({
+      ...student,
+      halaqaName: student.halaqaName || halaqatMap[student.halaqaId] || 'بدون حلقة'
+    }));
+
+    // 3. عرض الطلاب
+    renderStudents(allStudentsCache);
+
+    // 4. ربط الأحداث
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        renderStudents(allStudentsCache, e.target.value);
+      });
+    }
+
+    if (saveBtn) saveBtn.onclick = handleSave;
+    if (resetPointsBtn) resetPointsBtn.onclick = handleResetAllPoints;
+
+  } catch (e) {
+    console.error("تفاصيل الخطأ:", e);
+    
+    // إظهار سبب المعاوقة بوضوح للمطور في الواجهة
+    let errorMessage = e.message || "خطأ غير معروف";
+    if (errorMessage.includes("permission-denied") || errorMessage.includes("Missing or insufficient permissions")) {
+      errorMessage = "🔒 تم رفض الوصول! تحقق من قواعد الأمان (Firestore Rules) أو تسجيل الدخول.";
+    }
+
+    listContainer.innerHTML = `
+      <div class="empty-msg" style="color:red; text-align:center; padding: 20px; line-height:1.6;">
+        ⚠️ تعذر تحميل قائمة الطلاب<br>
+        <small style="background:#fee2e2; padding:5px 10px; border-radius:4px; display:inline-block; margin-top:8px;">
+          ${errorMessage}
+        </small>
+      </div>`;
+  }
 }
 
-// عرض الطلاب
 function renderStudents(students, filter = '') {
-    const filtered = students.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()));
-    if (filtered.length === 0) {
-        listContainer.innerHTML = '<div class="empty-msg">لا يوجد طلاب مطابقين</div>';
-        return;
-    }
+  if (!listContainer) return;
 
-    listContainer.innerHTML = '';
-    filtered.forEach(student => {
-        const div = document.createElement('div');
-        div.className = 'manage-item';
-        div.innerHTML = `
-            <div class="item-info">
-                <strong>👨‍🎓 ${student.name}</strong>
-                <small>📚 ${student.halaqaName}</small>
-                <small>⭐ النقاط: ${student.totalPoints || 0}</small>
-                <small>${student.isActive !== false ? '🟢 نشط' : '🔴 غير نشط'}</small>
-            </div>
-            <div class="item-actions">
-                <button class="edit-btn">✏️ تعديل</button>
-                <button class="delete-btn">🗑️ حذف</button>
-            </div>
-        `;
-        div.querySelector('.edit-btn').addEventListener('click', () => openEditModal(student));
-        div.querySelector('.delete-btn').addEventListener('click', () => deleteStudent(student.id));
-        listContainer.appendChild(div);
-    });
+  const filtered = students.filter(s => 
+    s.name && s.name.toLowerCase().includes(filter.toLowerCase().trim())
+  );
+
+  if (filtered.length === 0) {
+    listContainer.innerHTML = '<div class="empty-msg">لا يوجد طلاب مطابقين</div>';
+    return;
+  }
+
+  listContainer.innerHTML = '';
+  filtered.forEach(student => {
+    const div = document.createElement('div');
+    div.className = 'manage-item';
+    div.innerHTML = `
+      <div class="item-info">
+        <strong>👨‍🎓 ${student.name}</strong>
+        <small>📚 ${student.halaqaName}</small>
+        <small>⭐ النقاط: ${student.totalPoints || 0}</small>
+        <small>${student.isActive !== false ? '🟢 نشط' : '🔴 غير نشط'}</small>
+      </div>
+      <div class="item-actions">
+        <button class="edit-btn">✏️ تعديل</button>
+        <button class="delete-btn">🗑️ حذف</button>
+      </div>
+    `;
+
+    div.querySelector('.edit-btn')?.addEventListener('click', () => openEditModal(student));
+    div.querySelector('.delete-btn')?.addEventListener('click', () => deleteStudent(student));
+
+    listContainer.appendChild(div);
+  });
 }
 
-// فتح نافذة التعديل
 async function openEditModal(student) {
-    currentStudentId = student.id;
-    document.getElementById('editStudentId').value = student.id;
-    document.getElementById('editStudentName').value = student.name || '';
-    document.getElementById('editStudentPoints').value = student.totalPoints || 0;
-    document.getElementById('editStudentStatus').value = student.isActive !== false ? 'true' : 'false';
+  currentStudentId = student.id;
+  
+  const idInput = document.getElementById('editStudentId');
+  const nameInput = document.getElementById('editStudentName');
+  const pointsInput = document.getElementById('editStudentPoints');
+  const statusSelect = document.getElementById('editStudentStatus');
+  const parentEmailInput = document.getElementById('editParentEmail');
 
-    if (student.halaqaId) {
-        halaqaSelect.value = student.halaqaId;
+  if (idInput) idInput.value = student.id;
+  if (nameInput) nameInput.value = student.name || '';
+  if (pointsInput) pointsInput.value = student.totalPoints || 0;
+  if (statusSelect) statusSelect.value = student.isActive !== false ? 'true' : 'false';
+  if (halaqaSelect) halaqaSelect.value = student.halaqaId || '';
+
+  if (modal) modal.style.display = 'flex';
+
+  if (parentEmailInput) {
+    parentEmailInput.value = 'جاري التحميل...';
+    if (!student.parentId) {
+      parentEmailInput.value = 'غير مرتبط';
     } else {
-        halaqaSelect.value = '';
+      try {
+        const parentDoc = await getDoc(doc(db, "parents", student.parentId));
+        parentEmailInput.value = parentDoc.exists() ? (parentDoc.data().email || 'غير معروف') : 'غير معروف';
+      } catch (e) {
+        parentEmailInput.value = 'تعذر الجلب';
+      }
     }
-
-    // بريد ولي الأمر
-    try {
-        if (student.parentId) {
-            const parentDoc = await getDoc(doc(db, "parents", student.parentId));
-            document.getElementById('editParentEmail').value = parentDoc.exists()
-                ? (parentDoc.data().email || 'غير معروف')
-                : 'غير معروف';
-        } else {
-            document.getElementById('editParentEmail').value = 'غير مرتبط';
-        }
-    } catch (e) {
-        document.getElementById('editParentEmail').value = 'خطأ';
-    }
-
-    modal.style.display = 'flex';
+  }
 }
 
-// حفظ التعديلات
 async function handleSave() {
-    const newName = document.getElementById('editStudentName').value.trim();
-    const newHalaqaId = halaqaSelect.value;
-    const newPoints = parseInt(document.getElementById('editStudentPoints').value) || 0;
-    const newStatus = document.getElementById('editStudentStatus').value === 'true';
+  if (!currentStudentId) return;
 
-    if (!newName) {
-        alert("يرجى إدخال اسم الطالب");
-        return;
+  const nameInput = document.getElementById('editStudentName');
+  const pointsInput = document.getElementById('editStudentPoints');
+  const statusSelect = document.getElementById('editStudentStatus');
+
+  const newName = nameInput ? nameInput.value.trim() : '';
+  const newHalaqaId = halaqaSelect ? halaqaSelect.value : '';
+  const newPoints = parseInt(pointsInput?.value) || 0;
+  const newStatus = statusSelect?.value === 'true';
+
+  if (!newName) {
+    alert("يرجى إدخال اسم الطالب");
+    return;
+  }
+
+  try {
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerText = "جاري الحفظ...";
     }
 
-    try {
-        const updateData = {
-            name: newName,
-            totalPoints: newPoints,
-            isActive: newStatus
-        };
-        if (newHalaqaId) updateData.halaqaId = newHalaqaId;
+    await updateDoc(doc(db, "students", currentStudentId), {
+      name: newName,
+      totalPoints: newPoints,
+      isActive: newStatus,
+      halaqaId: newHalaqaId || null
+    });
 
-        await updateDoc(doc(db, "students", currentStudentId), updateData);
-        alert("✅ تم تعديل بيانات الطالب بنجاح");
-        closeModal();
-        location.reload();
-    } catch (e) {
-        alert("خطأ في الحفظ: " + e.message);
+    alert("✅ تم تعديل بيانات الطالب بنجاح");
+    closeModal();
+    init();
+  } catch (e) {
+    alert("خطأ في الحفظ: " + e.message);
+  } finally {
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.innerText = "💾 حفظ التعديلات";
     }
+  }
 }
 
-// حذف طالب
-async function deleteStudent(id) {
-    if (!confirm("متأكد من حذف الطالب وجميع سجلاته؟")) return;
-    try {
-        const recordsSnap = await getDocs(query(collection(db, "records"), where("studentId", "==", id)));
-        for (const rec of recordsSnap.docs) {
-            await deleteDoc(doc(db, "records", rec.id));
-        }
-        await deleteDoc(doc(db, "students", id));
-        alert("تم الحذف");
-        location.reload();
-    } catch (e) {
-        alert("خطأ في الحذف: " + e.message);
-    }
+async function deleteStudent(student) {
+  if (!confirm(`هل أنت متأكد من حذف الطالب (${student.name})؟`)) return;
+
+  try {
+    const batch = writeBatch(db);
+    const recordsSnap = await getDocs(query(collection(db, "records"), where("studentId", "==", student.id)));
+    recordsSnap.forEach(recDoc => batch.delete(recDoc.ref));
+    batch.delete(doc(db, "students", student.id));
+
+    await batch.commit();
+    alert("✅ تم الحذف بنجاح");
+    init();
+  } catch (e) {
+    alert("خطأ أثناء الحذف: " + e.message);
+  }
 }
 
-init();
-// بعد init() أو في نهاية الملف
-document.getElementById('resetAllPointsBtn').addEventListener('click', async () => {
-    if (!confirm("⚠️ هل أنت متأكد من تصفير نقاط جميع الطلاب؟ لا يمكن التراجع!")) return;
-    try {
-        const students = await loadAllStudents();
-        const batch = [];
-        for (const student of students) {
-            batch.push(updateDoc(doc(db, "students", student.id), { totalPoints: 0 }));
-        }
-        await Promise.all(batch);
-        alert("✅ تم تصفير نقاط جميع الطلاب بنجاح");
-        location.reload();
-    } catch (e) {
-        alert("❌ خطأ أثناء التصفير: " + e.message);
-    }
-});
+async function handleResetAllPoints() {
+  if (!confirm("⚠️ هل أنت متأكد من تصفير نقاط جميع الطلاب؟")) return;
+
+  try {
+    if (resetPointsBtn) resetPointsBtn.disabled = true;
+    const students = await loadAllStudents();
+    const batch = writeBatch(db);
+    students.forEach(s => batch.update(doc(db, "students", s.id), { totalPoints: 0 }));
+
+    await batch.commit();
+    alert("✅ تم تصفير النقاط بنجاح");
+    init();
+  } catch (e) {
+    alert("❌ خطأ أثناء التصفير: " + e.message);
+  } finally {
+    if (resetPointsBtn) resetPointsBtn.disabled = false;
+  }
+}
+
+// بدء التشغيل
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
