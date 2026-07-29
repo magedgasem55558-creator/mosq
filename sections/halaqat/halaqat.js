@@ -39,7 +39,8 @@ document.getElementById('saveRecitationBtn').addEventListener('click', async () 
     if (status === "حاضر" && !surah) return alert("يرجى إدخال اسم السورة");
     const evaluations = [];
     document.querySelectorAll('.eval-check:checked').forEach(cb => evaluations.push(cb.value));
-    const grade = evaluations.length > 0 ? evaluations[0] : (status === "حاضر" ? "جيد" : "-");
+    const grade = evaluations.length > 0 ? evaluations.join(" - ") : (status === "حاضر" ? "جيد" : "-");
+
     let teacherPhone = "967770000000";
     const halaqaDoc = halaqat.find(h => h.id === halaqaId);
     if (halaqaDoc?.teacherPhone) teacherPhone = halaqaDoc.teacherPhone;
