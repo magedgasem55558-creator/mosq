@@ -244,6 +244,9 @@ function generateDetailedReport(records) {
 // ==========================================
 // 7. التصدير المباشر والموثوق (مع الطباعة الافتراضية للكروم)
 // ==========================================
+// ==========================================
+// 7. استخراج التقرير باسم الطالب فقط (PDF)
+// ==========================================
 async function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
     alert("يرجى اختيار طالب أولاً!");
@@ -256,40 +259,52 @@ async function downloadPDF() {
     return;
   }
 
-  const studentName = pdfStudentName ? pdfStudentName.innerText.replace(/\s+/g, '_') : 'طالب';
-  const month = monthSelect ? monthSelect.value : '';
-  const fileName = `تقرير_${studentName}_${month}.pdf`;
+  // استخراج اسم الطالب وتنظيف المسافات الزائدة لاستخدامه كاسم للملف
+  const studentName = pdfStudentName 
+    ? pdfStudentName.innerText.trim().replace(/\s+/g, '_') 
+    : 'طالب';
+
+  // حفظ الملف باسم الطالب مباشرة (مثال: أحمد_محمد.pdf)
+  const fileName = `${studentName}.pdf`;
 
   if (generatePdfBtn) {
-    generatePdfBtn.innerText = '⏳ جاري تجهيز التقرير...';
+    generatePdfBtn.innerText = '⏳ جاري استخراج PDF...';
     generatePdfBtn.disabled = true;
   }
 
-  // خيارات HTML2PDF المبسطة والآمنة
   const opt = {
-    margin:       0,
+    margin:       [10, 10, 10, 10],
     filename:     fileName,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { 
       scale: 2, 
-      useCORS: true,
+      useCORS: true, 
       allowTaint: true,
-      windowWidth: 1024 // لضمان ثبات العرض وعدم حدوث انكماش في الموبايل
+      scrollX: 0,
+      scrollY: 0
     },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
   try {
-    // المحاولة الأساسية عبر html2pdf
     if (typeof html2pdf !== 'undefined') {
       await html2pdf().set(opt).from(element).save();
     } else {
-      throw new Error("المكتبة غير محملة");
+      throw new Error("المكتبة غير متوفرة");
     }
   } catch (err) {
-    console.warn("⚠️ تعذر التصدير التلقائي، فتح نافذة الطباعة المباشرة وحفظ كـ PDF...", err);
-    // الطريقة المباشرة والأصلية لـ Chrome (فتح طباعة النظام للحفظ كـ PDF)
+    console.warn("⚠️ استخدام نافذة الطباعة المباشرة للتقرير...", err);
+    
+    // حفظ عنوان الصفحة مؤقتاً ليكون اسم الطالب هو المقترح عند الحفظ في Chrome
+    const originalTitle = document.title;
+    document.title = studentName;
+    
     window.print();
+    
+    // استعادة عنوان الصفحة الأصلية
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
   } finally {
     if (generatePdfBtn) {
       generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
