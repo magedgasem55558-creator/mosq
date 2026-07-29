@@ -1,4 +1,4 @@
-import { db, loadAllRecords } from '../firebase.js';
+import { db, loadAllRecords } from '../../../firebase.js';
 import { doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const container = document.getElementById('manageRecordsList');
