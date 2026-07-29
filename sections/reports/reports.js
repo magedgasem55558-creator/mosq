@@ -275,10 +275,17 @@ function downloadPDF() {
   const month = monthSelect ? monthSelect.value : '';
 
   const opt = {
-    margin:       0,
+    margin:       [5, 5, 5, 5],
     filename:     `تقرير_${studentName}_${month}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true },
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      allowTaint: true, 
+      logging: false,
+      scrollX: 0,
+      scrollY: 0
+    },
     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
@@ -287,17 +294,26 @@ function downloadPDF() {
     generatePdfBtn.disabled = true;
   }
 
-  html2pdf().set(opt).from(element).save().then(() => {
-    if (generatePdfBtn) {
-      generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
-      generatePdfBtn.disabled = false;
-    }
-  }).catch(err => {
-    console.error("خطأ التصدير:", err);
-    if (generatePdfBtn) {
-      generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
-      generatePdfBtn.disabled = false;
-    }
-    alert("حدث خطأ أثناء تصدير الـ PDF.");
-  });
+  html2pdf()
+    .set(opt)
+    .from(element)
+    .toPdf()
+    .get('pdf')
+    .then((pdf) => {
+      pdf.save(`تقرير_${studentName}_${month}.pdf`);
+    })
+    .then(() => {
+      if (generatePdfBtn) {
+        generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
+        generatePdfBtn.disabled = false;
+      }
+    })
+    .catch(err => {
+      console.error("❌ خطأ أثناء التصدير:", err);
+      if (generatePdfBtn) {
+        generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
+        generatePdfBtn.disabled = false;
+      }
+      alert("حدث خطأ أثناء تصدير الـ PDF. تفقد وحدات التحكم (Console).");
+    });
 }
