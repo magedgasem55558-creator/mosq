@@ -31,8 +31,10 @@ let halaqatMap = {};
 // ==========================================
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    // المستخدم مسجل دخوله -> بدء تهيئة البيانات
     init();
   } else {
+    // غير مسجل الدخول
     console.warn("⚠️ لم يتم التحقق من حالة الدخول بعد أو لا يوجد مستخدم مسجل.");
     if (studentSelect) {
       studentSelect.innerHTML = '<option value="">⚠️ يرجى تسجيل الدخول أولاً</option>';
@@ -45,6 +47,7 @@ onAuthStateChanged(auth, (user) => {
 // ==========================================
 async function init() {
   try {
+    // تعيين الشهر الحالي افتراضياً (YYYY-MM)
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     if (monthSelect) monthSelect.value = currentMonth;
@@ -53,6 +56,7 @@ async function init() {
       studentSelect.innerHTML = '<option value="">جاري جلب قائمة الطلاب...</option>';
     }
 
+    // 1. جلب الحلقات والطلاب مع التعامل مع الأخطاء الفردية
     const [halaqat, students] = await Promise.all([
       loadHalaqatList().catch(err => {
         console.warn("⚠️ تعذر جلب الحلقات:", err);
@@ -64,10 +68,12 @@ async function init() {
       })
     ]);
 
+    // معالجة بيانات الحلقات
     if (Array.isArray(halaqat)) {
       halaqat.forEach(h => halaqatMap[h.id] = h.name);
     }
 
+    // معالجة بيانات الطلاب وتخزينها كاش
     if (Array.isArray(students)) {
       studentsCache = students.map(s => ({
         ...s,
@@ -75,6 +81,7 @@ async function init() {
       }));
     }
 
+    // 2. تعبئة القائمة المنسدلة للطلاب
     if (!studentSelect) return;
 
     if (!studentsCache || studentsCache.length === 0) {
@@ -88,6 +95,7 @@ async function init() {
     });
     studentSelect.innerHTML = options;
 
+    // 3. ربط الأحداث مع المراقبة للأخطاء
     setupEventListeners();
 
   } catch (e) {
@@ -121,7 +129,7 @@ async function updateReportPreview() {
   if (!studentSelect || !monthSelect || !reportTypeSelect) return;
 
   const studentId = studentSelect.value;
-  const selectedMonth = monthSelect.value;
+  const selectedMonth = monthSelect.value; // YYYY-MM
   const reportType = reportTypeSelect.value;
 
   if (!studentId || !selectedMonth) return;
@@ -129,14 +137,17 @@ async function updateReportPreview() {
   const student = studentsCache.find(s => s.id === studentId);
   if (!student) return;
 
+  // تعبئة البيانات العامة
   if (pdfStudentName) pdfStudentName.innerText = student.name || 'طالب بدون اسم';
   if (pdfHalaqaName) pdfHalaqaName.innerText = student.halaqaName || 'بدون حلقة';
   if (pdfMonth) pdfMonth.innerText = selectedMonth;
   if (pdfPoints) pdfPoints.innerText = student.totalPoints || 0;
   if (pdfNotesText && reportNotes) pdfNotesText.innerText = reportNotes.value.trim() || 'لا توجد ملاحظات.';
 
+  // جلب سجلات الطالب للشهر المحدد
   const records = await fetchStudentRecordsForMonth(studentId, selectedMonth);
 
+  // حساب الحضور والغياب
   let attendCount = 0;
   let absentCount = 0;
 
@@ -148,6 +159,7 @@ async function updateReportPreview() {
   if (pdfAttendCount) pdfAttendCount.innerText = attendCount;
   if (pdfAbsentCount) pdfAbsentCount.innerText = absentCount;
 
+  // التحكم بإظهار التقرير المختصر أو التفصيلي
   if (reportType === 'summary') {
     if (pdfReportBadge) pdfReportBadge.innerText = 'تقرير أداء مختصر';
     if (summarySection) summarySection.style.display = 'block';
@@ -177,11 +189,13 @@ async function fetchStudentRecordsForMonth(studentId, monthStr) {
 
     snap.forEach(docSnap => {
       const data = docSnap.data();
+      // التصفية بحسب التاريخ (الشهر المختار YYYY-MM)
       if (data.date && data.date.startsWith(monthStr)) {
         list.push({ id: docSnap.id, ...data });
       }
     });
 
+    // ترتيب السجلات تصاعدياً بحسب التاريخ
     list.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
     return list;
 
@@ -192,7 +206,7 @@ async function fetchStudentRecordsForMonth(studentId, monthStr) {
 }
 
 // ==========================================
-// 5. بناء التقرير المختصر (مضمون 100% للـ PDF والشاشة)
+// 5. بناء التقرير المختصر (أول رصد لآخر رصد)
 // ==========================================
 function generateSummaryReport(records) {
   if (!pdfSummaryText) return;
@@ -204,26 +218,18 @@ function generateSummaryReport(records) {
     return;
   }
 
+  // أول وأخر رصد
   const first = attendRecords[0];
   const last = attendRecords[attendRecords.length - 1];
 
-  const fromAyahVal = first.fromAyah || 1;
-  const toAyahVal = last.toAyah || 'النهاية';
-
-  // صياغة الأقواس والآيات ككتل مغلفة لمنع اختلال التنسيق أثناء تصوير الـ PDF
-  const fromPart = `<span style="display: inline-block; direction: rtl; unicode-bidi: embed;">(آية ${fromAyahVal})</span>`;
-  const toPart = `<span style="display: inline-block; direction: rtl; unicode-bidi: embed;">(آية ${toAyahVal})</span>`;
-
   pdfSummaryText.innerHTML = `
-    من <span style="color:var(--primary-green); font-weight: bold;">سورة ${first.surah}</span> 
-    ${fromPart} 
-    إلى <span style="color:var(--primary-green); font-weight: bold;">سورة ${last.surah}</span> 
-    ${toPart}
+    من <span style="color:var(--primary-green)">سورة ${first.surah}</span> (آية ${first.fromAyah || 1}) 
+    إلى <span style="color:var(--primary-green)">سورة ${last.surah}</span> (آية ${last.toAyah || 'النهاية'})
   `;
 }
 
 // ==========================================
-// 6. بناء التقرير التفصيلي
+// 6. بناء التقرير التفصيلي (جدول الأيام)
 // ==========================================
 function generateDetailedReport(records) {
   if (!pdfTableBody) return;
@@ -251,105 +257,63 @@ function generateDetailedReport(records) {
 }
 
 // ==========================================
-// 7. استخراج التقرير وتنزيله مباشرة بدون فتح المحرر (PDF)
+// 7. استخراج وتنزيل ملف الـ PDF
 // ==========================================
-async function downloadPDF() {
+function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
     alert("يرجى اختيار طالب أولاً!");
     return;
   }
 
-  const originalElement = document.getElementById('pdfContent');
-  if (!originalElement) {
+  const element = document.getElementById('pdfContent');
+  if (!element) {
     alert("تعذر العثور على محتوى التقرير للطباعة!");
     return;
   }
 
-  // استخراج اسم الطالب وتنظيف المسافات
-  const studentName = pdfStudentName 
-    ? pdfStudentName.innerText.trim().replace(/\s+/g, '_') 
-    : 'طالب';
-
-  const fileName = `${studentName}.pdf`;
-
-  if (generatePdfBtn) {
-    generatePdfBtn.innerText = '⏳ جاري تنزيل الملف...';
-    generatePdfBtn.disabled = true;
-  }
-
-  // إنشاء حاوي مؤقت لتجنب مشاكل الانزياح أو المسافات البيضاء
-  const clone = originalElement.cloneNode(true);
-  const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.top = '0';
-  container.style.left = '0';
-  container.style.width = '210mm';
-  container.style.zIndex = '-99999';
-  container.style.opacity = '0';
-  container.style.direction = 'ltr';
-
-  clone.style.direction = 'rtl';
-  clone.style.width = '100%';
-  clone.style.margin = '0 auto';
-
-  container.appendChild(clone);
-  document.body.appendChild(container);
+  const studentName = pdfStudentName ? pdfStudentName.innerText.replace(/\s+/g, '_') : 'طالب';
+  const month = monthSelect ? monthSelect.value : '';
 
   const opt = {
     margin:       [5, 5, 5, 5],
-    filename:     fileName,
+    filename:     `تقرير_${studentName}_${month}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { 
       scale: 2, 
       useCORS: true, 
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      x: 0,
-      y: 0,
+      allowTaint: true, 
+      logging: false,
       scrollX: 0,
       scrollY: 0
     },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
   };
 
-  try {
-    if (typeof html2pdf !== 'undefined') {
-      // 1. توليد الـ PDF كبيانات Blob في الذاكرة
-      const pdfBlob = await html2pdf().set(opt).from(clone).output('blob');
-
-      // 2. إنشاء رابط تنزيل مباشر مخصص
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = fileName;
-      
-      // 3. محاكاة نقرة المستخدم للتنزيل المباشر
-      document.body.appendChild(link);
-      link.click();
-      
-      // 4. تنظيف الروابط المؤقتة
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
-
-    } else {
-      throw new Error("مكتبة html2pdf غير متوفرة");
-    }
-  } catch (err) {
-    console.warn("⚠️ تعذر التنزيل المباشر عبر Blob، استخدام الطريقة البديلة...", err);
-    if (typeof html2pdf !== 'undefined') {
-      html2pdf().set(opt).from(clone).save();
-    } else {
-      window.print();
-    }
-  } finally {
-    if (document.body.contains(container)) {
-      document.body.removeChild(container);
-    }
-
-    if (generatePdfBtn) {
-      generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
-      generatePdfBtn.disabled = false;
-    }
+  if (generatePdfBtn) {
+    generatePdfBtn.innerText = '⏳ جاري استخراج PDF...';
+    generatePdfBtn.disabled = true;
   }
+
+  html2pdf()
+    .set(opt)
+    .from(element)
+    .toPdf()
+    .get('pdf')
+    .then((pdf) => {
+      pdf.save(`تقرير_${studentName}_${month}.pdf`);
+    })
+    .then(() => {
+      if (generatePdfBtn) {
+        generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
+        generatePdfBtn.disabled = false;
+      }
+    })
+    .catch(err => {
+      console.error("❌ خطأ أثناء التصدير:", err);
+      if (generatePdfBtn) {
+        generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
+        generatePdfBtn.disabled = false;
+      }
+      alert("حدث خطأ أثناء تصدير الـ PDF. تفقد وحدات التحكم (Console).");
+    });
 }
