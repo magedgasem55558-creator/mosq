@@ -245,7 +245,7 @@ function generateDetailedReport(records) {
 // 7. استخراج التقرير متناسق ومتناسب مع صفحة A4 (معالجة الصفحة الفارغة)
 // ==========================================
       // ==========================================
-// 7. استخراج التقرير كاملاً وبدون أجزاء فارغة (PDF)
+// 7. استخراج التقرير وتنزيله مباشرة بدون فتح المحرر (PDF)
 // ==========================================
 async function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
@@ -259,7 +259,7 @@ async function downloadPDF() {
     return;
   }
 
-  // استخراج اسم الطالب وتنظيف المسافات الزائدة
+  // استخراج اسم الطالب وتنظيف المسافات
   const studentName = pdfStudentName 
     ? pdfStudentName.innerText.trim().replace(/\s+/g, '_') 
     : 'طالب';
@@ -267,54 +267,44 @@ async function downloadPDF() {
   const fileName = `${studentName}.pdf`;
 
   if (generatePdfBtn) {
-    generatePdfBtn.innerText = '⏳ جاري استخراج PDF...';
+    generatePdfBtn.innerText = '⏳ جاري تنزيل الملف...';
     generatePdfBtn.disabled = true;
   }
 
+  const opt = {
+    margin:       [5, 5, 5, 5],
+    filename:     fileName,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
   try {
-    // 1. تحويل العنصر كاملاً إلى صورة Canvas عالية الدقة بـ scale 2
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      backgroundColor: '#ffffff'
-    });
-
-    // 2. تحويل الـ Canvas إلى بيانات صورة JPEG
-    const imgData = canvas.toDataURL('image/jpeg', 0.98);
-
-    // 3. إنشاء ملف jsPDF بحجم A4
-    const { jsPDF } = window.jspdf || {};
-    
-    // في حال استخدام html2pdf المدمجة مع jsPDF
     if (typeof html2pdf !== 'undefined') {
-      const opt = {
-        margin:       [5, 5, 5, 5],
-        filename:     fileName,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      // 1. توليد الـ PDF كبيانات Blob في الذاكرة أولاً
+      const pdfBlob = await html2pdf().set(opt).from(element).output('blob');
 
-      // استخدام الصورة مباشرة داخل PDF يمنع انزياح النصوص العربي
-      await html2pdf().set(opt).from(element).save();
+      // 2. إنشاء رابط تنزيل مباشر مخصص
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = fileName; // إجبار المتصفح على التنزيل بالاسم المعتمد
+      
+      // 3. محاكاة نقرة المستخدم للتنزيل المباشر
+      document.body.appendChild(link);
+      link.click();
+      
+      // 4. تنظيف الروابط المؤقتة
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+
     } else {
       throw new Error("المكتبة غير متوفرة");
     }
-
   } catch (err) {
-    console.warn("⚠️ تعذر التصدير المباشر، جاري استخدام الطباعة المباشرة...", err);
-    
-    // خطة احتياطية بديلة تضمن عدم ضياع التقرير
-    const originalTitle = document.title;
-    document.title = studentName;
-    window.print();
-    
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 1000);
-
+    console.warn("⚠️ تعذر التنزيل المباشر عبر Blob، استخدام طريقة save()...", err);
+    // طريقة احتياطية
+    html2pdf().set(opt).from(element).save();
   } finally {
     if (generatePdfBtn) {
       generatePdfBtn.innerText = '⚡ استخراج التقرير PDF';
