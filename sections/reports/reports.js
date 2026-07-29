@@ -242,10 +242,7 @@ function generateDetailedReport(records) {
 }
 
 // ==========================================
-// 7. التصدير المباشر والموثوق (مع الطباعة الافتراضية للكروم)
-// ==========================================
-// ==========================================
-// 7. استخراج التقرير باسم الطالب فقط (PDF)
+// 7. استخراج التقرير متناسق ومتناسب مع صفحة A4
 // ==========================================
 async function downloadPDF() {
   if (!studentSelect || !studentSelect.value) {
@@ -259,12 +256,11 @@ async function downloadPDF() {
     return;
   }
 
-  // استخراج اسم الطالب وتنظيف المسافات الزائدة لاستخدامه كاسم للملف
+  // استخراج اسم الطالب وتنظيف المسافات الزائدة
   const studentName = pdfStudentName 
     ? pdfStudentName.innerText.trim().replace(/\s+/g, '_') 
     : 'طالب';
 
-  // حفظ الملف باسم الطالب مباشرة (مثال: أحمد_محمد.pdf)
   const fileName = `${studentName}.pdf`;
 
   if (generatePdfBtn) {
@@ -272,18 +268,20 @@ async function downloadPDF() {
     generatePdfBtn.disabled = true;
   }
 
+  // إعدادات محسّنة جداً لمنع تقطيع الصفحة
   const opt = {
-    margin:       [10, 10, 10, 10],
+    margin:       [5, 5, 5, 5], // هوامش صغيرة لضمان احتواء كامل المحتوى
     filename:     fileName,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { 
       scale: 2, 
       useCORS: true, 
       allowTaint: true,
-      scrollX: 0,
-      scrollY: 0
+      logging: false,
+      windowWidth: 1200 // تقييد العرض لضمان ملاءمة النسب
     },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] } // منع قص الجداول والبطاقات
   };
 
   try {
@@ -295,13 +293,11 @@ async function downloadPDF() {
   } catch (err) {
     console.warn("⚠️ استخدام نافذة الطباعة المباشرة للتقرير...", err);
     
-    // حفظ عنوان الصفحة مؤقتاً ليكون اسم الطالب هو المقترح عند الحفظ في Chrome
     const originalTitle = document.title;
     document.title = studentName;
     
     window.print();
     
-    // استعادة عنوان الصفحة الأصلية
     setTimeout(() => {
       document.title = originalTitle;
     }, 1000);
