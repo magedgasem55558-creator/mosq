@@ -1,6 +1,30 @@
 import { db, auth, loadHalaqatList } from '../../firebase.js';
 import { collection, addDoc, query, where, getDocs, setDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// دالة إنشاء حساب لولي الأمر عبر تطبيق ثانوي مؤقت حتى لا يتسبب في قطع جلسة الأدمن
+async function createParentAccountSecondary(email, password) {
+  // استخدام نفس إعدادات التطبيق الرئيسي
+  const firebaseConfig = auth.app.options;
+  
+  // إنشاء تطبيق فرعي باسم عشوائي مؤقت
+  const secondaryAppName = `SecondaryApp_${Date.now()}`;
+  const secondaryApp = initializeApp(firebaseConfig, secondaryAppName);
+  const secondaryAuth = getAuth(secondaryApp);
+
+  try {
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+    const uid = cred.user.uid;
+    
+    // تسجيل الخروج وتنظيف التطبيق الفرعي فور الانتهاء
+    await secondaryAuth.signOut();
+    
+    return uid;
+  } catch (err) {
+    throw err;
+  }
+}
 
 (async () => {
   const halaqaSelect = document.getElementById('halaqaSelect');
@@ -30,7 +54,7 @@ import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebase
       const passInput = document.getElementById('parentPass');
 
       const name = nameInput ? nameInput.value.trim() : '';
-      const email = emailInput ? emailInput.value.trim() : '';
+      const email = emailInput ? emailInput.value.trim().toLowerCase() : '';
       const pass = passInput ? passInput.value : '';
       const halaqaId = halaqaSelect ? halaqaSelect.value : '';
 
@@ -47,20 +71,23 @@ import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebase
       try {
         let parentUid;
 
-        // 1. إنشاء حساب ولي الأمر أو جلب ID الحساب الموجد مسبقاً
+        // 1. إنشاء حساب ولي الأمر بواسطة التطبيق الثانوي لتفادي خروج الأدمن
         try {
-          const cred = await createUserWithEmailAndPassword(auth, email, pass);
-          parentUid = cred.user.uid;
+          parentUid = await createParentAccountSecondary(email, pass);
+          
+          // حفظ مستند ولي الأمر في قاعدة البيانات الرئيسية Firestore
           await setDoc(doc(db, "parents", parentUid), { 
             email, 
             createdAt: serverTimestamp() 
           });
+          
         } catch (e) {
           if (e.code === 'auth/email-already-in-use') {
+            // إذا كان البريد موجوداً مسبقاً، نربط الطالب بحساب ولي الأمر الموجود
             const q = query(collection(db, "parents"), where("email", "==", email));
             const snap = await getDocs(q);
             if (snap.empty) {
-              throw new Error("البريد الإلكتروني موجود مسبقاً لكن لا يوجد سجل لولي الأمر.");
+              throw new Error("البريد الإلكتروني موجود مسبقاً في نظام Auth لكن لا يوجد له سجل في قاعدة البيانات.");
             }
             parentUid = snap.docs[0].id;
           } else {
@@ -68,7 +95,7 @@ import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebase
           }
         }
 
-        // 2. إضافة الطالب في Firestore
+        // 2. إضافة الطالب إلى Firestore مع ربطه بـ parentUid وحلقة الطالب
         await addDoc(collection(db, "students"), {
           name,
           parentId: parentUid,
