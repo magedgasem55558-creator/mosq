@@ -11,8 +11,7 @@
     <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
         :root {
             --bg-primary: #0a0f1e;
@@ -362,15 +361,9 @@
             align-items: center;
             gap: 4px;
         }
-        .badge-success {
-            color: var(--success);
-        }
-        .badge-warning {
-            color: var(--warning);
-        }
-        .badge-purple {
-            color: var(--accent3);
-        }
+        .badge-success { color: var(--success); }
+        .badge-warning { color: var(--warning); }
+        .badge-purple { color: var(--accent3); }
 
         .section-title {
             font-size: 1.3rem;
@@ -412,22 +405,10 @@
             font-weight: 700;
             display: inline-block;
         }
-        .badge-blue {
-            background: rgba(79, 70, 229, 0.2);
-            color: #a5b4fc;
-        }
-        .badge-green {
-            background: rgba(52, 211, 153, 0.2);
-            color: #6ee7b7;
-        }
-        .badge-amber {
-            background: rgba(251, 191, 36, 0.2);
-            color: #fcd34d;
-        }
-        .badge-rose {
-            background: rgba(248, 113, 113, 0.2);
-            color: #fca5a5;
-        }
+        .badge-blue { background: rgba(79, 70, 229, 0.2); color: #a5b4fc; }
+        .badge-green { background: rgba(52, 211, 153, 0.2); color: #6ee7b7; }
+        .badge-amber { background: rgba(251, 191, 36, 0.2); color: #fcd34d; }
+        .badge-rose { background: rgba(248, 113, 113, 0.2); color: #fca5a5; }
 
         .btn {
             padding: 10px 20px;
@@ -464,29 +445,14 @@
             width: 100%;
         }
 
-        .flex {
-            display: flex;
-        }
-        .flex-between {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .items-center {
-            align-items: center;
-        }
-        .gap-2 {
-            gap: 8px;
-        }
-        .mt-24 {
-            margin-top: 24px;
-        }
-        .mt-3 {
-            margin-top: 12px;
-        }
-        .mb-4 {
-            margin-bottom: 16px;
-        }
+        .flex { display: flex; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .items-center { align-items: center; }
+        .gap-2 { gap: 8px; }
+        .gap-3 { gap: 12px; }
+        .mt-24 { margin-top: 24px; }
+        .mt-3 { margin-top: 12px; }
+        .mb-4 { margin-bottom: 16px; }
 
         .search-input,
         input[type="text"],
@@ -505,16 +471,11 @@
             outline: none;
             transition: border 0.2s;
         }
-        input:focus,
-        textarea:focus,
-        select:focus {
+        input:focus, textarea:focus, select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 10px rgba(79, 70, 229, 0.3);
         }
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
+        textarea { min-height: 100px; resize: vertical; }
 
         .chat-box {
             background: rgba(0, 0, 0, 0.2);
@@ -524,14 +485,8 @@
             overflow-y: auto;
             margin-bottom: 16px;
         }
-        .chat-message {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .chat-message.admin {
-            flex-direction: row-reverse;
-        }
+        .chat-message { display: flex; gap: 12px; margin-bottom: 16px; }
+        .chat-message.admin { flex-direction: row-reverse; }
         .chat-avatar {
             width: 36px;
             height: 36px;
@@ -548,68 +503,91 @@
             border-radius: 16px;
             max-width: 70%;
         }
-        .chat-message.admin .chat-bubble {
-            background: rgba(79, 70, 229, 0.5);
-        }
+        .chat-message.admin .chat-bubble { background: rgba(79, 70, 229, 0.5); }
 
-        .progress-bar {
-            height: 8px;
-            background: #1e293b;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-top: 8px;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4f46e5, #7c3aed);
-            border-radius: 10px;
-        }
+        .product-card { text-align: center; }
+        .product-img { height: 120px; background: rgba(30,41,59,0.6); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--accent); margin-bottom: 12px; }
+        .price { font-weight: 800; color: var(--success); font-size: 1.2rem; }
+        .category-item { display: flex; align-items: center; gap: 16px; }
+        .category-item i { font-size: 2rem; color: var(--accent); }
+        .coupon-card { border-right: 4px solid var(--accent); }
+        .driver-card .driver-info { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .driver-card i { font-size: 1.8rem; }
+        .driver-stats { display: flex; justify-content: space-between; border-top: 1px solid rgba(99,102,241,0.2); padding-top: 12px; }
+        .rating { color: var(--warning); font-weight: 700; }
+        .shipping-card { text-align: center; }
+        .shipping-card i { font-size: 2.5rem; margin-bottom: 8px; color: var(--accent); }
+        .wallet-balance { background: linear-gradient(135deg, rgba(79,70,229,0.2), rgba(124,58,237,0.1)); }
+        .text-accent { color: var(--accent); }
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        .text-warning { color: var(--warning); }
+        .hidden-mobile { display: block; }
 
         @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(100%);
-                position: fixed;
-                z-index: 200;
-                transition: transform 0.3s;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-right: 0;
-            }
-            .menu-toggle {
-                display: block;
-            }
-            .grid-4,
-            .grid-3 {
-                grid-template-columns: 1fr 1fr;
-            }
-            .span-2 {
-                grid-column: span 2;
-            }
+            .sidebar { transform: translateX(100%); position: fixed; z-index: 200; transition: transform 0.3s; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-right: 0; }
+            .menu-toggle { display: block; }
+            .grid-4, .grid-3 { grid-template-columns: 1fr 1fr; }
+            .span-2 { grid-column: span 2; }
         }
         @media (max-width: 640px) {
-            .grid-4,
-            .grid-3 {
-                grid-template-columns: 1fr;
-            }
-            .span-2 {
-                grid-column: span 1;
-            }
+            .grid-4, .grid-3 { grid-template-columns: 1fr; }
+            .span-2 { grid-column: span 1; }
+            .hidden-mobile { display: none; }
         }
 
         .overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(4px);
-            z-index: 150;
-            display: none;
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 150; display: none;
         }
-        .overlay.show {
-            display: block;
+        .overlay.show { display: block; }
+
+        /* ========================================================= */
+        /* قواعد التنسيق للطباعة وتصدير PDF (كل قسم في صفحة مستقلا) */
+        /* ========================================================= */
+        @media print {
+            body {
+                background: #0a0f1e !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                display: block !important;
+            }
+            .sidebar, .header, .btn, .search-input, .overlay {
+                display: none !important;
+            }
+            .main-content {
+                margin-right: 0 !important;
+                min-height: auto !important;
+            }
+            .content-area {
+                padding: 0 !important;
+            }
+            /* جعل كل الأقسام ظاهرة وتفصل كل قسم في صفحة جديدة */
+            .section {
+                display: block !important;
+                opacity: 1 !important;
+                transform: none !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                padding: 20px 0 !important;
+            }
+            .card {
+                break-inside: avoid !important;
+                box-shadow: none !important;
+                border: 1px solid rgba(99, 102, 241, 0.4) !important;
+            }
+            .section-print-header {
+                display: block !important;
+                font-size: 1.8rem;
+                font-weight: 800;
+                color: #818cf8;
+                border-bottom: 2px solid #818cf8;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
         }
+        .section-print-header { display: none; }
     </style>
 </head>
 <body>
@@ -674,6 +652,7 @@
                 <h2 class="page-title" id="pageTitle">التحليلات والنظرة العامة</h2>
             </div>
             <div class="header-actions">
+                <button class="btn btn-primary" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> تصدير PDF (كل قسم بصفحة)</button>
                 <div class="admin-profile">
                     <div class="admin-info hidden-mobile">
                         <div class="name">أحمد العتيبي</div>
@@ -685,19 +664,16 @@
         </header>
 
         <div class="content-area">
-            <!-- الأقسام السابقة تبقى كما هي، سنضيف الأقسام الجديدة فقط هنا لتجنب التكرار، لكن في الكود الكامل يجب تضمينها كلها. 
-            سيتم عرض الكود الكامل أدناه مع جميع الأقسام بما فيها الجديدة. 
-            -->
             <!-- التحليلات -->
             <section id="analytics" class="section active">
-                <!-- نفس المحتوى السابق -->
+                <div class="section-print-header">القسم 1: التحليلات والنظرة العامة</div>
                 <div class="grid grid-4">
                     <div class="card"><div class="stat-label">إجمالي المبيعات</div><div class="stat-value">428,650 <small>ر.س</small></div><div class="stat-badge badge-success"><i class="fas fa-arrow-up"></i> +18.5%</div></div>
                     <div class="card"><div class="stat-label">الطلبات النشطة</div><div class="stat-value">148</div><div class="stat-badge badge-warning"><i class="fas fa-truck"></i> 84 جاري التوصيل</div></div>
                     <div class="card"><div class="stat-label">مندوبين متصلين</div><div class="stat-value">42</div><div class="stat-badge badge-success"><i class="fas fa-circle"></i> GPS نشط</div></div>
                     <div class="card"><div class="stat-label">صافي الأرباح</div><div class="stat-value">127,800 <small>ر.س</small></div><div class="stat-badge badge-purple"><i class="fas fa-wallet"></i> متاح للسحب</div></div>
                 </div>
-                <div class="grid grid-3 mt-24" style="margin-top: 24px;">
+                <div class="grid grid-3 mt-24">
                     <div class="card span-2"><div class="section-title"><i class="fas fa-chart-line"></i> المبيعات والأرباح الشهرية</div><div class="chart-box"><canvas id="salesChart"></canvas></div></div>
                     <div class="card"><div class="section-title"><i class="fas fa-chart-pie"></i> حالات الطلبات</div><div class="chart-box" style="height:250px"><canvas id="doughnutChart"></canvas></div></div>
                 </div>
@@ -705,6 +681,7 @@
 
             <!-- المنتجات -->
             <section id="products" class="section">
+                <div class="section-print-header">القسم 2: إدارة المنتجات</div>
                 <div class="flex justify-between mb-4"><input type="text" placeholder="بحث عن منتج..." class="search-input"><button class="btn btn-primary"><i class="fas fa-plus"></i> إضافة منتج</button></div>
                 <div class="grid grid-4">
                     <div class="card product-card"><div class="product-img"><i class="fas fa-mobile-alt"></i></div><span class="badge badge-blue">إلكترونيات</span><h4>آيفون 15 برو</h4><div class="flex-between"><span class="price">5,499 ر.س</span><span>المخزون: 45</span></div></div>
@@ -716,6 +693,7 @@
 
             <!-- التصنيفات -->
             <section id="categories" class="section">
+                <div class="section-print-header">القسم 3: التصنيفات</div>
                 <div class="flex justify-between mb-4"><input type="text" placeholder="بحث في التصنيفات..." class="search-input"><button class="btn btn-primary"><i class="fas fa-plus"></i> إضافة تصنيف</button></div>
                 <div class="grid grid-3">
                     <div class="card category-item"><i class="fas fa-laptop"></i><div><h4>الأجهزة الإلكترونية</h4><span>1,240 منتج</span></div></div>
@@ -726,6 +704,7 @@
 
             <!-- المخزون -->
             <section id="inventory" class="section">
+                <div class="section-print-header">القسم 4: إدارة المخزون</div>
                 <div class="card"><div class="section-title"><i class="fas fa-warehouse"></i> إدارة المخزون</div>
                     <div class="table-container"><table><thead><tr><th>المنتج</th><th>المستودع</th><th>الكمية</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody>
                         <tr><td>آيفون 15</td><td>الرياض</td><td>45</td><td><span class="badge badge-green">متوفر</span></td><td><button class="btn">تحديث</button></td></tr>
@@ -737,6 +716,7 @@
 
             <!-- الكوبونات -->
             <section id="coupons" class="section">
+                <div class="section-print-header">القسم 5: الكوبونات والعروض</div>
                 <div class="flex justify-between mb-4"><h3 class="section-title">الكوبونات النشطة</h3><button class="btn btn-primary"><i class="fas fa-ticket-alt"></i> إنشاء كوبون</button></div>
                 <div class="grid grid-2">
                     <div class="card coupon-card"><div class="flex-between"><span class="badge badge-blue">SWIFT2026</span><span class="badge badge-green">نشط</span></div><h4>خصم 20% على الإلكترونيات</h4><p>الاستخدام: 1,420 مرة</p></div>
@@ -746,6 +726,7 @@
 
             <!-- الطلبات -->
             <section id="orders" class="section">
+                <div class="section-print-header">القسم 6: سجل الطلبات</div>
                 <div class="card"><div class="section-title"><i class="fas fa-shopping-cart"></i> سجل الطلبات</div>
                     <div class="table-container"><table><thead><tr><th>رقم الطلب</th><th>العميل</th><th>التاريخ</th><th>المبلغ</th><th>الحالة</th><th>تفاصيل</th></tr></thead><tbody>
                         <tr><td class="text-accent">#ORD-9981</td><td>محمد الشهري</td><td>منذ 15 دقيقة</td><td>1,450 ر.س</td><td><span class="badge badge-blue">جاري التوصيل</span></td><td><button class="btn"><i class="fas fa-eye"></i></button></td></tr>
@@ -757,6 +738,7 @@
 
             <!-- السائقين -->
             <section id="drivers" class="section">
+                <div class="section-print-header">القسم 7: السائقين والمندوبين</div>
                 <div class="flex justify-between mb-4"><h3 class="section-title">المندوبين</h3><button class="btn btn-primary"><i class="fas fa-user-plus"></i> إضافة</button></div>
                 <div class="grid grid-3">
                     <div class="card driver-card"><div class="driver-info"><i class="fas fa-user-check"></i><div><h4>فيصل الغامدي</h4><span class="badge badge-green">متصل</span></div></div><div class="driver-stats"><span>142 طلب</span><span class="rating">★ 4.9</span></div></div>
@@ -767,6 +749,7 @@
 
             <!-- الشحن -->
             <section id="shipping" class="section">
+                <div class="section-print-header">القسم 8: الشحن والتوصيل</div>
                 <div class="grid grid-3">
                     <div class="card shipping-card"><i class="fas fa-truck"></i><h4>أرامكس</h4><span class="badge badge-green">متصل API</span><p>34 شحنة نشطة</p></div>
                     <div class="card shipping-card"><i class="fas fa-plane"></i><h4>DHL</h4><span class="badge badge-green">متصل API</span><p>12 شحنة نشطة</p></div>
@@ -776,6 +759,7 @@
 
             <!-- المحفظة -->
             <section id="wallet" class="section">
+                <div class="section-print-header">القسم 9: المحفظة والمعاملات</div>
                 <div class="grid grid-3">
                     <div class="card span-2 wallet-balance"><div class="stat-label">الرصيد المتاح</div><div class="stat-value">127,800.50 ر.س</div><div class="flex gap-2 mt-3"><button class="btn btn-primary">طلب سحب</button><button class="btn">الحساب البنكي</button></div></div>
                     <div class="card"><div class="stat-label">عمولات معلقة</div><div class="stat-value text-warning">14,350 ر.س</div></div>
@@ -786,192 +770,69 @@
                 </tbody></table></div></div>
             </section>
 
-            <!-- ========== الأقسام الجديدة ========== -->
-
             <!-- الإعدادات -->
             <section id="settings" class="section">
+                <div class="section-print-header">القسم 10: إعدادات النظام</div>
                 <div class="card">
                     <div class="section-title"><i class="fas fa-cog"></i> إعدادات النظام</div>
                     <div class="grid grid-2">
-                        <div>
-                            <label class="stat-label">اسم المنصة</label>
-                            <input type="text" value="SwiftFlow" placeholder="اسم المنصة">
-                        </div>
-                        <div>
-                            <label class="stat-label">البريد الإلكتروني للإدارة</label>
-                            <input type="text" value="admin@swiftflow.com" placeholder="البريد الإلكتروني">
-                        </div>
-                        <div>
-                            <label class="stat-label">اللغة الافتراضية</label>
-                            <select>
-                                <option>العربية</option>
-                                <option>English</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="stat-label">المنطقة الزمنية</label>
-                            <select>
-                                <option>Asia/Riyadh</option>
-                                <option>Asia/Dubai</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="stat-label">صيانة الموقع</label>
-                            <select>
-                                <option>قيد التشغيل</option>
-                                <option>وضع الصيانة</option>
-                            </select>
-                        </div>
-                        <div class="flex items-end">
-                            <button class="btn btn-primary"><i class="fas fa-save"></i> حفظ الإعدادات</button>
-                        </div>
+                        <div><label class="stat-label">اسم المنصة</label><input type="text" value="SwiftFlow"></div>
+                        <div><label class="stat-label">البريد الإلكتروني للإدارة</label><input type="text" value="admin@swiftflow.com"></div>
+                        <div><label class="stat-label">اللغة الافتراضية</label><select><option>العربية</option></select></div>
+                        <div><label class="stat-label">المنطقة الزمنية</label><select><option>Asia/Riyadh</option></select></div>
                     </div>
                 </div>
             </section>
 
             <!-- سياسة الخصوصية -->
             <section id="privacy" class="section">
+                <div class="section-print-header">القسم 11: سياسة الخصوصية</div>
                 <div class="card">
                     <div class="section-title"><i class="fas fa-shield-alt"></i> سياسة الخصوصية</div>
-                    <textarea style="min-height: 300px;">نحن في SwiftFlow نلتزم بحماية بيانات المستخدمين. توضح هذه السياسة كيفية جمع المعلومات واستخدامها. يتم تشفير جميع البيانات الحساسة ولا نشاركها مع أطراف ثالثة. للمستخدم الحق في طلب حذف بياناته في أي وقت. يتم استخدام ملفات تعريف الارتباط لتحسين تجربة المستخدم. يستمر العمل بهذه السياسة اعتباراً من 1 يناير 2026.</textarea>
-                    <button class="btn btn-primary mt-3"><i class="fas fa-save"></i> تحديث السياسة</button>
+                    <textarea style="min-height: 200px;">نحن في SwiftFlow نلتزم بحماية بيانات المستخدمين. توضح هذه السياسة كيفية جمع المعلومات واستخدامها. يتم تشفير جميع البيانات الحساسة ولا نشاركها مع أطراف ثالثة.</textarea>
                 </div>
             </section>
 
             <!-- إرسال إشعارات -->
             <section id="notifications" class="section">
+                <div class="section-print-header">القسم 12: إرسال الإشعارات</div>
                 <div class="card">
                     <div class="section-title"><i class="fas fa-bell"></i> إرسال إشعار عام للمستخدمين</div>
                     <div class="grid grid-2">
-                        <div>
-                            <label class="stat-label">عنوان الإشعار</label>
-                            <input type="text" placeholder="مثلاً: عرض خاص لفترة محدودة">
-                        </div>
-                        <div>
-                            <label class="stat-label">الفئة المستهدفة</label>
-                            <select>
-                                <option>جميع المستخدمين</option>
-                                <option>العملاء النشطين</option>
-                                <option>السائقين</option>
-                            </select>
-                        </div>
+                        <div><label class="stat-label">عنوان الإشعار</label><input type="text" placeholder="العنوان"></div>
+                        <div><label class="stat-label">الفئة المستهدفة</label><select><option>جميع المستخدمين</option></select></div>
                     </div>
-                    <label class="stat-label">نص الإشعار</label>
-                    <textarea placeholder="اكتب نص الإشعار هنا..."></textarea>
-                    <button class="btn btn-primary mt-3"><i class="fas fa-paper-plane"></i> إرسال الآن</button>
-                </div>
-                <div class="card mt-24">
-                    <h3 class="section-title"><i class="fas fa-history"></i> سجل الإشعارات</h3>
-                    <div class="table-container"><table><thead><tr><th>التاريخ</th><th>العنوان</th><th>الفئة</th><th>الحالة</th></tr></thead><tbody>
-                        <tr><td>2026-08-01</td><td>تحديث هام</td><td>الكل</td><td><span class="badge badge-green">تم الإرسال</span></td></tr>
-                        <tr><td>2026-07-25</td><td>عرض الصيف</td><td>العملاء</td><td><span class="badge badge-green">تم الإرسال</span></td></tr>
-                    </tbody></table></div>
                 </div>
             </section>
 
             <!-- إدارة الإعلانات -->
             <section id="ads" class="section">
+                <div class="section-print-header">القسم 13: إدارة الإعلانات</div>
                 <div class="card">
-                    <div class="section-title"><i class="fas fa-ad"></i> نشر إعلان جديد</div>
-                    <div class="grid grid-2">
-                        <div>
-                            <label class="stat-label">عنوان الإعلان</label>
-                            <input type="text" placeholder="مثلاً: خصم 30% على الإلكترونيات">
-                        </div>
-                        <div>
-                            <label class="stat-label">مدة الإعلان (بالأيام)</label>
-                            <input type="number" placeholder="مثلاً: 7" value="7">
-                        </div>
-                    </div>
-                    <label class="stat-label">رابط الإعلان (اختياري)</label>
-                    <input type="text" placeholder="https://...">
-                    <label class="stat-label">نص الإعلان</label>
-                    <textarea placeholder="وصف الإعلان..."></textarea>
-                    <button class="btn btn-primary mt-3"><i class="fas fa-bullhorn"></i> نشر الإعلان</button>
-                </div>
-                <div class="card mt-24">
-                    <h3 class="section-title"><i class="fas fa-chart-bar"></i> الإعلانات النشطة والسابقة</h3>
+                    <div class="section-title"><i class="fas fa-ad"></i> الإعلانات النشطة</div>
                     <div class="table-container"><table><thead><tr><th>الإعلان</th><th>المدة (أيام)</th><th>المشاهدات</th><th>الحالة</th></tr></thead><tbody>
                         <tr><td>خصم 30% على الإلكترونيات</td><td>7</td><td>1,245</td><td><span class="badge badge-green">نشط</span></td></tr>
-                        <tr><td>توصيل مجاني</td><td>14</td><td>3,820</td><td><span class="badge badge-amber">منتهي</span></td></tr>
                     </tbody></table></div>
                 </div>
             </section>
 
             <!-- خدمة العملاء -->
             <section id="support" class="section">
-                <div class="grid grid-3">
-                    <div class="card span-2">
-                        <div class="section-title"><i class="fas fa-comments"></i> الرد على استفسارات العملاء</div>
-                        <div class="chat-box" id="chatBox">
-                            <div class="chat-message">
-                                <div class="chat-avatar">U</div>
-                                <div class="chat-bubble">مرحباً، لدي مشكلة في تتبع طلبي رقم #1234</div>
-                            </div>
-                            <div class="chat-message admin">
-                                <div class="chat-avatar" style="background:#4f46e5;">A</div>
-                                <div class="chat-bubble">أهلاً بك، دعني أتحقق من الحالة وأعود إليك.</div>
-                            </div>
-                        </div>
-                        <div class="flex gap-2">
-                            <input type="text" placeholder="اكتب ردك..." id="supportInput" style="margin-bottom:0;">
-                            <button class="btn btn-primary" onclick="sendSupportReply()"><i class="fas fa-reply"></i> إرسال</button>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <div class="section-title"><i class="fas fa-ticket-alt"></i> تذاكر الدعم</div>
-                        <div class="table-container"><table><thead><tr><th>رقم التذكرة</th><th>الموضوع</th><th>الحالة</th></tr></thead><tbody>
-                            <tr><td>#101</td><td>مشكلة في الدفع</td><td><span class="badge badge-amber">مفتوحة</span></td></tr>
-                            <tr><td>#102</td><td>تعديل عنوان</td><td><span class="badge badge-green">تم الحل</span></td></tr>
-                        </tbody></table></div>
-                    </div>
+                <div class="section-print-header">القسم 14: خدمة العملاء والدعم الفني</div>
+                <div class="card">
+                    <div class="section-title"><i class="fas fa-headset"></i> تذاكر الدعم الأخيرة</div>
+                    <div class="table-container"><table><thead><tr><th>رقم التذكرة</th><th>الموضوع</th><th>الحالة</th></tr></thead><tbody>
+                        <tr><td>#101</td><td>مشكلة في الدفع</td><td><span class="badge badge-amber">مفتوحة</span></td></tr>
+                        <tr><td>#102</td><td>تعديل عنوان</td><td><span class="badge badge-green">تم الحل</span></td></tr>
+                    </tbody></table></div>
                 </div>
             </section>
         </div>
     </main>
 
-    <style>
-        /* أنماط إضافية للأقسام الجديدة */
-        .product-card { text-align: center; }
-        .product-img { height: 120px; background: rgba(30,41,59,0.6); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 3rem; color: var(--accent); margin-bottom: 12px; }
-        .price { font-weight: 800; color: var(--success); font-size: 1.2rem; }
-        .category-item { display: flex; align-items: center; gap: 16px; }
-        .category-item i { font-size: 2rem; color: var(--accent); }
-        .coupon-card { border-right: 4px solid var(--accent); }
-        .driver-card .driver-info { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-        .driver-card i { font-size: 1.8rem; }
-        .driver-stats { display: flex; justify-content: space-between; border-top: 1px solid rgba(99,102,241,0.2); padding-top: 12px; }
-        .rating { color: var(--warning); font-weight: 700; }
-        .shipping-card { text-align: center; }
-        .shipping-card i { font-size: 2.5rem; margin-bottom: 8px; color: var(--accent); }
-        .wallet-balance { background: linear-gradient(135deg, rgba(79,70,229,0.2), rgba(124,58,237,0.1)); }
-        .text-accent { color: var(--accent); }
-        .text-success { color: var(--success); }
-        .text-danger { color: var(--danger); }
-        .text-warning { color: var(--warning); }
-        .hidden-mobile { display: block; }
-        @media (max-width: 768px) {
-            .hidden-mobile { display: none; }
-        }
-    </style>
-
     <script>
-        // تحديث عناوين الصفحات
         const pageTitles = {
-            analytics: 'التحليلات والنظرة العامة',
-            products: 'إدارة المنتجات',
-            categories: 'التصنيفات',
-            inventory: 'المخزون',
-            coupons: 'الكوبونات والعروض',
-            orders: 'الطلبات',
-            drivers: 'السائقين والمندوبين',
-            shipping: 'الشحن والتوصيل',
-            wallet: 'المحفظة والمعاملات',
-            settings: 'الإعدادات',
-            privacy: 'سياسة الخصوصية',
-            notifications: 'إرسال إشعارات',
-            ads: 'إدارة الإعلانات',
-            support: 'خدمة العملاء'
+            analytics: 'التحليلات والنظرة العامة', products: 'إدارة المنتجات', categories: 'التصنيفات', inventory: 'المخزون', coupons: 'الكوبونات والعروض', orders: 'الطلبات', drivers: 'السائقين والمندوبين', shipping: 'الشحن والتوصيل', wallet: 'المحفظة والمعاملات', settings: 'الإعدادات', privacy: 'سياسة الخصوصية', notifications: 'إرسال إشعارات', ads: 'إدارة الإعلانات', support: 'خدمة العملاء'
         };
 
         function switchPage(pageId, element) {
@@ -996,20 +857,10 @@
             document.getElementById('overlay').classList.remove('show');
         }
 
-        // إرسال رد في خدمة العملاء (محاكاة)
-        function sendSupportReply() {
-            const input = document.getElementById('supportInput');
-            const chatBox = document.getElementById('chatBox');
-            if (input.value.trim() === '') return;
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'chat-message admin';
-            messageDiv.innerHTML = `<div class="chat-avatar" style="background:#4f46e5;">A</div><div class="chat-bubble">${input.value}</div>`;
-            chatBox.appendChild(messageDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            input.value = '';
+        function exportToPDF() {
+            window.print();
         }
 
-        // تهيئة الرسوم البيانية بعد تحميل الصفحة
         window.addEventListener('load', () => {
             const ctx1 = document.getElementById('salesChart')?.getContext('2d');
             if (ctx1) {
@@ -1023,19 +874,10 @@
                             borderColor: '#818cf8',
                             backgroundColor: 'rgba(99, 102, 241, 0.1)',
                             fill: true,
-                            tension: 0.4,
-                            pointBackgroundColor: '#c7d2fe'
+                            tension: 0.4
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { labels: { color: '#cbd5e1', font: { family: 'Cairo' } } } },
-                        scales: {
-                            y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
-                            x: { ticks: { color: '#94a3b8' } }
-                        }
-                    }
+                    options: { responsive: true, maintainAspectRatio: false }
                 });
             }
             const ctx2 = document.getElementById('doughnutChart')?.getContext('2d');
@@ -1044,7 +886,7 @@
                     type: 'doughnut',
                     data: {
                         labels: ['مكتمل', 'جاري التوصيل', 'ملغى'],
-                        datasets: [{ data: [65, 25, 10], backgroundColor: ['#34d399', '#818cf8', '#f87171'], borderColor: '#0f172a' }]
+                        datasets: [{ data: [65, 25, 10], backgroundColor: ['#34d399', '#818cf8', '#f87171'] }]
                     },
                     options: { cutout: '70%', plugins: { legend: { display: false } } }
                 });
