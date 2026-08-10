@@ -32,52 +32,526 @@
 
 <body>
 
-    <main class="page-container">
+<main class="page-container">
+
+    <!-- ==================================================
+         رأس الصفحة
+         ================================================== -->
+
+    <header class="page-header">
+
+        <div class="page-icon">
+            📖
+        </div>
+
+        <div>
+
+            <h1>
+                رصد التسميع والمتابعة
+            </h1>
+
+            <p>
+                تسجيل حضور الطلاب وتسميعهم وتقييم أدائهم
+            </p>
+
+        </div>
+
+    </header>
+
+
+    <!-- ==================================================
+         البطاقة الرئيسية
+         ================================================== -->
+
+    <section class="card">
+
 
         <!-- ==================================================
-             العنوان
+             اختيار الطالب
              ================================================== -->
 
-        <header class="page-header">
+        <div class="section-title">
 
-            <div class="page-icon">
-                📖
-            </div>
+            <span class="section-number">
+                1
+            </span>
 
             <div>
-                <h1>رصد التسميع والمتابعة</h1>
 
-                <p>
-                    تسجيل حضور الطلاب وتسميعهم وتقييم أدائهم
-                </p>
+                <strong>
+                    اختيار الطالب
+                </strong>
+
+                <small>
+                    اختر الحلقة ثم الطالب
+                </small>
+
             </div>
 
-        </header>
+        </div>
+
+
+        <div class="grid-inputs">
+
+            <div class="field-wrapper">
+
+                <label for="halaqaFilter">
+                    الحلقة
+                </label>
+
+                <select id="halaqaFilter">
+
+                    <option value="">
+                        اختر الحلقة...
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="field-wrapper">
+
+                <label for="studentIdSelect">
+                    الطالب
+                </label>
+
+                <select
+                    id="studentIdSelect"
+                    disabled
+                >
+
+                    <option value="">
+                        اختر الحلقة أولاً...
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
 
 
         <!-- ==================================================
-             البطاقة الرئيسية
+             حالة السجل
              ================================================== -->
 
-        <section class="card">
+        <div
+            id="recordMode"
+            class="record-mode new"
+        >
+            📝 رصد جديد
+        </div>
 
 
-            <!-- ==================================================
-                 اختيار الحلقة والطالب
-                 ================================================== -->
+        <!-- ==================================================
+             أزرار الطالب
+             ================================================== -->
+
+        <div class="student-actions">
+
+            <button
+                id="editTodayRecordBtn"
+                class="btn-edit"
+                type="button"
+                style="display:none;"
+            >
+                ✏️ تعديل رصد اليوم
+            </button>
+
+
+            <button
+                id="chatParentBtn"
+                class="btn-chat"
+                type="button"
+                style="display:none;"
+            >
+                💬 محادثة ولي الأمر
+            </button>
+
+        </div>
+
+
+        <!-- ==================================================
+             صندوق المحادثة
+             ================================================== -->
+
+        <section
+            id="parentChatSection"
+            class="parent-chat-section"
+            style="display:none;"
+        >
+
+            <div class="chat-header">
+
+                <div class="chat-header-info">
+
+                    <div class="chat-avatar">
+                        👨‍👩‍👦
+                    </div>
+
+                    <div>
+
+                        <strong id="chatStudentName">
+                            محادثة ولي الأمر
+                        </strong>
+
+                        <small id="chatHalaqaName">
+                            اختر الطالب
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="closeChatBtn"
+                    class="close-chat-btn"
+                    type="button"
+                >
+                    ✕
+                </button>
+
+            </div>
+
+
+            <div
+                id="chatMessages"
+                class="chat-messages"
+            >
+
+                <div class="chat-empty">
+
+                    💬
+
+                    <strong>
+                        لا توجد رسائل بعد
+                    </strong>
+
+                    <small>
+                        ستظهر هنا رسائل ولي الأمر.
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="chat-input-area">
+
+                <textarea
+                    id="chatMessageInput"
+                    placeholder="اكتب رسالة لولي الأمر..."
+                    rows="1"
+                ></textarea>
+
+
+                <button
+                    id="sendChatMessageBtn"
+                    type="button"
+                    class="send-chat-btn"
+                >
+                    📤
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ==================================================
+             ملخص الرصد
+             ================================================== -->
+
+        <div
+            id="attendanceSummary"
+            class="attendance-summary-box"
+        ></div>
+
+
+        <div class="info-box">
+
+            <span>
+                💡
+            </span>
+
+            <div>
+
+                <strong>
+                    حالة الرصد
+                </strong>
+
+                <p>
+                    تظهر علامة ✅ بجانب الطالب إذا تم رصده اليوم.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <hr>
+
+
+        <!-- ==================================================
+             حالة الحضور
+             ================================================== -->
+
+        <div class="section-title">
+
+            <span class="section-number">
+                2
+            </span>
+
+            <div>
+
+                <strong>
+                    حالة الحضور
+                </strong>
+
+                <small>
+                    حدد حالة الطالب لهذا اليوم
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="field-wrapper">
+
+            <label for="attendanceStatus">
+                الحالة
+            </label>
+
+            <select
+                id="attendanceStatus"
+                class="status-select"
+            >
+
+                <option value="حاضر">
+                    ✅ حاضر - تسميع جديد
+                </option>
+
+                <option value="غائب">
+                    ❌ غائب
+                </option>
+
+                <option value="إجازة">
+                    🔵 إجازة رسمية
+                </option>
+
+                <option value="مستأذن">
+                    🟠 مستأذن
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <!-- ==================================================
+             بيانات التسميع
+             ================================================== -->
+
+        <div
+            id="recitationFields"
+            class="recitation-section"
+        >
+
+            <hr>
+
+
+            <!-- تقييم الأداء -->
 
             <div class="section-title">
 
                 <span class="section-number">
-                    1
+                    3
                 </span>
 
                 <div>
-                    <strong>اختيار الطالب</strong>
+
+                    <strong>
+                        تقييم الأداء
+                    </strong>
+
                     <small>
-                        اختر الحلقة ثم الطالب
+                        يمكنك اختيار أكثر من تقييم
                     </small>
+
                 </div>
+
+            </div>
+
+
+            <div class="checkbox-group">
+
+                <label class="check-label">
+
+                    <input
+                        type="checkbox"
+                        class="eval-check"
+                        value="حفظ"
+                    >
+
+                    <span class="check-icon">
+                        🧠
+                    </span>
+
+                    <span class="check-content">
+
+                        <strong>
+                            حفظ
+                        </strong>
+
+                        <small>
+                            مستوى الحفظ
+                        </small>
+
+                    </span>
+
+                    <span class="check-mark">
+                        ✓
+                    </span>
+
+                </label>
+
+
+                <label class="check-label">
+
+                    <input
+                        type="checkbox"
+                        class="eval-check"
+                        value="إتقان"
+                    >
+
+                    <span class="check-icon">
+                        ⭐
+                    </span>
+
+                    <span class="check-content">
+
+                        <strong>
+                            إتقان
+                        </strong>
+
+                        <small>
+                            إتقان الآيات
+                        </small>
+
+                    </span>
+
+                    <span class="check-mark">
+                        ✓
+                    </span>
+
+                </label>
+
+
+                <label class="check-label">
+
+                    <input
+                        type="checkbox"
+                        class="eval-check"
+                        value="تجويد"
+                    >
+
+                    <span class="check-icon">
+                        📖
+                    </span>
+
+                    <span class="check-content">
+
+                        <strong>
+                            تجويد
+                        </strong>
+
+                        <small>
+                            تطبيق التجويد
+                        </small>
+
+                    </span>
+
+                    <span class="check-mark">
+                        ✓
+                    </span>
+
+                </label>
+
+
+                <label class="check-label">
+
+                    <input
+                        type="checkbox"
+                        class="eval-check"
+                        value="مراجعة"
+                    >
+
+                    <span class="check-icon">
+                        🔄
+                    </span>
+
+                    <span class="check-content">
+
+                        <strong>
+                            مراجعة
+                        </strong>
+
+                        <small>
+                            مراجعة المحفوظ
+                        </small>
+
+                    </span>
+
+                    <span class="check-mark">
+                        ✓
+                    </span>
+
+                </label>
+
+            </div>
+
+
+            <hr>
+
+
+            <!-- تفاصيل التسميع -->
+
+            <div class="section-title">
+
+                <span class="section-number">
+                    4
+                </span>
+
+                <div>
+
+                    <strong>
+                        تفاصيل التسميع
+                    </strong>
+
+                    <small>
+                        السورة والآيات التي تم تسميعها
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="field-wrapper">
+
+                <label for="currentSurah">
+                    اسم السورة
+                </label>
+
+                <input
+                    type="text"
+                    id="currentSurah"
+                    placeholder="مثال: سورة البقرة"
+                    autocomplete="off"
+                >
 
             </div>
 
@@ -86,420 +560,36 @@
 
                 <div class="field-wrapper">
 
-                    <label for="halaqaFilter">
-                        الحلقة
+                    <label for="fromAya">
+                        من آية
                     </label>
-
-                    <select id="halaqaFilter">
-
-                        <option value="">
-                            اختر الحلقة...
-                        </option>
-
-                    </select>
-
-                </div>
-
-
-                <div class="field-wrapper">
-
-                    <label for="studentIdSelect">
-                        الطالب
-                    </label>
-
-                    <select
-                        id="studentIdSelect"
-                        disabled
-                    >
-
-                        <option value="">
-                            اختر الحلقة أولاً...
-                        </option>
-
-                    </select>
-
-                </div>
-
-            </div>
-
-
-            <!-- ==================================================
-                 ملخص الرصد
-                 ================================================== -->
-
-            <div
-                id="attendanceSummary"
-                class="attendance-summary-box"
-            ></div>
-
-
-            <div class="info-box">
-
-                <span>💡</span>
-
-                <div>
-                    <strong>
-                        حالة الرصد
-                    </strong>
-
-                    <p>
-                        تظهر علامة ✅ بجانب الطالب إذا تم رصده اليوم.
-                    </p>
-                </div>
-
-            </div>
-
-
-            <hr>
-
-
-            <!-- ==================================================
-                 حالة الحضور
-                 ================================================== -->
-
-            <div class="section-title">
-
-                <span class="section-number">
-                    2
-                </span>
-
-                <div>
-                    <strong>حالة الحضور</strong>
-                    <small>
-                        حدد حالة الطالب لهذا اليوم
-                    </small>
-                </div>
-
-            </div>
-
-
-            <div class="field-wrapper">
-
-                <label for="attendanceStatus">
-                    الحالة
-                </label>
-
-                <select
-                    id="attendanceStatus"
-                    class="status-select"
-                >
-
-                    <option value="حاضر">
-                        ✅ حاضر - تسميع جديد
-                    </option>
-
-                    <option value="غائب">
-                        ❌ غائب
-                    </option>
-
-                    <option value="إجازة">
-                        🔵 إجازة رسمية
-                    </option>
-
-                    <option value="مستأذن">
-                        🟠 مستأذن
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <!-- ==================================================
-                 بيانات التسميع
-                 ================================================== -->
-
-            <div
-                id="recitationFields"
-                class="recitation-section"
-            >
-
-
-                <hr>
-
-
-                <!-- ==================================================
-                     تقييم الأداء
-                     ================================================== -->
-
-                <div class="section-title">
-
-                    <span class="section-number">
-                        3
-                    </span>
-
-                    <div>
-                        <strong>تقييم الأداء</strong>
-
-                        <small>
-                            يمكنك اختيار أكثر من تقييم
-                        </small>
-                    </div>
-
-                </div>
-
-
-                <div class="checkbox-group">
-
-
-                    <!-- حفظ -->
-
-                    <label class="check-label">
-
-                        <input
-                            type="checkbox"
-                            class="eval-check"
-                            value="حفظ"
-                        >
-
-                        <span class="check-icon">
-                            🧠
-                        </span>
-
-                        <span class="check-content">
-
-                            <strong>
-                                حفظ
-                            </strong>
-
-                            <small>
-                                مستوى الحفظ
-                            </small>
-
-                        </span>
-
-                        <span class="check-mark">
-                            ✓
-                        </span>
-
-                    </label>
-
-
-                    <!-- إتقان -->
-
-                    <label class="check-label">
-
-                        <input
-                            type="checkbox"
-                            class="eval-check"
-                            value="إتقان"
-                        >
-
-                        <span class="check-icon">
-                            ⭐
-                        </span>
-
-                        <span class="check-content">
-
-                            <strong>
-                                إتقان
-                            </strong>
-
-                            <small>
-                                إتقان الآيات
-                            </small>
-
-                        </span>
-
-                        <span class="check-mark">
-                            ✓
-                        </span>
-
-                    </label>
-
-
-                    <!-- تجويد -->
-
-                    <label class="check-label">
-
-                        <input
-                            type="checkbox"
-                            class="eval-check"
-                            value="تجويد"
-                        >
-
-                        <span class="check-icon">
-                            📖
-                        </span>
-
-                        <span class="check-content">
-
-                            <strong>
-                                تجويد
-                            </strong>
-
-                            <small>
-                                تطبيق التجويد
-                            </small>
-
-                        </span>
-
-                        <span class="check-mark">
-                            ✓
-                        </span>
-
-                    </label>
-
-
-                    <!-- مراجعة -->
-
-                    <label class="check-label">
-
-                        <input
-                            type="checkbox"
-                            class="eval-check"
-                            value="مراجعة"
-                        >
-
-                        <span class="check-icon">
-                            🔄
-                        </span>
-
-                        <span class="check-content">
-
-                            <strong>
-                                مراجعة
-                            </strong>
-
-                            <small>
-                                مراجعة المحفوظ
-                            </small>
-
-                        </span>
-
-                        <span class="check-mark">
-                            ✓
-                        </span>
-
-                    </label>
-
-                </div>
-
-
-                <hr>
-
-
-                <!-- ==================================================
-                     تفاصيل التسميع
-                     ================================================== -->
-
-                <div class="section-title">
-
-                    <span class="section-number">
-                        4
-                    </span>
-
-                    <div>
-                        <strong>
-                            تفاصيل التسميع
-                        </strong>
-
-                        <small>
-                            السورة والآيات التي تم تسميعها
-                        </small>
-                    </div>
-
-                </div>
-
-
-                <div class="field-wrapper">
-
-                    <label for="currentSurah">
-                        اسم السورة
-                    </label>
-
-                    <input
-                        type="text"
-                        id="currentSurah"
-                        placeholder="مثال: سورة البقرة"
-                        autocomplete="off"
-                    >
-
-                </div>
-
-
-                <div class="grid-inputs">
-
-                    <div class="field-wrapper">
-
-                        <label for="fromAya">
-                            من آية
-                        </label>
-
-                        <input
-                            type="number"
-                            id="fromAya"
-                            placeholder="مثال: 1"
-                            min="0"
-                            inputmode="numeric"
-                        >
-
-                    </div>
-
-
-                    <div class="field-wrapper">
-
-                        <label for="toAya">
-                            إلى آية
-                        </label>
-
-                        <input
-                            type="number"
-                            id="toAya"
-                            placeholder="مثال: 10"
-                            min="0"
-                            inputmode="numeric"
-                        >
-
-                    </div>
-
-                </div>
-
-
-                <hr>
-
-
-                <!-- ==================================================
-                     النقاط
-                     ================================================== -->
-
-                <div class="section-title">
-
-                    <span class="section-number">
-                        5
-                    </span>
-
-                    <div>
-                        <strong>
-                            النقاط الممنوحة
-                        </strong>
-
-                        <small>
-                            النقاط تضاف إلى مجموع نقاط الطالب
-                        </small>
-                    </div>
-
-                </div>
-
-
-                <div class="points-box">
 
                     <input
                         type="number"
-                        id="pointsGiven"
-                        placeholder="عدد النقاط"
-                        value="10"
+                        id="fromAya"
+                        placeholder="مثال: 1"
                         min="0"
-                        step="1"
                         inputmode="numeric"
                     >
 
-                    <div class="points-hint">
-                        ✨ النقاط الافتراضية للحاضر: 10
-                    </div>
-
                 </div>
 
+
+                <div class="field-wrapper">
+
+                    <label for="toAya">
+                        إلى آية
+                    </label>
+
+                    <input
+                        type="number"
+                        id="toAya"
+                        placeholder="مثال: 10"
+                        min="0"
+                        inputmode="numeric"
+                    >
+
+                </div>
 
             </div>
 
@@ -507,99 +597,148 @@
             <hr>
 
 
-            <!-- ==================================================
-                 خطة الغد والملاحظات
-                 ================================================== -->
+            <!-- النقاط -->
 
             <div class="section-title">
 
                 <span class="section-number">
-                    6
+                    5
                 </span>
 
                 <div>
+
                     <strong>
-                        خطة الغد والملاحظات
+                        النقاط الممنوحة
                     </strong>
 
                     <small>
-                        معلومات تظهر في متابعة الطالب
+                        النقاط تضاف إلى مجموع نقاط الطالب
                     </small>
+
                 </div>
 
             </div>
 
 
-            <div class="field-wrapper">
-
-                <label for="tomorrowReq">
-                    المطلوب غداً
-                </label>
+            <div class="points-box">
 
                 <input
-                    type="text"
-                    id="tomorrowReq"
-                    placeholder="مثال: حفظ أول 10 آيات من السورة"
+                    type="number"
+                    id="pointsGiven"
+                    placeholder="عدد النقاط"
+                    value="10"
+                    min="0"
+                    step="1"
+                    inputmode="numeric"
                 >
 
-            </div>
-
-
-            <div class="field-wrapper">
-
-                <label for="teacherNotes">
-                    ملاحظات الشيخ
-                </label>
-
-                <textarea
-                    id="teacherNotes"
-                    placeholder="اكتب ملاحظات لولي الأمر..."
-                ></textarea>
+                <div class="points-hint">
+                    ✨ النقاط الافتراضية للحاضر: 10
+                </div>
 
             </div>
 
-
-            <!-- ==================================================
-                 زر الحفظ
-                 ================================================== -->
-
-            <button
-                id="saveRecitationBtn"
-                class="btn-primary"
-                type="button"
-            >
-
-                <span>
-                    📤
-                </span>
-
-                <span>
-                    حفظ وإرسال التحديث للأهل
-                </span>
-
-            </button>
+        </div>
 
 
-        </section>
+        <hr>
 
 
         <!-- ==================================================
-             تذييل
+             خطة الغد
              ================================================== -->
 
-        <footer class="page-footer">
+        <div class="section-title">
 
-            📖 حلقات القرآن الكريم
+            <span class="section-number">
+                6
+            </span>
 
-        </footer>
+            <div>
 
-    </main>
+                <strong>
+                    خطة الغد والملاحظات
+                </strong>
+
+                <small>
+                    معلومات تظهر في متابعة الطالب
+                </small>
+
+            </div>
+
+        </div>
 
 
-    <script
-        type="module"
-        src="halaqat.js"
-    ></script>
+        <div class="field-wrapper">
+
+            <label for="tomorrowReq">
+                المطلوب غداً
+            </label>
+
+            <input
+                type="text"
+                id="tomorrowReq"
+                placeholder="مثال: حفظ أول 10 آيات من السورة"
+            >
+
+        </div>
+
+
+        <div class="field-wrapper">
+
+            <label for="teacherNotes">
+                ملاحظات الشيخ
+            </label>
+
+            <textarea
+                id="teacherNotes"
+                placeholder="اكتب ملاحظات لولي الأمر..."
+            ></textarea>
+
+        </div>
+
+
+        <!-- ==================================================
+             زر الحفظ
+             ================================================== -->
+
+        <button
+            id="saveRecitationBtn"
+            class="btn-primary"
+            type="button"
+        >
+
+            <span>
+                📤
+            </span>
+
+            <span>
+                حفظ وإرسال التحديث للأهل
+            </span>
+
+        </button>
+
+
+    </section>
+
+
+    <!-- ==================================================
+         التذييل
+         ================================================== -->
+
+    <footer class="page-footer">
+
+        📖 حلقات القرآن الكريم
+
+    </footer>
+
+</main>
+
+
+<script
+    type="module"
+    src="halaqat.js"
+></script>
 
 </body>
 
