@@ -2,6 +2,7 @@
 // 📖 رصد التسميع والحضور - حلقات القرآن
 // 💬 محادثة المدرس وولي الأمر
 // ⭐ حفظ + إتقان + تجويد + مراجعة
+// 🚫 إخفاء الطلاب غير النشطين
 // ============================================================
 
 import { db, loadHalaqatList } from '../../firebase.js';
@@ -16,7 +17,6 @@ import {
     doc,
     serverTimestamp,
     increment,
-    orderBy,
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -151,7 +151,7 @@ function showMessage(message) {
 }
 
 // ============================================================
-// تنظيف
+// تنظيف النص
 // ============================================================
 
 function cleanText(value) {
@@ -159,7 +159,7 @@ function cleanText(value) {
 }
 
 // ============================================================
-// الطالب
+// الطالب المحدد
 // ============================================================
 
 function getSelectedStudent() {
@@ -177,7 +177,7 @@ function getSelectedStudent() {
 }
 
 // ============================================================
-// الحلقة
+// الحلقة المحددة
 // ============================================================
 
 function getSelectedHalaqa() {
@@ -196,7 +196,7 @@ function getSelectedHalaqa() {
 }
 
 // ============================================================
-// تهيئة
+// تهيئة الصفحة
 // ============================================================
 
 async function initializePage() {
@@ -297,7 +297,7 @@ function renderHalaqat() {
 }
 
 // ============================================================
-// رصد اليوم
+// 📋 جلب رصد اليوم
 // ============================================================
 
 async function getTodayAttendance(
@@ -365,7 +365,7 @@ async function getTodayAttendance(
 }
 
 // ============================================================
-// تحميل الطلاب
+// 👥 تحميل الطلاب حسب الحلقة
 // ============================================================
 
 async function loadStudentsByHalaqa(
@@ -381,6 +381,10 @@ async function loadStudentsByHalaqa(
     hideEditMode();
 
     closeParentChat();
+
+    // ========================================================
+    // حالة التحميل
+    // ========================================================
 
     const loadingOption =
         document.createElement(
@@ -400,6 +404,10 @@ async function loadStudentsByHalaqa(
         true;
 
     try {
+
+        // ====================================================
+        // تحميل الطلاب + رصد اليوم
+        // ====================================================
 
         const [
             studentsSnapshot,
@@ -424,6 +432,10 @@ async function loadStudentsByHalaqa(
                 halaqaId
             )
         ]);
+
+        // ====================================================
+        // إذا لم توجد سجلات طلاب أصلًا
+        // ====================================================
 
         if (studentsSnapshot.empty) {
 
@@ -454,6 +466,10 @@ async function loadStudentsByHalaqa(
             return;
         }
 
+        // ====================================================
+        // تجهيز القائمة
+        // ====================================================
+
         studentSelect.innerHTML = '';
 
         const defaultOption =
@@ -470,6 +486,10 @@ async function loadStudentsByHalaqa(
             defaultOption
         );
 
+        // ====================================================
+        // الطلاب النشطون فقط
+        // ====================================================
+
         const students = [];
 
         studentsSnapshot.forEach(
@@ -477,6 +497,25 @@ async function loadStudentsByHalaqa(
 
                 const student =
                     studentDoc.data();
+
+                // =================================================
+                // 🚫 تجاهل الطالب غير النشط
+                //
+                // إذا كان:
+                //
+                // isActive: false
+                //
+                // فلن يظهر في قائمة اختيار الطالب.
+                //
+                // أما إذا لم يوجد isActive أصلًا،
+                // فسيعتبر الطالب نشطًا.
+                // =================================================
+
+                if (
+                    student.isActive === false
+                ) {
+                    return;
+                }
 
                 students.push({
 
@@ -487,6 +526,43 @@ async function loadStudentsByHalaqa(
                 });
             }
         );
+
+        // ====================================================
+        // لا يوجد طلاب نشطون
+        // ====================================================
+
+        if (students.length === 0) {
+
+            studentSelect.innerHTML = '';
+
+            const emptyOption =
+                document.createElement(
+                    'option'
+                );
+
+            emptyOption.value = '';
+
+            emptyOption.textContent =
+                'لا يوجد طلاب نشطون في هذه الحلقة';
+
+            studentSelect.appendChild(
+                emptyOption
+            );
+
+            studentSelect.disabled =
+                true;
+
+            updateAttendanceSummary(
+                0,
+                0
+            );
+
+            return;
+        }
+
+        // ====================================================
+        // ترتيب الطلاب حسب الاسم
+        // ====================================================
 
         students.sort(
             (a, b) => {
@@ -508,7 +584,15 @@ async function loadStudentsByHalaqa(
             }
         );
 
+        // ====================================================
+        // عدد الطلاب الذين تم رصدهم
+        // ====================================================
+
         let recordedCount = 0;
+
+        // ====================================================
+        // إنشاء الخيارات
+        // ====================================================
 
         students.forEach(
             student => {
@@ -535,6 +619,10 @@ async function loadStudentsByHalaqa(
                         student.id
                     );
 
+                // =================================================
+                // الطالب تم رصده اليوم
+                // =================================================
+
                 if (attendance) {
 
                     recordedCount++;
@@ -550,34 +638,62 @@ async function loadStudentsByHalaqa(
                     ) {
 
                         case 'حاضر':
-                            icon = '✅';
+
+                            icon =
+                                '✅';
+
                             statusText =
                                 'حاضر';
+
                             break;
 
                         case 'غائب':
-                            icon = '❌';
+
+                            icon =
+                                '❌';
+
                             statusText =
                                 'غائب';
+
                             break;
 
                         case 'إجازة':
-                            icon = '🔵';
+
+                            icon =
+                                '🔵';
+
                             statusText =
                                 'إجازة';
+
                             break;
 
                         case 'مستأذن':
-                            icon = '🟠';
+
+                            icon =
+                                '🟠';
+
                             statusText =
                                 'مستأذن';
+
                             break;
 
                         case 'مراجعة':
-                            icon = '🔷';
+
+                            icon =
+                                '🔷';
+
                             statusText =
                                 'مراجعة';
+
                             break;
+
+                        default:
+
+                            icon =
+                                '✅';
+
+                            statusText =
+                                'تم الرصد';
                     }
 
                     option.textContent =
@@ -599,6 +715,10 @@ async function loadStudentsByHalaqa(
 
                 } else {
 
+                    // =================================================
+                    // الطالب لم يتم رصده
+                    // =================================================
+
                     option.textContent =
                         `⬜ ${studentName} — لم يُرصد`;
 
@@ -618,8 +738,16 @@ async function loadStudentsByHalaqa(
             }
         );
 
+        // ====================================================
+        // تفعيل القائمة
+        // ====================================================
+
         studentSelect.disabled =
             false;
+
+        // ====================================================
+        // تحديث الملخص
+        // ====================================================
 
         updateAttendanceSummary(
             students.length,
@@ -665,7 +793,7 @@ async function loadStudentsByHalaqa(
 }
 
 // ============================================================
-// ملخص الرصد
+// 📊 ملخص الرصد
 // ============================================================
 
 function updateAttendanceSummary(
@@ -797,7 +925,8 @@ halaqaFilter.addEventListener(
 
         studentsCache.clear();
 
-        currentTodayRecord = null;
+        currentTodayRecord =
+            null;
 
         hideEditMode();
 
@@ -837,6 +966,8 @@ studentSelect.addEventListener(
         ) {
 
             hideEditMode();
+
+            hideChatButton();
 
             closeParentChat();
 
@@ -884,7 +1015,7 @@ studentSelect.addEventListener(
 );
 
 // ============================================================
-// المحادثة
+// 💬 إظهار زر المحادثة
 // ============================================================
 
 function showChatButton() {
@@ -896,6 +1027,10 @@ function showChatButton() {
     chatParentButton.style.display =
         'flex';
 }
+
+// ============================================================
+// إخفاء زر المحادثة
+// ============================================================
 
 function hideChatButton() {
 
@@ -943,6 +1078,10 @@ function showEditMode() {
     );
 }
 
+// ============================================================
+// إخفاء وضع التعديل
+// ============================================================
+
 function hideEditMode() {
 
     isEditMode = false;
@@ -972,7 +1111,7 @@ function hideEditMode() {
 }
 
 // ============================================================
-// تعبئة النموذج
+// تعبئة النموذج من السجل
 // ============================================================
 
 function fillFormFromRecord(
@@ -1092,7 +1231,7 @@ function updateRecitationVisibility() {
 }
 
 // ============================================================
-// التحقق
+// التحقق من النموذج
 // ============================================================
 
 function validateForm() {
@@ -1368,7 +1507,7 @@ function buildRecordData(
 }
 
 // ============================================================
-// حفظ الرصد
+// 💾 حفظ الرصد
 // ============================================================
 
 saveButton.addEventListener(
@@ -1416,6 +1555,22 @@ async function saveRecitation() {
         return;
     }
 
+    // ========================================================
+    // حماية إضافية
+    // حتى لو حاول طالب غير نشط الوصول للصفحة بطريقة أخرى
+    // ========================================================
+
+    if (
+        selectedStudent.isActive === false
+    ) {
+
+        showMessage(
+            '⚠️ هذا الطالب غير نشط ولا يمكن رصد التسميع له.'
+        );
+
+        return;
+    }
+
     const recordData =
         buildRecordData(
             selectedHalaqa,
@@ -1425,6 +1580,10 @@ async function saveRecitation() {
     saveButton.disabled = true;
 
     try {
+
+        // ====================================================
+        // تعديل سجل موجود
+        // ====================================================
 
         if (
             isEditMode &&
@@ -1485,6 +1644,10 @@ async function saveRecitation() {
 
         } else {
 
+            // =================================================
+            // التأكد من عدم وجود رصد سابق
+            // =================================================
+
             const existingQuery =
                 query(
                     collection(
@@ -1537,6 +1700,10 @@ async function saveRecitation() {
                 return;
             }
 
+            // =================================================
+            // إنشاء سجل جديد
+            // =================================================
+
             await addDoc(
                 collection(
                     db,
@@ -1581,6 +1748,10 @@ async function saveRecitation() {
                 `📊 التقييم: ${recordData.grade}`
             );
         }
+
+        // ====================================================
+        // إعادة تحميل القائمة
+        // ====================================================
 
         await loadStudentsByHalaqa(
             halaqaId
@@ -1763,6 +1934,21 @@ function openParentChat() {
         return;
     }
 
+    // ========================================================
+    // حماية من الطالب غير النشط
+    // ========================================================
+
+    if (
+        student.isActive === false
+    ) {
+
+        showMessage(
+            '⚠️ هذا الطالب غير نشط.'
+        );
+
+        return;
+    }
+
     const parentId =
         student.parentId ||
         student.parentUid ||
@@ -1812,7 +1998,7 @@ function openParentChat() {
 }
 
 // ============================================================
-// إغلاق
+// إغلاق المحادثة
 // ============================================================
 
 if (closeChatButton) {
@@ -1979,6 +2165,7 @@ function renderChatMessages(
         messageDoc => {
 
             messages.push({
+
                 id:
                     messageDoc.id,
 
@@ -2158,7 +2345,7 @@ function formatMessageTime(
 }
 
 // ============================================================
-// آخر الرسائل
+// النزول إلى آخر المحادثة
 // ============================================================
 
 function scrollChatToBottom() {
@@ -2206,6 +2393,21 @@ async function sendParentChatMessage() {
 
         showMessage(
             '⚠️ اختر الحلقة والطالب أولاً.'
+        );
+
+        return;
+    }
+
+    // ========================================================
+    // حماية إضافية
+    // ========================================================
+
+    if (
+        student.isActive === false
+    ) {
+
+        showMessage(
+            '⚠️ لا يمكن مراسلة ولي أمر طالب غير نشط.'
         );
 
         return;
@@ -2315,7 +2517,7 @@ async function sendParentChatMessage() {
 }
 
 // ============================================================
-// Enter
+// Enter لإرسال الرسالة
 // ============================================================
 
 if (chatMessageInput) {
@@ -2353,7 +2555,7 @@ if (chatMessageInput) {
 }
 
 // ============================================================
-// تشغيل
+// 🚀 تشغيل الصفحة
 // ============================================================
 
 initializePage();
