@@ -1,11 +1,14 @@
 // ============================================================
 // 📖 رصد التسميع والحضور - حلقات القرآن
-// 💬 محادثة المدرس وولي الأمر
 // ⭐ حفظ + إتقان + تجويد + مراجعة
 // 🚫 إخفاء الطلاب غير النشطين
+// 💬 المحادثة أصبحت في صفحة مستقلة
 // ============================================================
 
-import { db, loadHalaqatList } from '../../firebase.js';
+import {
+    db,
+    loadHalaqatList
+} from '../../firebase.js';
 
 import {
     collection,
@@ -16,15 +19,9 @@ import {
     updateDoc,
     doc,
     serverTimestamp,
-    increment,
-    onSnapshot
+    increment
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-import {
-    getAuth
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-
-const auth = getAuth();
 
 // ============================================================
 // العناصر
@@ -72,33 +69,6 @@ const attendanceSummary =
 const recordMode =
     document.getElementById('recordMode');
 
-// ============================================================
-// 💬 المحادثة
-// ============================================================
-
-const chatParentButton =
-    document.getElementById('chatParentBtn');
-
-const parentChatSection =
-    document.getElementById('parentChatSection');
-
-const closeChatButton =
-    document.getElementById('closeChatBtn');
-
-const chatMessages =
-    document.getElementById('chatMessages');
-
-const chatMessageInput =
-    document.getElementById('chatMessageInput');
-
-const sendChatMessageButton =
-    document.getElementById('sendChatMessageBtn');
-
-const chatStudentName =
-    document.getElementById('chatStudentName');
-
-const chatHalaqaName =
-    document.getElementById('chatHalaqaName');
 
 // ============================================================
 // المتغيرات
@@ -112,11 +82,6 @@ let currentTodayRecord = null;
 
 let isEditMode = false;
 
-let unsubscribeChat = null;
-
-let currentChatStudent = null;
-
-let currentChatHalaqa = null;
 
 // ============================================================
 // 📅 تاريخ اليوم
@@ -142,21 +107,30 @@ function getTodayDate() {
     return `${year}-${month}-${day}`;
 }
 
+
 // ============================================================
 // الرسائل
 // ============================================================
 
 function showMessage(message) {
+
     alert(message);
+
 }
+
 
 // ============================================================
 // تنظيف النص
 // ============================================================
 
 function cleanText(value) {
-    return String(value || '').trim();
+
+    return String(
+        value || ''
+    ).trim();
+
 }
+
 
 // ============================================================
 // الطالب المحدد
@@ -175,6 +149,7 @@ function getSelectedStudent() {
         studentId
     ) || null;
 }
+
 
 // ============================================================
 // الحلقة المحددة
@@ -195,8 +170,9 @@ function getSelectedHalaqa() {
     ) || null;
 }
 
+
 // ============================================================
-// تهيئة الصفحة
+// 🚀 تهيئة الصفحة
 // ============================================================
 
 async function initializePage() {
@@ -210,9 +186,11 @@ async function initializePage() {
             !recitationFields ||
             !saveButton
         ) {
+
             throw new Error(
                 'بعض عناصر الصفحة غير موجودة.'
             );
+
         }
 
         halaqat =
@@ -242,8 +220,11 @@ async function initializePage() {
             '❌ حدث خطأ أثناء تحميل الصفحة.\n\n' +
             error.message
         );
+
     }
+
 }
+
 
 // ============================================================
 // عرض الحلقات
@@ -292,9 +273,12 @@ function renderHalaqat() {
             halaqaFilter.appendChild(
                 option
             );
+
         }
     );
+
 }
+
 
 // ============================================================
 // 📋 جلب رصد اليوم
@@ -313,11 +297,13 @@ async function getTodayAttendance(
                 db,
                 'records'
             ),
+
             where(
                 'halaqaId',
                 '==',
                 halaqaId
             ),
+
             where(
                 'date',
                 '==',
@@ -358,11 +344,13 @@ async function getTodayAttendance(
                         )
                 }
             );
+
         }
     );
 
     return attendanceMap;
 }
+
 
 // ============================================================
 // 👥 تحميل الطلاب حسب الحلقة
@@ -380,7 +368,8 @@ async function loadStudentsByHalaqa(
 
     hideEditMode();
 
-    closeParentChat();
+    hideChatButton();
+
 
     // ========================================================
     // حالة التحميل
@@ -403,6 +392,7 @@ async function loadStudentsByHalaqa(
     studentSelect.disabled =
         true;
 
+
     try {
 
         // ====================================================
@@ -420,6 +410,7 @@ async function loadStudentsByHalaqa(
                         db,
                         'students'
                     ),
+
                     where(
                         'halaqaId',
                         '==',
@@ -431,10 +422,12 @@ async function loadStudentsByHalaqa(
             getTodayAttendance(
                 halaqaId
             )
+
         ]);
 
+
         // ====================================================
-        // إذا لم توجد سجلات طلاب أصلًا
+        // لا يوجد طلاب
         // ====================================================
 
         if (studentsSnapshot.empty) {
@@ -466,6 +459,7 @@ async function loadStudentsByHalaqa(
             return;
         }
 
+
         // ====================================================
         // تجهيز القائمة
         // ====================================================
@@ -486,6 +480,7 @@ async function loadStudentsByHalaqa(
             defaultOption
         );
 
+
         // ====================================================
         // الطلاب النشطون فقط
         // ====================================================
@@ -497,19 +492,6 @@ async function loadStudentsByHalaqa(
 
                 const student =
                     studentDoc.data();
-
-                // =================================================
-                // 🚫 تجاهل الطالب غير النشط
-                //
-                // إذا كان:
-                //
-                // isActive: false
-                //
-                // فلن يظهر في قائمة اختيار الطالب.
-                //
-                // أما إذا لم يوجد isActive أصلًا،
-                // فسيعتبر الطالب نشطًا.
-                // =================================================
 
                 if (
                     student.isActive === false
@@ -523,9 +505,12 @@ async function loadStudentsByHalaqa(
                         studentDoc.id,
 
                     ...student
+
                 });
+
             }
         );
+
 
         // ====================================================
         // لا يوجد طلاب نشطون
@@ -560,8 +545,9 @@ async function loadStudentsByHalaqa(
             return;
         }
 
+
         // ====================================================
-        // ترتيب الطلاب حسب الاسم
+        // ترتيب الطلاب
         // ====================================================
 
         students.sort(
@@ -581,14 +567,17 @@ async function loadStudentsByHalaqa(
                     nameB,
                     'ar'
                 );
+
             }
         );
+
 
         // ====================================================
         // عدد الطلاب الذين تم رصدهم
         // ====================================================
 
         let recordedCount = 0;
+
 
         // ====================================================
         // إنشاء الخيارات
@@ -619,8 +608,9 @@ async function loadStudentsByHalaqa(
                         student.id
                     );
 
+
                 // =================================================
-                // الطالب تم رصده اليوم
+                // الطالب تم رصده
                 // =================================================
 
                 if (attendance) {
@@ -632,6 +622,7 @@ async function loadStudentsByHalaqa(
 
                     let statusText =
                         'تم الرصد';
+
 
                     switch (
                         attendance.status
@@ -647,6 +638,7 @@ async function loadStudentsByHalaqa(
 
                             break;
 
+
                         case 'غائب':
 
                             icon =
@@ -656,6 +648,7 @@ async function loadStudentsByHalaqa(
                                 'غائب';
 
                             break;
+
 
                         case 'إجازة':
 
@@ -667,6 +660,7 @@ async function loadStudentsByHalaqa(
 
                             break;
 
+
                         case 'مستأذن':
 
                             icon =
@@ -676,6 +670,7 @@ async function loadStudentsByHalaqa(
                                 'مستأذن';
 
                             break;
+
 
                         case 'مراجعة':
 
@@ -687,6 +682,7 @@ async function loadStudentsByHalaqa(
 
                             break;
 
+
                         default:
 
                             icon =
@@ -694,7 +690,9 @@ async function loadStudentsByHalaqa(
 
                             statusText =
                                 'تم الرصد';
+
                     }
+
 
                     option.textContent =
                         `${icon} ${studentName} — ${statusText}`;
@@ -716,7 +714,7 @@ async function loadStudentsByHalaqa(
                 } else {
 
                     // =================================================
-                    // الطالب لم يتم رصده
+                    // لم يتم الرصد
                     // =================================================
 
                     option.textContent =
@@ -730,29 +728,27 @@ async function loadStudentsByHalaqa(
 
                     option.dataset.recordId =
                         '';
+
                 }
+
 
                 studentSelect.appendChild(
                     option
                 );
+
             }
         );
 
-        // ====================================================
-        // تفعيل القائمة
-        // ====================================================
 
         studentSelect.disabled =
             false;
 
-        // ====================================================
-        // تحديث الملخص
-        // ====================================================
 
         updateAttendanceSummary(
             students.length,
             recordedCount
         );
+
 
     } catch (error) {
 
@@ -789,8 +785,11 @@ async function loadStudentsByHalaqa(
             '❌ تعذر تحميل بيانات الطلاب.\n\n' +
             error.message
         );
+
     }
+
 }
+
 
 // ============================================================
 // 📊 ملخص الرصد
@@ -854,6 +853,7 @@ function updateAttendanceSummary(
 
             </div>
 
+
             <div class="summary-item">
 
                 <span class="summary-icon">
@@ -873,6 +873,7 @@ function updateAttendanceSummary(
                 </div>
 
             </div>
+
 
             <div class="summary-item">
 
@@ -896,6 +897,7 @@ function updateAttendanceSummary(
 
         </div>
 
+
         <div class="summary-progress">
 
             <div
@@ -903,8 +905,11 @@ function updateAttendanceSummary(
             ></div>
 
         </div>
+
     `;
+
 }
+
 
 // ============================================================
 // تغيير الحلقة
@@ -930,7 +935,7 @@ halaqaFilter.addEventListener(
 
         hideEditMode();
 
-        closeParentChat();
+        hideChatButton();
 
         updateAttendanceSummary(
             0,
@@ -944,8 +949,10 @@ halaqaFilter.addEventListener(
         await loadStudentsByHalaqa(
             halaqaId
         );
+
     }
 );
+
 
 // ============================================================
 // اختيار الطالب
@@ -969,21 +976,25 @@ studentSelect.addEventListener(
 
             hideChatButton();
 
-            closeParentChat();
-
             return;
         }
+
 
         const recorded =
             selectedOption.dataset.recorded ===
             'true';
 
+
         const student =
             getSelectedStudent();
 
+
         if (student) {
+
             showChatButton();
+
         }
+
 
         if (!recorded) {
 
@@ -997,6 +1008,7 @@ studentSelect.addEventListener(
             return;
         }
 
+
         try {
 
             currentTodayRecord =
@@ -1008,11 +1020,15 @@ studentSelect.addEventListener(
 
             currentTodayRecord =
                 null;
+
         }
 
+
         showEditMode();
+
     }
 );
+
 
 // ============================================================
 // 💬 إظهار زر المحادثة
@@ -1020,13 +1036,20 @@ studentSelect.addEventListener(
 
 function showChatButton() {
 
-    if (!chatParentButton) {
+    const button =
+        document.getElementById(
+            'chatParentBtn'
+        );
+
+    if (!button) {
         return;
     }
 
-    chatParentButton.style.display =
+    button.style.display =
         'flex';
+
 }
+
 
 // ============================================================
 // إخفاء زر المحادثة
@@ -1034,13 +1057,123 @@ function showChatButton() {
 
 function hideChatButton() {
 
-    if (!chatParentButton) {
+    const button =
+        document.getElementById(
+            'chatParentBtn'
+        );
+
+    if (!button) {
         return;
     }
 
-    chatParentButton.style.display =
+    button.style.display =
         'none';
+
 }
+
+
+// ============================================================
+// 💬 فتح صفحة المحادثة المستقلة
+// ============================================================
+
+function openParentChatPage() {
+
+    const student =
+        getSelectedStudent();
+
+    const halaqa =
+        getSelectedHalaqa();
+
+
+    if (!student) {
+
+        showMessage(
+            '⚠️ اختر الطالب أولاً.'
+        );
+
+        return;
+    }
+
+
+    if (!halaqa) {
+
+        showMessage(
+            '⚠️ اختر الحلقة أولاً.'
+        );
+
+        return;
+    }
+
+
+    if (
+        student.isActive === false
+    ) {
+
+        showMessage(
+            '⚠️ هذا الطالب غير نشط.'
+        );
+
+        return;
+    }
+
+
+    const parentId =
+        student.parentId ||
+        student.parentUid ||
+        student.guardianId ||
+        '';
+
+
+    if (!parentId) {
+
+        showMessage(
+            '⚠️ لا يوجد حساب ولي أمر مرتبط بهذا الطالب.'
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // تمرير بيانات الطالب والحلقة إلى صفحة المحادثة
+    // ========================================================
+
+    const params =
+        new URLSearchParams({
+
+            studentId:
+                student.id,
+
+            halaqaId:
+                halaqa.id
+
+        });
+
+
+    window.location.href =
+        `chat.html?${params.toString()}`;
+
+}
+
+
+// ============================================================
+// ربط زر المحادثة
+// ============================================================
+
+const chatParentButton =
+    document.getElementById(
+        'chatParentBtn'
+    );
+
+if (chatParentButton) {
+
+    chatParentButton.addEventListener(
+        'click',
+        openParentChatPage
+    );
+
+}
+
 
 // ============================================================
 // وضع التعديل
@@ -1057,26 +1190,39 @@ function showEditMode() {
 
         recordMode.className =
             'record-mode edit';
+
     }
+
 
     if (editButton) {
 
         editButton.style.display =
             'flex';
+
     }
+
 
     if (saveButton) {
 
         saveButton.innerHTML = `
+
             <span>💾</span>
-            <span>حفظ تعديل رصد اليوم</span>
+
+            <span>
+                حفظ تعديل رصد اليوم
+            </span>
+
         `;
+
     }
+
 
     fillFormFromRecord(
         currentTodayRecord
     );
+
 }
+
 
 // ============================================================
 // إخفاء وضع التعديل
@@ -1093,22 +1239,34 @@ function hideEditMode() {
 
         recordMode.className =
             'record-mode new';
+
     }
+
 
     if (editButton) {
 
         editButton.style.display =
             'none';
+
     }
+
 
     if (saveButton) {
 
         saveButton.innerHTML = `
+
             <span>📤</span>
-            <span>حفظ وإرسال التحديث للأهل</span>
+
+            <span>
+                حفظ وإرسال التحديث للأهل
+            </span>
+
         `;
+
     }
+
 }
+
 
 // ============================================================
 // تعبئة النموذج من السجل
@@ -1122,17 +1280,26 @@ function fillFormFromRecord(
         return;
     }
 
+
     attendanceStatus.value =
-        record.status || 'حاضر';
+        record.status ||
+        'حاضر';
+
 
     currentSurah.value =
-        record.surah || '';
+        record.surah ||
+        '';
+
 
     fromAya.value =
-        record.fromAyah || '';
+        record.fromAyah ||
+        '';
+
 
     toAya.value =
-        record.toAyah || '';
+        record.toAyah ||
+        '';
+
 
     tomorrowReq.value =
         record.tomorrowRequirement ===
@@ -1143,23 +1310,30 @@ function fillFormFromRecord(
                 ''
             );
 
+
     teacherNotes.value =
-        record.notes || '';
+        record.notes ||
+        '';
+
 
     pointsGiven.value =
         Number(
-            record.pointsGiven || 0
+            record.pointsGiven ||
+            0
         );
+
 
     const values =
         String(
-            record.grade || ''
+            record.grade ||
+            ''
         )
         .split(' - ')
         .map(
             value =>
                 value.trim()
         );
+
 
     document
         .querySelectorAll(
@@ -1172,11 +1346,15 @@ function fillFormFromRecord(
                     values.includes(
                         checkbox.value
                     );
+
             }
         );
 
+
     updateRecitationVisibility();
+
 }
+
 
 // ============================================================
 // حالة الحضور
@@ -1187,6 +1365,7 @@ attendanceStatus.addEventListener(
     updateRecitationVisibility
 );
 
+
 function updateRecitationVisibility() {
 
     const status =
@@ -1195,10 +1374,12 @@ function updateRecitationVisibility() {
     const isPresent =
         status === 'حاضر';
 
+
     recitationFields.style.display =
         isPresent
             ? 'block'
             : 'none';
+
 
     if (!isEditMode) {
 
@@ -1206,15 +1387,21 @@ function updateRecitationVisibility() {
             isPresent
                 ? '10'
                 : '0';
+
     }
+
 
     if (!isPresent) {
 
-        currentSurah.value = '';
+        currentSurah.value =
+            '';
 
-        fromAya.value = '';
+        fromAya.value =
+            '';
 
-        toAya.value = '';
+        toAya.value =
+            '';
+
 
         document
             .querySelectorAll(
@@ -1225,10 +1412,14 @@ function updateRecitationVisibility() {
 
                     checkbox.checked =
                         false;
+
                 }
             );
+
     }
+
 }
+
 
 // ============================================================
 // التحقق من النموذج
@@ -1245,6 +1436,7 @@ function validateForm() {
     const status =
         attendanceStatus.value;
 
+
     if (!halaqaId) {
 
         showMessage(
@@ -1253,6 +1445,7 @@ function validateForm() {
 
         return false;
     }
+
 
     if (!studentId) {
 
@@ -1263,6 +1456,7 @@ function validateForm() {
         return false;
     }
 
+
     if (!status) {
 
         showMessage(
@@ -1271,6 +1465,7 @@ function validateForm() {
 
         return false;
     }
+
 
     if (status === 'حاضر') {
 
@@ -1289,6 +1484,7 @@ function validateForm() {
             return false;
         }
 
+
         const from =
             Number(
                 fromAya.value || 0
@@ -1298,6 +1494,7 @@ function validateForm() {
             Number(
                 toAya.value || 0
             );
+
 
         if (
             from < 0 ||
@@ -1311,6 +1508,7 @@ function validateForm() {
             return false;
         }
 
+
         if (
             from > 0 &&
             to > 0 &&
@@ -1323,12 +1521,15 @@ function validateForm() {
 
             return false;
         }
+
     }
+
 
     const points =
         Number(
             pointsGiven.value || 0
         );
+
 
     if (
         !Number.isFinite(points) ||
@@ -1344,8 +1545,11 @@ function validateForm() {
         return false;
     }
 
+
     return true;
+
 }
+
 
 // ============================================================
 // ⭐ التقييم
@@ -1357,7 +1561,9 @@ function getGrade(status) {
         return '-';
     }
 
+
     const evaluations = [];
+
 
     document
         .querySelectorAll(
@@ -1369,8 +1575,10 @@ function getGrade(status) {
                 evaluations.push(
                     checkbox.value
                 );
+
             }
         );
+
 
     if (
         evaluations.length > 0
@@ -1379,10 +1587,14 @@ function getGrade(status) {
         return evaluations.join(
             ' - '
         );
+
     }
 
+
     return 'جيد';
+
 }
+
 
 // ============================================================
 // تجهيز السجل
@@ -1396,48 +1608,60 @@ function buildRecordData(
     const status =
         attendanceStatus.value;
 
+
     const surah =
         cleanText(
             currentSurah.value
         );
+
 
     const from =
         cleanText(
             fromAya.value
         ) || '0';
 
+
     const to =
         cleanText(
             toAya.value
         ) || '0';
+
 
     const tomorrowRequirement =
         cleanText(
             tomorrowReq.value
         ) || 'لا يوجد';
 
+
     const notes =
         cleanText(
             teacherNotes.value
         );
+
 
     let points =
         Number(
             pointsGiven.value || 0
         );
 
+
     if (
         status !== 'حاضر'
     ) {
+
         points = 0;
+
     }
+
 
     const grade =
         getGrade(status);
 
+
     const teacherPhone =
         selectedHalaqa.teacherPhone ||
         '';
+
 
     return {
 
@@ -1503,8 +1727,11 @@ function buildRecordData(
 
         updatedAt:
             serverTimestamp()
+
     };
+
 }
+
 
 // ============================================================
 // 💾 حفظ الرصد
@@ -1515,15 +1742,18 @@ saveButton.addEventListener(
     saveRecitation
 );
 
+
 async function saveRecitation() {
 
     if (saveButton.disabled) {
         return;
     }
 
+
     if (!validateForm()) {
         return;
     }
+
 
     const halaqaId =
         halaqaFilter.value;
@@ -1531,11 +1761,14 @@ async function saveRecitation() {
     const studentId =
         studentSelect.value;
 
+
     const selectedHalaqa =
         getSelectedHalaqa();
 
+
     const selectedStudent =
         getSelectedStudent();
+
 
     if (!selectedHalaqa) {
 
@@ -1546,6 +1779,7 @@ async function saveRecitation() {
         return;
     }
 
+
     if (!selectedStudent) {
 
         showMessage(
@@ -1555,9 +1789,9 @@ async function saveRecitation() {
         return;
     }
 
+
     // ========================================================
-    // حماية إضافية
-    // حتى لو حاول طالب غير نشط الوصول للصفحة بطريقة أخرى
+    // حماية الطالب غير النشط
     // ========================================================
 
     if (
@@ -1571,13 +1805,17 @@ async function saveRecitation() {
         return;
     }
 
+
     const recordData =
         buildRecordData(
             selectedHalaqa,
             selectedStudent
         );
 
-    saveButton.disabled = true;
+
+    saveButton.disabled =
+        true;
+
 
     try {
 
@@ -1597,11 +1835,13 @@ async function saveRecitation() {
                     0
                 );
 
+
             const newPoints =
                 Number(
                     recordData.pointsGiven ||
                     0
                 );
+
 
             await updateDoc(
                 doc(
@@ -1612,8 +1852,11 @@ async function saveRecitation() {
                 recordData
             );
 
+
             const pointsDifference =
-                newPoints - oldPoints;
+                newPoints -
+                oldPoints;
+
 
             if (
                 pointsDifference !== 0
@@ -1632,7 +1875,9 @@ async function saveRecitation() {
                             )
                     }
                 );
+
             }
+
 
             showMessage(
                 `✅ تم تعديل رصد الطالب بنجاح\n\n` +
@@ -1641,6 +1886,7 @@ async function saveRecitation() {
                 `⭐ النقاط: ${newPoints}\n` +
                 `📊 التقييم: ${recordData.grade}`
             );
+
 
         } else {
 
@@ -1654,16 +1900,19 @@ async function saveRecitation() {
                         db,
                         'records'
                     ),
+
                     where(
                         'halaqaId',
                         '==',
                         halaqaId
                     ),
+
                     where(
                         'studentId',
                         '==',
                         studentId
                     ),
+
                     where(
                         'date',
                         '==',
@@ -1671,10 +1920,12 @@ async function saveRecitation() {
                     )
                 );
 
+
             const existingSnapshot =
                 await getDocs(
                     existingQuery
                 );
+
 
             if (
                 !existingSnapshot.empty
@@ -1684,8 +1935,10 @@ async function saveRecitation() {
                     '⚠️ يوجد بالفعل رصد لهذا الطالب اليوم.\n\nسيتم فتح السجل للتعديل.'
                 );
 
+
                 const first =
                     existingSnapshot.docs[0];
+
 
                 currentTodayRecord = {
 
@@ -1693,12 +1946,16 @@ async function saveRecitation() {
                         first.id,
 
                     ...first.data()
+
                 };
+
 
                 showEditMode();
 
                 return;
+
             }
+
 
             // =================================================
             // إنشاء سجل جديد
@@ -1710,18 +1967,22 @@ async function saveRecitation() {
                     'records'
                 ),
                 {
+
                     ...recordData,
 
                     timestamp:
                         serverTimestamp()
+
                 }
             );
+
 
             const points =
                 Number(
                     recordData.pointsGiven ||
                     0
                 );
+
 
             if (points > 0) {
 
@@ -1738,7 +1999,9 @@ async function saveRecitation() {
                             )
                     }
                 );
+
             }
+
 
             showMessage(
                 `✅ تم حفظ الرصد بنجاح\n\n` +
@@ -1747,7 +2010,9 @@ async function saveRecitation() {
                 `⭐ النقاط: ${points}\n` +
                 `📊 التقييم: ${recordData.grade}`
             );
+
         }
+
 
         // ====================================================
         // إعادة تحميل القائمة
@@ -1757,14 +2022,18 @@ async function saveRecitation() {
             halaqaId
         );
 
+
         studentSelect.value =
             studentId;
+
 
         studentSelect.dispatchEvent(
             new Event('change')
         );
 
+
         resetFormAfterSave();
+
 
     } catch (error) {
 
@@ -1782,57 +2051,17 @@ async function saveRecitation() {
 
         saveButton.disabled =
             false;
+
     }
+
 }
+
 
 // ============================================================
 // تنظيف بعد الحفظ
 // ============================================================
 
 function resetFormAfterSave() {
-
-    currentSurah.value = '';
-
-    fromAya.value = '';
-
-    toAya.value = '';
-
-    tomorrowReq.value = '';
-
-    teacherNotes.value = '';
-
-    pointsGiven.value =
-        '10';
-
-    document
-        .querySelectorAll(
-            '.eval-check'
-        )
-        .forEach(
-            checkbox => {
-
-                checkbox.checked =
-                    false;
-            }
-        );
-
-    currentTodayRecord =
-        null;
-
-    isEditMode =
-        false;
-
-    hideEditMode();
-}
-
-// ============================================================
-// طالب جديد
-// ============================================================
-
-function resetFormAfterNewStudent() {
-
-    attendanceStatus.value =
-        'حاضر';
 
     currentSurah.value =
         '';
@@ -1852,6 +2081,7 @@ function resetFormAfterNewStudent() {
     pointsGiven.value =
         '10';
 
+
     document
         .querySelectorAll(
             '.eval-check'
@@ -1861,11 +2091,69 @@ function resetFormAfterNewStudent() {
 
                 checkbox.checked =
                     false;
+
             }
         );
 
-    updateRecitationVisibility();
+
+    currentTodayRecord =
+        null;
+
+    isEditMode =
+        false;
+
+    hideEditMode();
+
 }
+
+
+// ============================================================
+// طالب جديد
+// ============================================================
+
+function resetFormAfterNewStudent() {
+
+    attendanceStatus.value =
+        'حاضر';
+
+
+    currentSurah.value =
+        '';
+
+    fromAya.value =
+        '';
+
+    toAya.value =
+        '';
+
+    tomorrowReq.value =
+        '';
+
+    teacherNotes.value =
+        '';
+
+    pointsGiven.value =
+        '10';
+
+
+    document
+        .querySelectorAll(
+            '.eval-check'
+        )
+        .forEach(
+            checkbox => {
+
+                checkbox.checked =
+                    false;
+
+            }
+        );
+
+
+    updateRecitationVisibility();
+
+}
+
 
 // ============================================================
 // زر التعديل
@@ -1886,673 +2174,23 @@ if (editButton) {
                 return;
             }
 
+
             showEditMode();
 
+
             window.scrollTo({
+
                 top: 0,
+
                 behavior: 'smooth'
+
             });
-        }
-    );
-}
 
-// ============================================================
-// فتح المحادثة
-// ============================================================
-
-if (chatParentButton) {
-
-    chatParentButton.addEventListener(
-        'click',
-        openParentChat
-    );
-}
-
-function openParentChat() {
-
-    const student =
-        getSelectedStudent();
-
-    const halaqa =
-        getSelectedHalaqa();
-
-    if (!student) {
-
-        showMessage(
-            '⚠️ اختر الطالب أولاً.'
-        );
-
-        return;
-    }
-
-    if (!halaqa) {
-
-        showMessage(
-            '⚠️ اختر الحلقة أولاً.'
-        );
-
-        return;
-    }
-
-    // ========================================================
-    // حماية من الطالب غير النشط
-    // ========================================================
-
-    if (
-        student.isActive === false
-    ) {
-
-        showMessage(
-            '⚠️ هذا الطالب غير نشط.'
-        );
-
-        return;
-    }
-
-    const parentId =
-        student.parentId ||
-        student.parentUid ||
-        student.guardianId ||
-        '';
-
-    if (!parentId) {
-
-        showMessage(
-            '⚠️ لا يوجد حساب ولي أمر مرتبط بهذا الطالب.'
-        );
-
-        return;
-    }
-
-    currentChatStudent =
-        student;
-
-    currentChatHalaqa =
-        halaqa;
-
-    chatStudentName.textContent =
-        `ولي أمر ${student.name || 'الطالب'}`;
-
-    chatHalaqaName.textContent =
-        `📖 ${halaqa.name || 'الحلقة'}`;
-
-    parentChatSection.style.display =
-        'block';
-
-    subscribeToChat(
-        student,
-        halaqa,
-        parentId
-    );
-
-    setTimeout(
-        () => {
-
-            if (chatMessageInput) {
-                chatMessageInput.focus();
-            }
-
-        },
-        100
-    );
-}
-
-// ============================================================
-// إغلاق المحادثة
-// ============================================================
-
-if (closeChatButton) {
-
-    closeChatButton.addEventListener(
-        'click',
-        closeParentChat
-    );
-}
-
-function closeParentChat() {
-
-    if (unsubscribeChat) {
-
-        unsubscribeChat();
-
-        unsubscribeChat =
-            null;
-    }
-
-    currentChatStudent =
-        null;
-
-    currentChatHalaqa =
-        null;
-
-    if (parentChatSection) {
-
-        parentChatSection.style.display =
-            'none';
-    }
-}
-
-// ============================================================
-// 🔴 الاستماع للمحادثة
-// ============================================================
-
-function subscribeToChat(
-    student,
-    halaqa,
-    parentId
-) {
-
-    if (unsubscribeChat) {
-
-        unsubscribeChat();
-
-        unsubscribeChat =
-            null;
-    }
-
-    chatMessages.innerHTML = `
-
-        <div class="chat-empty">
-
-            ⏳
-
-            <strong>
-                جاري تحميل المحادثة...
-            </strong>
-
-        </div>
-    `;
-
-    const messagesQuery =
-        query(
-
-            collection(
-                db,
-                'messages'
-            ),
-
-            where(
-                'halaqaId',
-                '==',
-                halaqa.id
-            ),
-
-            where(
-                'studentId',
-                '==',
-                student.id
-            ),
-
-            where(
-                'parentId',
-                '==',
-                parentId
-            )
-        );
-
-    unsubscribeChat =
-        onSnapshot(
-
-            messagesQuery,
-
-            snapshot => {
-
-                renderChatMessages(
-                    snapshot
-                );
-            },
-
-            error => {
-
-                console.error(
-                    'Chat Listener Error:',
-                    error
-                );
-
-                chatMessages.innerHTML = `
-
-                    <div class="chat-empty">
-
-                        ❌
-
-                        <strong>
-                            تعذر تحميل المحادثة
-                        </strong>
-
-                        <small>
-                            تحقق من اتصال الإنترنت وصلاحيات Firestore.
-                        </small>
-
-                    </div>
-                `;
-            }
-        );
-}
-
-// ============================================================
-// عرض الرسائل
-// ============================================================
-
-function renderChatMessages(
-    snapshot
-) {
-
-    if (snapshot.empty) {
-
-        chatMessages.innerHTML = `
-
-            <div class="chat-empty">
-
-                💬
-
-                <strong>
-                    لا توجد رسائل بعد
-                </strong>
-
-                <small>
-                    عند إرسال ولي الأمر رسالة ستظهر هنا مباشرة.
-                </small>
-
-            </div>
-        `;
-
-        return;
-    }
-
-    const messages = [];
-
-    snapshot.forEach(
-        messageDoc => {
-
-            messages.push({
-
-                id:
-                    messageDoc.id,
-
-                ...messageDoc.data()
-            });
         }
     );
 
-    messages.sort(
-        (a, b) => {
-
-            const timeA =
-                a.createdAt?.toMillis?.() ||
-                0;
-
-            const timeB =
-                b.createdAt?.toMillis?.() ||
-                0;
-
-            return timeA - timeB;
-        }
-    );
-
-    chatMessages.innerHTML = '';
-
-    messages.forEach(
-        message => {
-
-            const senderRole =
-                message.senderRole ||
-                'parent';
-
-            const isTeacher =
-                senderRole ===
-                'teacher';
-
-            const messageElement =
-                document.createElement(
-                    'div'
-                );
-
-            messageElement.className =
-                `chat-message ${
-                    isTeacher
-                        ? 'teacher'
-                        : 'parent'
-                }`;
-
-            const text =
-                cleanText(
-                    message.text
-                );
-
-            const senderName =
-                isTeacher
-                    ? (
-                        message.teacherName ||
-                        'الشيخ'
-                    )
-                    : 'ولي الأمر';
-
-            const time =
-                formatMessageTime(
-                    message.createdAt
-                );
-
-            messageElement.innerHTML = `
-
-                <div class="chat-sender">
-
-                    ${
-                        isTeacher
-                            ? '👨‍🏫'
-                            : '👤'
-                    }
-
-                    ${escapeHtml(
-                        senderName
-                    )}
-
-                </div>
-
-                <div class="chat-text">
-
-                    ${escapeHtml(
-                        text
-                    )}
-
-                </div>
-
-                <div class="chat-message-meta">
-
-                    <span>
-                        ${time}
-                    </span>
-
-                </div>
-            `;
-
-            chatMessages.appendChild(
-                messageElement
-            );
-        }
-    );
-
-    scrollChatToBottom();
 }
 
-// ============================================================
-// حماية HTML
-// ============================================================
-
-function escapeHtml(
-    value
-) {
-
-    return String(value)
-        .replace(
-            /&/g,
-            '&amp;'
-        )
-        .replace(
-            /</g,
-            '&lt;'
-        )
-        .replace(
-            />/g,
-            '&gt;'
-        )
-        .replace(
-            /"/g,
-            '&quot;'
-        )
-        .replace(
-            /'/g,
-            '&#039;'
-        )
-        .replace(
-            /\n/g,
-            '<br>'
-        );
-}
-
-// ============================================================
-// وقت الرسالة
-// ============================================================
-
-function formatMessageTime(
-    timestamp
-) {
-
-    if (!timestamp) {
-        return 'الآن';
-    }
-
-    try {
-
-        const date =
-            timestamp.toDate
-                ? timestamp.toDate()
-                : new Date(
-                    timestamp
-                );
-
-        return date.toLocaleTimeString(
-            'ar-YE',
-            {
-                hour: '2-digit',
-                minute: '2-digit'
-            }
-        );
-
-    } catch {
-
-        return 'الآن';
-    }
-}
-
-// ============================================================
-// النزول إلى آخر المحادثة
-// ============================================================
-
-function scrollChatToBottom() {
-
-    if (!chatMessages) {
-        return;
-    }
-
-    chatMessages.scrollTop =
-        chatMessages.scrollHeight;
-}
-
-// ============================================================
-// إرسال رسالة المدرس
-// ============================================================
-
-if (sendChatMessageButton) {
-
-    sendChatMessageButton.addEventListener(
-        'click',
-        sendParentChatMessage
-    );
-}
-
-async function sendParentChatMessage() {
-
-    const text =
-        cleanText(
-            chatMessageInput.value
-        );
-
-    if (!text) {
-        return;
-    }
-
-    const student =
-        currentChatStudent ||
-        getSelectedStudent();
-
-    const halaqa =
-        currentChatHalaqa ||
-        getSelectedHalaqa();
-
-    if (!student || !halaqa) {
-
-        showMessage(
-            '⚠️ اختر الحلقة والطالب أولاً.'
-        );
-
-        return;
-    }
-
-    // ========================================================
-    // حماية إضافية
-    // ========================================================
-
-    if (
-        student.isActive === false
-    ) {
-
-        showMessage(
-            '⚠️ لا يمكن مراسلة ولي أمر طالب غير نشط.'
-        );
-
-        return;
-    }
-
-    const parentId =
-        student.parentId ||
-        student.parentUid ||
-        student.guardianId ||
-        '';
-
-    if (!parentId) {
-
-        showMessage(
-            '⚠️ لا يوجد ولي أمر مرتبط بهذا الطالب.'
-        );
-
-        return;
-    }
-
-    const user =
-        auth.currentUser;
-
-    if (!user) {
-
-        showMessage(
-            '⚠️ يجب تسجيل دخول المدرس أولاً.'
-        );
-
-        return;
-    }
-
-    sendChatMessageButton.disabled =
-        true;
-
-    try {
-
-        await addDoc(
-            collection(
-                db,
-                'messages'
-            ),
-            {
-
-                studentId:
-                    student.id,
-
-                studentName:
-                    student.name || '',
-
-                halaqaId:
-                    halaqa.id,
-
-                halaqaName:
-                    halaqa.name || '',
-
-                parentId,
-
-                teacherId:
-                    halaqa.teacherId ||
-                    halaqa.teacherUid ||
-                    user.uid,
-
-                teacherName:
-                    halaqa.teacherName ||
-                    '',
-
-                senderId:
-                    user.uid,
-
-                senderRole:
-                    'teacher',
-
-                text,
-
-                createdAt:
-                    serverTimestamp(),
-
-                updatedAt:
-                    serverTimestamp()
-            }
-        );
-
-        chatMessageInput.value =
-            '';
-
-        chatMessageInput.style.height =
-            'auto';
-
-    } catch (error) {
-
-        console.error(
-            'Send Chat Error:',
-            error
-        );
-
-        showMessage(
-            '❌ تعذر إرسال الرسالة.\n\n' +
-            error.message
-        );
-
-    } finally {
-
-        sendChatMessageButton.disabled =
-            false;
-    }
-}
-
-// ============================================================
-// Enter لإرسال الرسالة
-// ============================================================
-
-if (chatMessageInput) {
-
-    chatMessageInput.addEventListener(
-        'keydown',
-        event => {
-
-            if (
-                event.key === 'Enter' &&
-                !event.shiftKey
-            ) {
-
-                event.preventDefault();
-
-                sendParentChatMessage();
-            }
-        }
-    );
-
-    chatMessageInput.addEventListener(
-        'input',
-        () => {
-
-            chatMessageInput.style.height =
-                'auto';
-
-            chatMessageInput.style.height =
-                Math.min(
-                    chatMessageInput.scrollHeight,
-                    110
-                ) + 'px';
-        }
-    );
-}
 
 // ============================================================
 // 🚀 تشغيل الصفحة
