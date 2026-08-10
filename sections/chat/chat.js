@@ -3,6 +3,7 @@
 // 📄 صفحة المدير
 // 👨‍👩‍👦 ولي الأمر ⇄ المدير
 // 🚫 لا يوجد مدرس في المحادثة
+// 📖 جلب اسم الحلقة عبر halaqaId
 // ============================================================
 
 import {
@@ -16,7 +17,9 @@ import {
     where,
     addDoc,
     onSnapshot,
-    serverTimestamp
+    serverTimestamp,
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ============================================================
@@ -71,6 +74,18 @@ let unsubscribeChat = null;
 let currentAdminId = null;
 
 // ============================================================
+// Cache الحلقات
+// ============================================================
+//
+// key   = halaqaId
+// value = اسم الحلقة
+//
+// حتى لا يتم جلب نفس الحلقة أكثر من مرة.
+// ============================================================
+
+const halaqaCache = new Map();
+
+// ============================================================
 // رسالة
 // ============================================================
 
@@ -91,12 +106,187 @@ function cleanText(value) {
 // ============================================================
 
 function escapeHtml(value) {
+
     return String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+
+}
+
+// ============================================================
+// ============================================================
+// 📖 جلب اسم الحلقة عبر halaqaId
+// ============================================================
+// ============================================================
+
+async function getHalaqaNameById(halaqaId) {
+
+    const id =
+        cleanText(halaqaId);
+
+    // لا يوجد ID
+    if (!id) {
+        return 'الحلقة غير محددة';
+    }
+
+    // ========================================================
+    // موجود في Cache
+    // ========================================================
+
+    if (halaqaCache.has(id)) {
+
+        return halaqaCache.get(id);
+
+    }
+
+    try {
+
+        /*
+         * ====================================================
+         * الحلقات موجودة في:
+         *
+         * halaqat
+         *
+         * و halaqaId هو ID الوثيقة.
+         * ====================================================
+         */
+
+        const halaqaRef =
+            doc(
+                db,
+                'halaqat',
+                id
+            );
+
+        const halaqaSnapshot =
+            await getDoc(
+                halaqaRef
+            );
+
+        if (!halaqaSnapshot.exists()) {
+
+            halaqaCache.set(
+                id,
+                'الحلقة غير موجودة'
+            );
+
+            return 'الحلقة غير موجودة';
+        }
+
+        const data =
+            halaqaSnapshot.data();
+
+        /*
+         * نحاول دعم أكثر من اسم محتمل
+         * لحقل اسم الحلقة.
+         */
+
+        const halaqaName =
+            cleanText(
+                data.halaqaName
+            ) ||
+            cleanText(
+                data.name
+            ) ||
+            cleanText(
+                data.title
+            ) ||
+            'الحلقة غير محددة';
+
+        halaqaCache.set(
+            id,
+            halaqaName
+        );
+
+        return halaqaName;
+
+    } catch (error) {
+
+        console.error(
+            'Get Halaqa Name Error:',
+            error
+        );
+
+        /*
+         * لا نوقف المحادثة بسبب خطأ
+         * في جلب اسم الحلقة.
+         */
+
+        return 'تعذر جلب الحلقة';
+
+    }
+
+}
+
+// ============================================================
+// جلب حلقات جميع المحادثات
+// ============================================================
+
+async function loadHalaqaNamesForConversations() {
+
+    /*
+     * نجمع IDs بدون تكرار
+     */
+
+    const halaqaIds =
+        [
+            ...new Set(
+                conversations
+                    .map(
+                        conversation =>
+                            cleanText(
+                                conversation.halaqaId
+                            )
+                    )
+                    .filter(Boolean)
+            )
+        ];
+
+    if (!halaqaIds.length) {
+
+        return;
+
+    }
+
+    /*
+     * جلب الحلقات بالتوازي
+     */
+
+    await Promise.all(
+
+        halaqaIds.map(
+            id =>
+                getHalaqaNameById(id)
+        )
+
+    );
+
+    /*
+     * بعد اكتمال الجلب
+     * نضع الاسم داخل المحادثة.
+     */
+
+    conversations.forEach(
+        conversation => {
+
+            if (
+                conversation.halaqaId
+            ) {
+
+                conversation.halaqaName =
+                    halaqaCache.get(
+                        conversation.halaqaId
+                    ) ||
+                    'الحلقة غير محددة';
+
+            }
+
+        }
+    );
+
 }
 
 // ============================================================
@@ -106,10 +296,14 @@ function escapeHtml(value) {
 function getConversationKey(message) {
 
     const parentId =
-        cleanText(message.parentId);
+        cleanText(
+            message.parentId
+        );
 
     const studentId =
-        cleanText(message.studentId);
+        cleanText(
+            message.studentId
+        );
 
     /*
      * المحادثة الأساسية:
@@ -119,25 +313,37 @@ function getConversationKey(message) {
      * لا نعتمد على الحلقة.
      */
 
-    if (parentId && studentId) {
+    if (
+        parentId &&
+        studentId
+    ) {
+
         return [
             parentId,
             studentId
         ].join('_');
+
     }
 
     if (parentId) {
+
         return parentId;
+
     }
 
     const senderId =
-        cleanText(message.senderId);
+        cleanText(
+            message.senderId
+        );
 
     if (senderId) {
+
         return `sender_${senderId}`;
+
     }
 
     return `message_${message.id || Date.now()}`;
+
 }
 
 // ============================================================
@@ -156,22 +362,30 @@ function getTimestampMillis(timestamp) {
             typeof timestamp.toMillis ===
             'function'
         ) {
+
             return timestamp.toMillis();
+
         }
 
         if (
             typeof timestamp.toDate ===
             'function'
         ) {
+
             return timestamp
                 .toDate()
                 .getTime();
+
         }
 
         if (
             timestamp.seconds !== undefined
         ) {
-            return Number(timestamp.seconds) * 1000;
+
+            return Number(
+                timestamp.seconds
+            ) * 1000;
+
         }
 
         const date =
@@ -185,8 +399,11 @@ function getTimestampMillis(timestamp) {
             : time;
 
     } catch {
+
         return 0;
+
     }
+
 }
 
 // ============================================================
@@ -196,10 +413,14 @@ function getTimestampMillis(timestamp) {
 function formatMessageTime(timestamp) {
 
     const millis =
-        getTimestampMillis(timestamp);
+        getTimestampMillis(
+            timestamp
+        );
 
     if (!millis) {
+
         return 'الآن';
+
     }
 
     try {
@@ -216,8 +437,11 @@ function formatMessageTime(timestamp) {
         );
 
     } catch {
+
         return 'الآن';
+
     }
+
 }
 
 // ============================================================
@@ -227,10 +451,14 @@ function formatMessageTime(timestamp) {
 function formatConversationTime(timestamp) {
 
     const millis =
-        getTimestampMillis(timestamp);
+        getTimestampMillis(
+            timestamp
+        );
 
     if (!millis) {
+
         return 'الآن';
+
     }
 
     try {
@@ -260,6 +488,7 @@ function formatConversationTime(timestamp) {
                     minute: '2-digit'
                 }
             );
+
         }
 
         return date.toLocaleDateString(
@@ -271,8 +500,11 @@ function formatConversationTime(timestamp) {
         );
 
     } catch {
+
         return '';
+
     }
+
 }
 
 // ============================================================
@@ -285,10 +517,13 @@ function getInitial(name) {
         cleanText(name);
 
     if (!value) {
+
         return '👤';
+
     }
 
     return value.charAt(0);
+
 }
 
 // ============================================================
@@ -302,10 +537,13 @@ function subscribeToInbox() {
         unsubscribeInbox();
 
         unsubscribeInbox = null;
+
     }
 
     if (!currentAdminId) {
+
         return;
+
     }
 
     chatList.innerHTML = `
@@ -326,19 +564,8 @@ function subscribeToInbox() {
 
     /*
      * ========================================================
-     * مهم:
-     *
      * المدير يستمع إلى كل الرسائل التي adminId فيها
      * يساوي UID المدير.
-     *
-     * سواء كانت الرسالة:
-     *
-     * parent
-     *
-     * أو
-     *
-     * admin
-     *
      * ========================================================
      */
 
@@ -397,26 +624,29 @@ function subscribeToInbox() {
                     </div>
 
                 `;
+
             }
+
         );
+
 }
 
 // ============================================================
 // بناء المحادثات
 // ============================================================
 
-function buildConversations(snapshot) {
+async function buildConversations(snapshot) {
 
     const grouped =
         new Map();
 
-    snapshot.forEach(doc => {
+    snapshot.forEach(docSnapshot => {
 
         const message = {
 
-            id: doc.id,
+            id: docSnapshot.id,
 
-            ...doc.data()
+            ...docSnapshot.data()
 
         };
 
@@ -459,6 +689,11 @@ function buildConversations(snapshot) {
 
                 halaqaId,
 
+                /*
+                 * لا نعتمد على halaqaName
+                 * القادم من الرسالة.
+                 */
+
                 studentName:
                     cleanText(
                         message.studentName
@@ -466,10 +701,7 @@ function buildConversations(snapshot) {
                     'الطالب',
 
                 halaqaName:
-                    cleanText(
-                        message.halaqaName
-                    ) ||
-                    'الحلقة',
+                    'جاري جلب الحلقة...',
 
                 parentName:
                     cleanText(
@@ -497,6 +729,7 @@ function buildConversations(snapshot) {
             );
 
             return;
+
         }
 
         existing.messageCount++;
@@ -512,6 +745,7 @@ function buildConversations(snapshot) {
 
             existing.parentId =
                 parentId;
+
         }
 
         if (
@@ -521,6 +755,7 @@ function buildConversations(snapshot) {
 
             existing.studentId =
                 studentId;
+
         }
 
         if (
@@ -530,6 +765,7 @@ function buildConversations(snapshot) {
 
             existing.halaqaId =
                 halaqaId;
+
         }
 
         if (
@@ -547,23 +783,7 @@ function buildConversations(snapshot) {
                 cleanText(
                     message.studentName
                 );
-        }
 
-        if (
-            (
-                !existing.halaqaName ||
-                existing.halaqaName ===
-                    'الحلقة'
-            ) &&
-            cleanText(
-                message.halaqaName
-            )
-        ) {
-
-            existing.halaqaName =
-                cleanText(
-                    message.halaqaName
-                );
         }
 
         if (
@@ -581,6 +801,7 @@ function buildConversations(snapshot) {
                 cleanText(
                     message.parentName
                 );
+
         }
 
         // ====================================================
@@ -603,6 +824,7 @@ function buildConversations(snapshot) {
 
             existing.lastMessage =
                 message;
+
         }
 
     });
@@ -630,13 +852,83 @@ function buildConversations(snapshot) {
                 );
 
             return timeB - timeA;
+
         }
     );
+
+    // ========================================================
+    // جلب أسماء الحلقات من halaqaId
+    // ========================================================
+
+    await loadHalaqaNamesForConversations();
+
+    // ========================================================
+    // العدد
+    // ========================================================
 
     chatCount.textContent =
         conversations.length;
 
+    // ========================================================
+    // العرض
+    // ========================================================
+
     renderConversationList();
+
+    /*
+     * إذا كانت هناك محادثة مفتوحة
+     * نحدث اسم الحلقة أيضًا.
+     */
+
+    if (currentConversation) {
+
+        const updated =
+            conversations.find(
+                conversation =>
+                    conversation.key ===
+                    currentConversation.key
+            );
+
+        if (updated) {
+
+            currentConversation =
+                updated;
+
+            updateConversationHeader();
+
+        }
+
+    }
+
+}
+
+// ============================================================
+// تحديث رأس المحادثة
+// ============================================================
+
+function updateConversationHeader() {
+
+    if (!currentConversation) {
+
+        return;
+
+    }
+
+    chatStudentName.textContent =
+        `ولي أمر ${
+            currentConversation.studentName ||
+            'الطالب'
+        }`;
+
+    chatHalaqaName.textContent =
+        `👤 ${
+            currentConversation.parentName ||
+            'ولي الأمر'
+        }  •  📖 ${
+            currentConversation.halaqaName ||
+            'الحلقة غير محددة'
+        }`;
+
 }
 
 // ============================================================
@@ -667,6 +959,8 @@ function renderConversationList() {
 
                         conversation.halaqaName,
 
+                        conversation.halaqaId,
+
                         conversation.lastMessage?.text
 
                     ]
@@ -676,8 +970,10 @@ function renderConversationList() {
                     return text.includes(
                         search
                     );
+
                 }
             );
+
     }
 
     if (!filtered.length) {
@@ -721,6 +1017,7 @@ function renderConversationList() {
         `;
 
         return;
+
     }
 
     chatList.innerHTML = '';
@@ -745,6 +1042,7 @@ function renderConversationList() {
                 item.classList.add(
                     'active'
                 );
+
             }
 
             const lastMessage =
@@ -808,6 +1106,8 @@ function renderConversationList() {
 
                         ·
 
+                        📖
+
                         ${escapeHtml(
                             conversation.halaqaName
                         )}
@@ -863,13 +1163,14 @@ function renderConversationList() {
 
         }
     );
+
 }
 
 // ============================================================
 // فتح المحادثة
 // ============================================================
 
-function openConversation(
+async function openConversation(
     conversation
 ) {
 
@@ -878,21 +1179,27 @@ function openConversation(
 
     renderConversationList();
 
-    chatStudentName.textContent =
-        `ولي أمر ${
-            conversation.studentName ||
-            'الطالب'
-        }`;
+    // ========================================================
+    // إذا لم يكن اسم الحلقة موجودًا
+    // نجلبها مباشرة عبر halaqaId
+    // ========================================================
 
-    chatHalaqaName.textContent =
+    if (
+        currentConversation.halaqaId
+    ) {
 
-        `👤 ${
-            conversation.parentName ||
-            'ولي الأمر'
-        }  •  📖 ${
-            conversation.halaqaName ||
-            'الحلقة'
-        }`;
+        currentConversation.halaqaName =
+            await getHalaqaNameById(
+                currentConversation.halaqaId
+            );
+
+    }
+
+    // ========================================================
+    // تحديث الرأس
+    // ========================================================
+
+    updateConversationHeader();
 
     chatMessageInput.disabled =
         false;
@@ -909,9 +1216,11 @@ function openConversation(
         chatPage.classList.add(
             'mobile-conversation'
         );
+
     }
 
     subscribeToConversation();
+
 }
 
 // ============================================================
@@ -925,10 +1234,13 @@ function subscribeToConversation() {
         unsubscribeChat();
 
         unsubscribeChat = null;
+
     }
 
     if (!currentConversation) {
+
         return;
+
     }
 
     chatMessages.innerHTML = `
@@ -950,6 +1262,7 @@ function subscribeToConversation() {
         );
 
         return;
+
     }
 
     /*
@@ -963,7 +1276,6 @@ function subscribeToConversation() {
      *
      * لا teacherId
      * لا teacherName
-     * لا halaqaId
      * ========================================================
      */
 
@@ -1030,8 +1342,11 @@ function subscribeToConversation() {
                     </div>
 
                 `;
+
             }
+
         );
+
 }
 
 // ============================================================
@@ -1061,6 +1376,7 @@ function renderSingleConversationMessage(
         `;
 
         return;
+
     }
 
     chatMessages.innerHTML = '';
@@ -1068,6 +1384,7 @@ function renderSingleConversationMessage(
     renderMessageElement(
         message
     );
+
 }
 
 // ============================================================
@@ -1101,6 +1418,7 @@ function renderChatMessages(
         `;
 
         return;
+
     }
 
     const messages = [];
@@ -1133,6 +1451,7 @@ function renderChatMessages(
                 )
 
             );
+
         }
     );
 
@@ -1149,6 +1468,7 @@ function renderChatMessages(
     );
 
     scrollChatToBottom();
+
 }
 
 // ============================================================
@@ -1256,6 +1576,7 @@ function renderMessageElement(
     chatMessages.appendChild(
         messageElement
     );
+
 }
 
 // ============================================================
@@ -1265,7 +1586,9 @@ function renderMessageElement(
 function scrollChatToBottom() {
 
     if (!chatMessages) {
+
         return;
+
     }
 
     requestAnimationFrame(
@@ -1276,6 +1599,7 @@ function scrollChatToBottom() {
 
         }
     );
+
 }
 
 // ============================================================
@@ -1290,7 +1614,9 @@ async function sendAdminMessage() {
         );
 
     if (!text) {
+
         return;
+
     }
 
     if (!currentConversation) {
@@ -1300,6 +1626,7 @@ async function sendAdminMessage() {
         );
 
         return;
+
     }
 
     const user =
@@ -1312,6 +1639,7 @@ async function sendAdminMessage() {
         );
 
         return;
+
     }
 
     if (
@@ -1325,12 +1653,31 @@ async function sendAdminMessage() {
         );
 
         return;
+
     }
 
     sendChatMessageButton.disabled =
         true;
 
     try {
+
+        // ====================================================
+        // نتأكد من جلب اسم الحلقة قبل إرسال الرد
+        // ====================================================
+
+        let halaqaName =
+            currentConversation.halaqaName;
+
+        if (
+            currentConversation.halaqaId
+        ) {
+
+            halaqaName =
+                await getHalaqaNameById(
+                    currentConversation.halaqaId
+                );
+
+        }
 
         await addDoc(
 
@@ -1381,12 +1728,15 @@ async function sendAdminMessage() {
                         currentConversation.halaqaId
                     ) || null,
 
+                /*
+                 * يتم حفظ الاسم أيضًا في رد المدير
+                 * لكن المصدر الأساسي هو halaqaId.
+                 */
+
                 halaqaName:
 
-                    cleanText(
-                        currentConversation.halaqaName
-                    ) ||
-                    'الحلقة',
+                    halaqaName ||
+                    'الحلقة غير محددة',
 
                 // =================================================
                 // ولي الأمر
@@ -1486,7 +1836,9 @@ async function sendAdminMessage() {
             false;
 
         chatMessageInput.focus();
+
     }
+
 }
 
 // ============================================================
@@ -1500,6 +1852,7 @@ function closeMobileConversation() {
         unsubscribeChat();
 
         unsubscribeChat = null;
+
     }
 
     currentConversation =
@@ -1545,6 +1898,7 @@ function closeMobileConversation() {
     `;
 
     renderConversationList();
+
 }
 
 // ============================================================
@@ -1557,6 +1911,7 @@ if (chatSearch) {
         'input',
         renderConversationList
     );
+
 }
 
 // ============================================================
@@ -1569,6 +1924,7 @@ if (sendChatMessageButton) {
         'click',
         sendAdminMessage
     );
+
 }
 
 // ============================================================
@@ -1589,6 +1945,7 @@ if (chatMessageInput) {
                 event.preventDefault();
 
                 sendAdminMessage();
+
             }
 
         }
@@ -1606,8 +1963,10 @@ if (chatMessageInput) {
                     chatMessageInput.scrollHeight,
                     115
                 ) + 'px';
+
         }
     );
+
 }
 
 // ============================================================
@@ -1625,6 +1984,7 @@ if (backChatBtn) {
 
         }
     );
+
 }
 
 // ============================================================
@@ -1637,6 +1997,7 @@ if (mobileBackChatBtn) {
         'click',
         closeMobileConversation
     );
+
 }
 
 // ============================================================
@@ -1648,11 +2009,15 @@ window.addEventListener(
     () => {
 
         if (unsubscribeInbox) {
+
             unsubscribeInbox();
+
         }
 
         if (unsubscribeChat) {
+
             unsubscribeChat();
+
         }
 
     }
@@ -1673,6 +2038,7 @@ async function initializeAdminChat() {
             );
 
             return;
+
         }
 
         currentAdminId =
@@ -1708,7 +2074,9 @@ async function initializeAdminChat() {
             </div>
 
         `;
+
     }
+
 }
 
 // ============================================================
@@ -1738,4 +2106,5 @@ if (auth.currentUser) {
 
             }
         );
-}
+
+                }
