@@ -24,59 +24,37 @@ import {
 // ============================================================
 
 const chatPage =
-    document.getElementById(
-        'chatPage'
-    );
+    document.getElementById('chatPage');
 
 const backChatBtn =
-    document.getElementById(
-        'backChatBtn'
-    );
+    document.getElementById('backChatBtn');
 
 const mobileBackChatBtn =
-    document.getElementById(
-        'mobileBackChatBtn'
-    );
+    document.getElementById('mobileBackChatBtn');
 
 const chatList =
-    document.getElementById(
-        'chatList'
-    );
+    document.getElementById('chatList');
 
 const chatCount =
-    document.getElementById(
-        'chatCount'
-    );
+    document.getElementById('chatCount');
 
 const chatSearch =
-    document.getElementById(
-        'chatSearch'
-    );
+    document.getElementById('chatSearch');
 
 const chatStudentName =
-    document.getElementById(
-        'chatStudentName'
-    );
+    document.getElementById('chatStudentName');
 
 const chatHalaqaName =
-    document.getElementById(
-        'chatHalaqaName'
-    );
+    document.getElementById('chatHalaqaName');
 
 const chatMessages =
-    document.getElementById(
-        'chatMessages'
-    );
+    document.getElementById('chatMessages');
 
 const chatMessageInput =
-    document.getElementById(
-        'chatMessageInput'
-    );
+    document.getElementById('chatMessageInput');
 
 const sendChatMessageButton =
-    document.getElementById(
-        'sendChatMessageBtn'
-    );
+    document.getElementById('sendChatMessageBtn');
 
 
 // ============================================================
@@ -111,9 +89,7 @@ function showMessage(message) {
 
 function cleanText(value) {
 
-    return String(
-        value ?? ''
-    ).trim();
+    return String(value ?? '').trim();
 
 }
 
@@ -124,34 +100,17 @@ function cleanText(value) {
 
 function escapeHtml(value) {
 
-    return String(
-        value ?? ''
-    )
+    return String(value ?? '')
 
-        .replace(
-            /&/g,
-            '&amp;'
-        )
+        .replace(/&/g, '&amp;')
 
-        .replace(
-            /</g,
-            '&lt;'
-        )
+        .replace(/</g, '&lt;')
 
-        .replace(
-            />/g,
-            '&gt;'
-        )
+        .replace(/>/g, '&gt;')
 
-        .replace(
-            /"/g,
-            '&quot;'
-        )
+        .replace(/"/g, '&quot;')
 
-        .replace(
-            /'/g,
-            '&#039;'
-        );
+        .replace(/'/g, '&#039;');
 
 }
 
@@ -160,25 +119,84 @@ function escapeHtml(value) {
 // معرف المحادثة
 // ============================================================
 
-function getConversationKey(
-    message
-) {
+function getConversationKey(message) {
 
-    return [
+    const parentId =
+        cleanText(message.parentId);
 
-        cleanText(
-            message.parentId
-        ),
+    const studentId =
+        cleanText(message.studentId);
 
-        cleanText(
-            message.studentId
-        ),
+    const halaqaId =
+        cleanText(message.halaqaId);
 
-        cleanText(
-            message.halaqaId
-        )
 
-    ].join('_');
+    /*
+     * الأولوية:
+     *
+     * ولي الأمر + الطالب + الحلقة
+     *
+     * وإذا كانت بيانات الطالب أو الحلقة ناقصة:
+     *
+     * ولي الأمر فقط
+     *
+     * حتى لا تختفي الرسالة.
+     */
+
+    if (parentId && studentId && halaqaId) {
+
+        return [
+            parentId,
+            studentId,
+            halaqaId
+        ].join('_');
+
+    }
+
+
+    if (parentId && studentId) {
+
+        return [
+            parentId,
+            studentId
+        ].join('_');
+
+    }
+
+
+    if (parentId) {
+
+        return parentId;
+
+    }
+
+
+    /*
+     * في حال الرسالة لا تحتوي parentId
+     * نستخدم senderId كحل أخير.
+     *
+     * ولكن الرد لن يكون ممكناً إلا إذا
+     * كان parentId موجوداً في إحدى رسائل
+     * نفس المحادثة.
+     */
+
+    const senderId =
+        cleanText(message.senderId);
+
+
+    if (senderId) {
+
+        return `sender_${senderId}`;
+
+    }
+
+
+    /*
+     * لا نحذف الرسالة.
+     * نعطيها معرفاً خاصاً.
+     */
+
+    return `message_${message.id || Date.now()}`;
 
 }
 
@@ -187,9 +205,7 @@ function getConversationKey(
 // وقت الرسالة
 // ============================================================
 
-function getTimestampMillis(
-    timestamp
-) {
+function getTimestampMillis(timestamp) {
 
     if (!timestamp) {
         return 0;
@@ -221,13 +237,10 @@ function getTimestampMillis(
 
 
         if (
-            timestamp.seconds
+            timestamp.seconds !== undefined
         ) {
 
-            return (
-                timestamp.seconds *
-                1000
-            );
+            return Number(timestamp.seconds) * 1000;
 
         }
 
@@ -254,17 +267,13 @@ function getTimestampMillis(
 
 
 // ============================================================
-// تنسيق الوقت
+// تنسيق وقت الرسالة
 // ============================================================
 
-function formatMessageTime(
-    timestamp
-) {
+function formatMessageTime(timestamp) {
 
     const millis =
-        getTimestampMillis(
-            timestamp
-        );
+        getTimestampMillis(timestamp);
 
 
     if (!millis) {
@@ -296,17 +305,13 @@ function formatMessageTime(
 
 
 // ============================================================
-// تنسيق تاريخ القائمة
+// تنسيق وقت المحادثة
 // ============================================================
 
-function formatConversationTime(
-    timestamp
-) {
+function formatConversationTime(timestamp) {
 
     const millis =
-        getTimestampMillis(
-            timestamp
-        );
+        getTimestampMillis(timestamp);
 
 
     if (!millis) {
@@ -365,12 +370,10 @@ function formatConversationTime(
 
 
 // ============================================================
-// الحرف الأول للاسم
+// الحرف الأول
 // ============================================================
 
-function getInitial(
-    name
-) {
+function getInitial(name) {
 
     const value =
         cleanText(name);
@@ -396,8 +399,7 @@ function subscribeToInbox() {
 
         unsubscribeInbox();
 
-        unsubscribeInbox =
-            null;
+        unsubscribeInbox = null;
 
     }
 
@@ -424,9 +426,20 @@ function subscribeToInbox() {
     `;
 
 
-    // ========================================================
-    // جميع الرسائل الخاصة بالمدرس
-    // ========================================================
+    /*
+     * ========================================================
+     * مهم جداً:
+     *
+     * نبحث فقط عن teacherId.
+     *
+     * لا نشترط parentId
+     * ولا studentId
+     * ولا halaqaId.
+     *
+     * لذلك أي رسالة وصلت لهذا المدرس
+     * سيتم التقاطها.
+     * ========================================================
+     */
 
     const messagesQuery =
         query(
@@ -452,9 +465,7 @@ function subscribeToInbox() {
 
             snapshot => {
 
-                buildConversations(
-                    snapshot
-                );
+                buildConversations(snapshot);
 
             },
 
@@ -479,7 +490,9 @@ function subscribeToInbox() {
                         </strong>
 
                         <small>
-                            تحقق من صلاحيات Firestore.
+                            ${escapeHtml(
+                                error.message
+                            )}
                         </small>
 
                     </div>
@@ -497,192 +510,246 @@ function subscribeToInbox() {
 // بناء المحادثات
 // ============================================================
 
-function buildConversations(
-    snapshot
-) {
+function buildConversations(snapshot) {
 
     const grouped =
         new Map();
 
 
-    snapshot.forEach(
-        doc => {
+    snapshot.forEach(doc => {
 
-            const message = {
+        const message = {
 
-                id:
-                    doc.id,
+            id: doc.id,
 
-                ...doc.data()
+            ...doc.data()
+
+        };
+
+
+        /*
+         * ====================================================
+         * لا يوجد هنا:
+         *
+         * if (!parentId || !studentId || !halaqaId) return;
+         *
+         * لأننا نريد عرض الرسالة مهما كانت بياناتها.
+         * ====================================================
+         */
+
+        const parentId =
+            cleanText(message.parentId);
+
+        const studentId =
+            cleanText(message.studentId);
+
+        const halaqaId =
+            cleanText(message.halaqaId);
+
+
+        const key =
+            getConversationKey(message);
+
+
+        let existing =
+            grouped.get(key);
+
+
+        if (!existing) {
+
+            existing = {
+
+                key,
+
+                parentId,
+
+                studentId,
+
+                halaqaId,
+
+                studentName:
+                    cleanText(
+                        message.studentName
+                    ) ||
+                    'الطالب',
+
+                halaqaName:
+                    cleanText(
+                        message.halaqaName
+                    ) ||
+                    'الحلقة',
+
+                parentName:
+                    cleanText(
+                        message.parentName
+                    ) ||
+                    'ولي الأمر',
+
+                teacherId:
+                    cleanText(
+                        message.teacherId
+                    ) ||
+                    currentTeacherId,
+
+                teacherName:
+                    cleanText(
+                        message.teacherName
+                    ) ||
+                    'المدرس',
+
+                lastMessage:
+                    message,
+
+                messageCount:
+                    1
 
             };
 
 
-            const parentId =
-                cleanText(
-                    message.parentId
-                );
-
-            const studentId =
-                cleanText(
-                    message.studentId
-                );
-
-            const halaqaId =
-                cleanText(
-                    message.halaqaId
-                );
+            grouped.set(
+                key,
+                existing
+            );
 
 
-            // =================================================
-            // تجاهل الرسائل غير المرتبطة
-            // =================================================
-
-            if (
-                !parentId ||
-                !studentId ||
-                !halaqaId
-            ) {
-
-                return;
-
-            }
-
-
-            const key =
-                getConversationKey(
-                    message
-                );
-
-
-            const existing =
-                grouped.get(key);
-
-
-            if (!existing) {
-
-                grouped.set(
-                    key,
-                    {
-
-                        key,
-
-                        parentId,
-
-                        studentId,
-
-                        halaqaId,
-
-                        studentName:
-                            cleanText(
-                                message.studentName
-                            ) ||
-                            'الطالب',
-
-                        halaqaName:
-                            cleanText(
-                                message.halaqaName
-                            ) ||
-                            'الحلقة',
-
-                        parentName:
-                            cleanText(
-                                message.parentName
-                            ) ||
-                            'ولي الأمر',
-
-                        teacherId:
-                            cleanText(
-                                message.teacherId
-                            ),
-
-                        teacherName:
-                            cleanText(
-                                message.teacherName
-                            ) ||
-                            'المدرس',
-
-                        lastMessage:
-                            message,
-
-                        messageCount:
-                            1
-
-                    }
-                );
-
-            } else {
-
-                existing.messageCount++;
-
-
-                const currentTime =
-                    getTimestampMillis(
-                        message.createdAt
-                    );
-
-
-                const oldTime =
-                    getTimestampMillis(
-                        existing
-                            .lastMessage
-                            ?.createdAt
-                    );
-
-
-                if (
-                    currentTime >=
-                    oldTime
-                ) {
-
-                    existing.lastMessage =
-                        message;
-
-                }
-
-
-                // =============================================
-                // تحديث البيانات إذا كانت موجودة
-                // =============================================
-
-                if (
-                    !existing.studentName &&
-                    message.studentName
-                ) {
-
-                    existing.studentName =
-                        message.studentName;
-
-                }
-
-
-                if (
-                    existing.halaqaName ===
-                        'الحلقة' &&
-                    message.halaqaName
-                ) {
-
-                    existing.halaqaName =
-                        message.halaqaName;
-
-                }
-
-
-                if (
-                    existing.parentName ===
-                        'ولي الأمر' &&
-                    message.parentName
-                ) {
-
-                    existing.parentName =
-                        message.parentName;
-
-                }
-
-            }
+            return;
 
         }
-    );
+
+
+        // ====================================================
+        // تحديث بيانات المحادثة
+        // ====================================================
+
+        existing.messageCount++;
+
+
+        /*
+         * إذا كانت بيانات سابقة ناقصة
+         * وأتت رسالة جديدة فيها البيانات،
+         * نستخدم البيانات الجديدة.
+         */
+
+        if (
+            !existing.parentId &&
+            parentId
+        ) {
+
+            existing.parentId =
+                parentId;
+
+        }
+
+
+        if (
+            !existing.studentId &&
+            studentId
+        ) {
+
+            existing.studentId =
+                studentId;
+
+        }
+
+
+        if (
+            !existing.halaqaId &&
+            halaqaId
+        ) {
+
+            existing.halaqaId =
+                halaqaId;
+
+        }
+
+
+        if (
+            (
+                !existing.studentName ||
+                existing.studentName === 'الطالب'
+            ) &&
+            cleanText(message.studentName)
+        ) {
+
+            existing.studentName =
+                cleanText(
+                    message.studentName
+                );
+
+        }
+
+
+        if (
+            (
+                !existing.halaqaName ||
+                existing.halaqaName === 'الحلقة'
+            ) &&
+            cleanText(message.halaqaName)
+        ) {
+
+            existing.halaqaName =
+                cleanText(
+                    message.halaqaName
+                );
+
+        }
+
+
+        if (
+            (
+                !existing.parentName ||
+                existing.parentName === 'ولي الأمر'
+            ) &&
+            cleanText(message.parentName)
+        ) {
+
+            existing.parentName =
+                cleanText(
+                    message.parentName
+                );
+
+        }
+
+
+        if (
+            !existing.teacherName &&
+            cleanText(message.teacherName)
+        ) {
+
+            existing.teacherName =
+                cleanText(
+                    message.teacherName
+                );
+
+        }
+
+
+        // ====================================================
+        // تحديد آخر رسالة
+        // ====================================================
+
+        const currentTime =
+            getTimestampMillis(
+                message.createdAt
+            );
+
+
+        const oldTime =
+            getTimestampMillis(
+                existing.lastMessage?.createdAt
+            );
+
+
+        if (
+            currentTime >= oldTime
+        ) {
+
+            existing.lastMessage =
+                message;
+
+        }
+
+    });
 
 
     conversations =
@@ -700,15 +767,13 @@ function buildConversations(
 
             const timeA =
                 getTimestampMillis(
-                    a.lastMessage
-                        ?.createdAt
+                    a.lastMessage?.createdAt
                 );
 
 
             const timeB =
                 getTimestampMillis(
-                    b.lastMessage
-                        ?.createdAt
+                    b.lastMessage?.createdAt
                 );
 
 
@@ -757,8 +822,7 @@ function renderConversationList() {
 
                         conversation.halaqaName,
 
-                        conversation.lastMessage
-                            ?.text
+                        conversation.lastMessage?.text
 
                     ]
 
@@ -766,9 +830,7 @@ function renderConversationList() {
                         .toLowerCase();
 
 
-                    return text.includes(
-                        search
-                    );
+                    return text.includes(search);
 
                 }
             );
@@ -783,27 +845,33 @@ function renderConversationList() {
             <div class="chat-list-empty">
 
                 <div class="chat-list-empty-icon">
+
                     ${
                         search
                             ? '🔎'
                             : '💬'
                     }
+
                 </div>
 
                 <strong>
+
                     ${
                         search
                             ? 'لا توجد نتائج'
-                            : 'لا توجد محادثات'
+                            : 'لا توجد رسائل'
                     }
+
                 </strong>
 
                 <small>
+
                     ${
                         search
-                            ? 'لم يتم العثور على محادثة مطابقة للبحث.'
-                            : 'لم يرسل أي ولي أمر رسالة حتى الآن.'
+                            ? 'لم يتم العثور على رسالة مطابقة للبحث.'
+                            : 'لم تصل أي رسالة إلى هذا المدرس حتى الآن.'
                     }
+
                 </small>
 
             </div>
@@ -815,17 +883,14 @@ function renderConversationList() {
     }
 
 
-    chatList.innerHTML =
-        '';
+    chatList.innerHTML = '';
 
 
     filtered.forEach(
         conversation => {
 
             const item =
-                document.createElement(
-                    'div'
-                );
+                document.createElement('div');
 
 
             item.className =
@@ -838,9 +903,7 @@ function renderConversationList() {
                     conversation.key
             ) {
 
-                item.classList.add(
-                    'active'
-                );
+                item.classList.add('active');
 
             }
 
@@ -849,17 +912,22 @@ function renderConversationList() {
                 conversation.lastMessage;
 
 
+            /*
+             * حتى لو كانت الرسالة بدون text
+             * لا نخفيها.
+             */
+
             const lastText =
-                cleanText(
-                    lastMessage?.text
-                ) ||
-                'لا توجد رسالة';
+                lastMessage?.text !== undefined
+                    ? String(lastMessage.text)
+                    : 'رسالة';
 
 
             const isParent =
-                lastMessage
-                    ?.senderRole ===
-                'parent';
+                lastMessage?.senderRole === 'parent' ||
+                lastMessage?.senderRole === 'guardian' ||
+                lastMessage?.senderRole === 'user' ||
+                lastMessage?.senderRole === 'ولي الأمر';
 
 
             item.innerHTML = `
@@ -879,43 +947,45 @@ function renderConversationList() {
 
                     <div class="chat-list-name-row">
 
-                        <div
-                            class="chat-list-parent"
-                        >
+                        <div class="chat-list-parent">
+
                             ${escapeHtml(
                                 conversation.parentName
                             )}
+
                         </div>
 
 
-                        <div
-                            class="chat-list-time"
-                        >
+                        <div class="chat-list-time">
+
                             ${formatConversationTime(
                                 lastMessage?.createdAt
                             )}
+
                         </div>
 
                     </div>
 
 
-                    <div
-                        class="chat-list-student"
-                    >
+                    <div class="chat-list-student">
+
                         👤
+
                         ${escapeHtml(
                             conversation.studentName
                         )}
+
                         ·
+
                         ${escapeHtml(
                             conversation.halaqaName
                         )}
+
                     </div>
 
 
-                    <div
-                        class="chat-list-last"
-                    >
+                    <div class="chat-list-last">
+
                         ${
                             isParent
                                 ? '👤 '
@@ -923,8 +993,9 @@ function renderConversationList() {
                         }
 
                         ${escapeHtml(
-                            lastText
+                            lastText || 'رسالة'
                         )}
+
                     </div>
 
                 </div>
@@ -958,9 +1029,7 @@ function renderConversationList() {
             );
 
 
-            chatList.appendChild(
-                item
-            );
+            chatList.appendChild(item);
 
         }
     );
@@ -969,12 +1038,10 @@ function renderConversationList() {
 
 
 // ============================================================
-// فتح محادثة
+// فتح المحادثة
 // ============================================================
 
-function openConversation(
-    conversation
-) {
+function openConversation(conversation) {
 
     currentConversation =
         conversation;
@@ -988,11 +1055,18 @@ function openConversation(
     // ========================================================
 
     chatStudentName.textContent =
-        `ولي أمر ${conversation.studentName}`;
+        `ولي أمر ${conversation.studentName || 'الطالب'}`;
 
 
     chatHalaqaName.textContent =
-        `👤 ${conversation.parentName}  •  📖 ${conversation.halaqaName}`;
+
+        `👤 ${
+            conversation.parentName ||
+            'ولي الأمر'
+        }  •  📖 ${
+            conversation.halaqaName ||
+            'الحلقة'
+        }`;
 
 
     // ========================================================
@@ -1011,7 +1085,7 @@ function openConversation(
 
 
     // ========================================================
-    // على الهاتف افتح المحادثة
+    // الهاتف
     // ========================================================
 
     if (
@@ -1031,7 +1105,7 @@ function openConversation(
 
 
 // ============================================================
-// الاستماع إلى المحادثة الحالية
+// الاستماع إلى المحادثة
 // ============================================================
 
 function subscribeToConversation() {
@@ -1040,8 +1114,7 @@ function subscribeToConversation() {
 
         unsubscribeChat();
 
-        unsubscribeChat =
-            null;
+        unsubscribeChat = null;
 
     }
 
@@ -1062,6 +1135,50 @@ function subscribeToConversation() {
     `;
 
 
+    /*
+     * ========================================================
+     * مهم:
+     *
+     * سابقاً كان الاستعلام يشترط:
+     *
+     * teacherId
+     * parentId
+     * studentId
+     * halaqaId
+     *
+     * وهذا يجعل بعض الرسائل تختفي.
+     *
+     * الآن نستخدم:
+     *
+     * teacherId + parentId
+     *
+     * فقط.
+     *
+     * وبالتالي تظهر كل رسائل ولي الأمر
+     * مع المدرس حتى لو كانت رسالة معينة
+     * ناقصة studentId أو halaqaId.
+     * ========================================================
+     */
+
+    if (!currentConversation.parentId) {
+
+        /*
+         * إذا كانت الرسالة فعلاً لا تحتوي
+         * parentId، لا نستطيع معرفة صاحبها
+         * بشكل آمن للرد عليه.
+         *
+         * لكننا لا نخفي الرسالة.
+         */
+
+        renderSingleConversationMessage(
+            currentConversation.lastMessage
+        );
+
+        return;
+
+    }
+
+
     const messagesQuery =
         query(
 
@@ -1080,18 +1197,6 @@ function subscribeToConversation() {
                 'parentId',
                 '==',
                 currentConversation.parentId
-            ),
-
-            where(
-                'studentId',
-                '==',
-                currentConversation.studentId
-            ),
-
-            where(
-                'halaqaId',
-                '==',
-                currentConversation.halaqaId
             )
 
         );
@@ -1131,7 +1236,9 @@ function subscribeToConversation() {
                         </strong>
 
                         <small>
-                            تحقق من صلاحيات Firestore.
+                            ${escapeHtml(
+                                error.message
+                            )}
                         </small>
 
                     </div>
@@ -1146,12 +1253,49 @@ function subscribeToConversation() {
 
 
 // ============================================================
+// عرض رسالة منفردة
+// ============================================================
+
+function renderSingleConversationMessage(message) {
+
+    if (!message) {
+
+        chatMessages.innerHTML = `
+
+            <div class="chat-empty">
+
+                <div class="chat-empty-icon">
+                    💬
+                </div>
+
+                <strong>
+                    لا توجد رسائل
+                </strong>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    chatMessages.innerHTML = '';
+
+
+    renderMessageElement(
+        message
+    );
+
+}
+
+
+// ============================================================
 // عرض الرسائل
 // ============================================================
 
-function renderChatMessages(
-    snapshot
-) {
+function renderChatMessages(snapshot) {
 
     if (snapshot.empty) {
 
@@ -1183,139 +1327,48 @@ function renderChatMessages(
     const messages = [];
 
 
-    snapshot.forEach(
-        doc => {
+    snapshot.forEach(doc => {
 
-            messages.push({
+        messages.push({
 
-                id:
-                    doc.id,
+            id: doc.id,
 
-                ...doc.data()
+            ...doc.data()
 
-            });
+        });
 
-        }
-    );
+    });
 
 
     messages.sort(
         (a, b) => {
 
             return (
+
                 getTimestampMillis(
                     a.createdAt
-                ) -
+                )
+
+                -
+
                 getTimestampMillis(
                     b.createdAt
                 )
+
             );
 
         }
     );
 
 
-    chatMessages.innerHTML =
-        '';
+    chatMessages.innerHTML = '';
 
 
     messages.forEach(
         message => {
 
-            const senderRole =
-                message.senderRole ||
-                'parent';
-
-
-            const isTeacher =
-                senderRole ===
-                'teacher';
-
-
-            const text =
-                cleanText(
-                    message.text
-                );
-
-
-            const senderName =
-                isTeacher
-
-                    ? (
-                        cleanText(
-                            message.teacherName
-                        ) ||
-                        'المدرس'
-                    )
-
-                    : (
-                        cleanText(
-                            currentConversation
-                                ?.parentName
-                        ) ||
-                        'ولي الأمر'
-                    );
-
-
-            const time =
-                formatMessageTime(
-                    message.createdAt
-                );
-
-
-            const messageElement =
-                document.createElement(
-                    'div'
-                );
-
-
-            messageElement.className =
-                `chat-message ${
-                    isTeacher
-                        ? 'teacher'
-                        : 'parent'
-                }`;
-
-
-            messageElement.innerHTML = `
-
-                <div class="chat-sender">
-
-                    ${
-                        isTeacher
-                            ? '👨‍🏫'
-                            : '👤'
-                    }
-
-                    ${escapeHtml(
-                        senderName
-                    )}
-
-                </div>
-
-
-                <div class="chat-text">
-
-                    ${escapeHtml(
-                        text
-                    )}
-
-                </div>
-
-
-                <div class="chat-message-meta">
-
-                    <span>
-                        ${time}
-                    </span>
-
-                </div>
-
-            `;
-
-
-            chatMessages.appendChild(
-                messageElement
+            renderMessageElement(
+                message
             );
 
         }
@@ -1323,6 +1376,119 @@ function renderChatMessages(
 
 
     scrollChatToBottom();
+
+}
+
+
+// ============================================================
+// إنشاء عنصر الرسالة
+// ============================================================
+
+function renderMessageElement(message) {
+
+    const senderRole =
+        cleanText(
+            message.senderRole
+        ).toLowerCase();
+
+
+    const isTeacher =
+        senderRole === 'teacher' ||
+        senderRole === 'admin' ||
+        senderRole === 'مدرس';
+
+
+    const text =
+        message.text !== undefined
+            ? String(message.text)
+            : '';
+
+
+    const senderName =
+        isTeacher
+
+            ? (
+                cleanText(
+                    message.teacherName
+                ) ||
+                'المدرس'
+            )
+
+            : (
+                cleanText(
+                    message.parentName
+                ) ||
+
+                cleanText(
+                    currentConversation?.parentName
+                ) ||
+
+                'ولي الأمر'
+            );
+
+
+    const time =
+        formatMessageTime(
+            message.createdAt
+        );
+
+
+    const messageElement =
+        document.createElement('div');
+
+
+    messageElement.className =
+        `chat-message ${
+            isTeacher
+                ? 'teacher'
+                : 'parent'
+        }`;
+
+
+    messageElement.innerHTML = `
+
+        <div class="chat-sender">
+
+            ${
+                isTeacher
+                    ? '👨‍🏫'
+                    : '👤'
+            }
+
+            ${escapeHtml(
+                senderName
+            )}
+
+        </div>
+
+
+        <div class="chat-text">
+
+            ${
+                text
+                    ? escapeHtml(text)
+                    : '<span style="opacity:.6">رسالة بدون نص</span>'
+            }
+
+        </div>
+
+
+        <div class="chat-message-meta">
+
+            <span>
+
+                ${time}
+
+            </span>
+
+        </div>
+
+    `;
+
+
+    chatMessages.appendChild(
+        messageElement
+    );
 
 }
 
@@ -1351,7 +1517,7 @@ function scrollChatToBottom() {
 
 
 // ============================================================
-// إرسال رسالة للولي
+// إرسال رد المدرس
 // ============================================================
 
 async function sendTeacherMessage() {
@@ -1361,6 +1527,10 @@ async function sendTeacherMessage() {
             chatMessageInput.value
         );
 
+
+    /*
+     * الرسالة يجب أن تحتوي نصاً عند الإرسال.
+     */
 
     if (!text) {
         return;
@@ -1393,6 +1563,30 @@ async function sendTeacherMessage() {
     }
 
 
+    /*
+     * ========================================================
+     * لا يمكن إرسال رد لولي الأمر إذا لم نعرف parentId.
+     *
+     * هذه الحالة لا يمكن حلها من جهة المدرس،
+     * لأن Firestore لا يخبرنا من هو المستلم.
+     * ========================================================
+     */
+
+    if (
+        !cleanText(
+            currentConversation.parentId
+        )
+    ) {
+
+        showMessage(
+            '⚠️ هذه الرسالة لا تحتوي على معرف ولي الأمر (parentId)، لذلك لا يمكن إرسال رد آمن عليها.'
+        );
+
+        return;
+
+    }
+
+
     sendChatMessageButton.disabled =
         true;
 
@@ -1408,34 +1602,72 @@ async function sendTeacherMessage() {
 
             {
 
+                // =================================================
+                // بيانات الطالب
+                // =================================================
+
                 studentId:
-                    currentConversation
-                        .studentId,
+                    cleanText(
+                        currentConversation.studentId
+                    ) || null,
 
                 studentName:
-                    currentConversation
-                        .studentName,
+                    cleanText(
+                        currentConversation.studentName
+                    ) ||
+                    'الطالب',
+
+
+                // =================================================
+                // بيانات الحلقة
+                // =================================================
 
                 halaqaId:
-                    currentConversation
-                        .halaqaId,
+                    cleanText(
+                        currentConversation.halaqaId
+                    ) || null,
 
                 halaqaName:
-                    currentConversation
-                        .halaqaName,
+                    cleanText(
+                        currentConversation.halaqaName
+                    ) ||
+                    'الحلقة',
+
+
+                // =================================================
+                // بيانات ولي الأمر
+                // =================================================
 
                 parentId:
-                    currentConversation
-                        .parentId,
+                    cleanText(
+                        currentConversation.parentId
+                    ),
+
+                parentName:
+                    cleanText(
+                        currentConversation.parentName
+                    ) ||
+                    'ولي الأمر',
+
+
+                // =================================================
+                // بيانات المدرس
+                // =================================================
 
                 teacherId:
                     currentTeacherId,
 
                 teacherName:
-                    currentConversation
-                        .teacherName ||
+                    cleanText(
+                        currentConversation.teacherName
+                    ) ||
                     user.displayName ||
                     'المدرس',
+
+
+                // =================================================
+                // المرسل
+                // =================================================
 
                 senderId:
                     user.uid,
@@ -1443,7 +1675,17 @@ async function sendTeacherMessage() {
                 senderRole:
                     'teacher',
 
+
+                // =================================================
+                // الرسالة
+                // =================================================
+
                 text,
+
+
+                // =================================================
+                // الوقت
+                // =================================================
 
                 createdAt:
                     serverTimestamp(),
@@ -1490,7 +1732,7 @@ async function sendTeacherMessage() {
 
 
 // ============================================================
-// الرجوع من المحادثة في الجوال
+// الرجوع في الجوال
 // ============================================================
 
 function closeMobileConversation() {
@@ -1499,8 +1741,7 @@ function closeMobileConversation() {
 
         unsubscribeChat();
 
-        unsubscribeChat =
-            null;
+        unsubscribeChat = null;
 
     }
 
@@ -1568,18 +1809,14 @@ if (chatSearch) {
 
     chatSearch.addEventListener(
         'input',
-        () => {
-
-            renderConversationList();
-
-        }
+        renderConversationList
     );
 
 }
 
 
 // ============================================================
-// زر إرسال
+// إرسال
 // ============================================================
 
 if (sendChatMessageButton) {
@@ -1593,7 +1830,7 @@ if (sendChatMessageButton) {
 
 
 // ============================================================
-// Enter للإرسال
+// Enter
 // ============================================================
 
 if (chatMessageInput) {
@@ -1638,7 +1875,7 @@ if (chatMessageInput) {
 
 
 // ============================================================
-// رجوع الصفحة
+// الرجوع للصفحة السابقة
 // ============================================================
 
 if (backChatBtn) {
@@ -1657,7 +1894,7 @@ if (backChatBtn) {
 
 
 // ============================================================
-// رجوع المحادثة في الجوال
+// رجوع الجوال
 // ============================================================
 
 if (mobileBackChatBtn) {
@@ -1671,7 +1908,7 @@ if (mobileBackChatBtn) {
 
 
 // ============================================================
-// إغلاق Listener عند مغادرة الصفحة
+// تنظيف Listeners
 // ============================================================
 
 window.addEventListener(
@@ -1703,10 +1940,6 @@ async function initializeChatInbox() {
 
     try {
 
-        // ====================================================
-        // انتظار تسجيل الدخول
-        // ====================================================
-
         if (!auth.currentUser) {
 
             showMessage(
@@ -1721,10 +1954,6 @@ async function initializeChatInbox() {
         currentTeacherId =
             auth.currentUser.uid;
 
-
-        // ====================================================
-        // تشغيل صندوق الوارد
-        // ====================================================
 
         subscribeToInbox();
 
@@ -1764,32 +1993,30 @@ async function initializeChatInbox() {
 
 
 // ============================================================
-// تشغيل بعد جاهزية Firebase Auth
+// انتظار تسجيل الدخول
 // ============================================================
 
-if (
-    auth.currentUser
-) {
+if (auth.currentUser) {
 
     initializeChatInbox();
 
-} else {
+} else if (
+    typeof auth.onAuthStateChanged === 'function'
+) {
 
     const unsubscribeAuth =
-        auth.onAuthStateChanged
-            ? auth.onAuthStateChanged(
-                user => {
+        auth.onAuthStateChanged(
+            user => {
 
-                    if (user) {
+                if (user) {
 
-                        unsubscribeAuth?.();
+                    unsubscribeAuth?.();
 
-                        initializeChatInbox();
-
-                    }
+                    initializeChatInbox();
 
                 }
-            )
-            : null;
 
-}
+            }
+        );
+
+        }
