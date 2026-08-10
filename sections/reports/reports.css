@@ -85,7 +85,37 @@ body {
     padding: 24px;
 }
 
+/* ============================================================
+   شعار التقرير
+============================================================ */
 
+.report-header {
+    position: relative;
+}
+
+.report-logo {
+    position: absolute;
+    top: 18px;
+    left: 20px;
+
+    width: 75px;
+    height: 75px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    z-index: 5;
+}
+
+.report-logo img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+
+    display: block;
+}
 /* =========================================================
    لوحة التحكم
    ========================================================= */
