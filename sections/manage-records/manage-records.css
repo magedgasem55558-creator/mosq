@@ -139,7 +139,194 @@ h1 {
 /* =========================================================
    شريط البحث والفلاتر
    ========================================================= */
+/* ============================================
+   حالات السجل
+   ============================================ */
 
+.record-details {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.record-detail {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 9px;
+    margin: 0 !important;
+    border-radius: 999px;
+    background: #f3f4f6;
+    color: #6b7280 !important;
+    font-size: 0.74rem !important;
+    white-space: nowrap;
+}
+
+
+/* الحالة الأساسية */
+
+.record-status {
+    font-weight: 700 !important;
+    border: 1px solid transparent;
+}
+
+
+/* حاضر */
+
+.status-present {
+    background: #dcfce7 !important;
+    color: #047857 !important;
+    border-color: #a7f3d0 !important;
+}
+
+
+/* مستأذن */
+
+.status-excused {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+    border-color: #fde68a !important;
+}
+
+
+/* إجازة */
+
+.status-leave {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border-color: #bfdbfe !important;
+}
+
+
+/* غائب */
+
+.status-absent {
+    background: #fee2e2 !important;
+    color: #b91c1c !important;
+    border-color: #fecaca !important;
+}
+
+
+/* حالة غير معروفة */
+
+.status-unknown {
+    background: #f3f4f6 !important;
+    color: #4b5563 !important;
+}
+
+
+/* تفاصيل التسميع */
+
+.recitation-detail {
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    border: 1px solid #d1fae5;
+}
+
+
+/* ============================================
+   تحسين عنصر السجل
+   ============================================ */
+
+.manage-item {
+    position: relative;
+    overflow: hidden;
+    min-height: 82px;
+}
+
+
+.manage-item::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #d1d5db;
+}
+
+
+/* لون الخط الجانبي حسب الحالة */
+
+.manage-item:has(.status-present)::before {
+    background: #10b981;
+}
+
+.manage-item:has(.status-excused)::before {
+    background: #f59e0b;
+}
+
+.manage-item:has(.status-leave)::before {
+    background: #3b82f6;
+}
+
+.manage-item:has(.status-absent)::before {
+    background: #ef4444;
+}
+
+
+/* ============================================
+   تحميل أسرع وأنعم
+   ============================================ */
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    min-height: 150px;
+}
+
+
+.loading-spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid #d1fae5;
+    border-top-color: #059669;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ============================================
+   تحسين الهاتف
+   ============================================ */
+
+@media (max-width: 768px) {
+
+    .record-details {
+        justify-content: center;
+    }
+
+    .manage-item {
+        padding: 1rem 0.85rem;
+    }
+
+    .manage-item .item-info {
+        width: 100%;
+    }
+
+    .manage-item .item-actions {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .manage-item .item-actions button {
+        flex: 1;
+        max-width: 140px;
+    }
+
+}
 .records-toolbar {
     display: flex;
     gap: 10px;
