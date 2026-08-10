@@ -1,8 +1,7 @@
 import {
     db,
     auth,
-    loadAllStudents,
-    loadHalaqatList
+    loadAllStudents
 } from '../../../firebase.js';
 
 import {
@@ -26,17 +25,23 @@ const $ = id =>
 
 
 // ============================================================
-// التحكم
+// عناصر لوحة التحكم
 // ============================================================
-
-const scopeSelect =
-    $('scopeSelect');
-
-const halaqaSelect =
-    $('halaqaSelect');
 
 const studentSelect =
     $('studentSelect');
+
+const studentSearchInput =
+    $('studentSearchInput');
+
+const studentSearchClear =
+    $('studentSearchClear');
+
+const studentDropdown =
+    $('studentDropdown');
+
+const studentPicker =
+    $('studentPicker');
 
 const monthSelect =
     $('monthSelect');
@@ -53,18 +58,12 @@ const generatePdfBtn =
 const refreshReportBtn =
     $('refreshReportBtn');
 
-const halaqaGroup =
-    $('halaqaGroup');
-
-const studentGroup =
-    $('studentGroup');
-
 const previewStatus =
     $('previewStatus');
 
 
 // ============================================================
-// التقرير
+// بيانات التقرير
 // ============================================================
 
 const pdfReportBadge =
@@ -148,9 +147,6 @@ const pdfReviewStatus =
 const studentSummarySection =
     $('studentSummarySection');
 
-const halaqaSummarySection =
-    $('halaqaSummarySection');
-
 const detailedSection =
     $('detailedSection');
 
@@ -163,17 +159,11 @@ const pdfSummaryText =
 const pdfAchievement =
     $('pdfAchievement');
 
-const pdfHalaqaSummaryBody =
-    $('pdfHalaqaSummaryBody');
-
 const pdfTableBody =
     $('pdfTableBody');
 
 const pdfNotesText =
     $('pdfNotesText');
-
-const studentColumnHeader =
-    $('studentColumnHeader');
 
 
 // ============================================================
@@ -182,13 +172,16 @@ const studentColumnHeader =
 
 let studentsCache = [];
 
-let halaqatCache = [];
-
-let halaqatMap = {};
-
 let currentReportData = null;
 
 let updateTimer = null;
+
+
+// ============================================================
+// حالة البحث
+// ============================================================
+
+let selectedStudent = null;
 
 
 // ============================================================
@@ -206,8 +199,14 @@ onAuthStateChanged(
                 'error'
             );
 
-            studentSelect.innerHTML =
-                '<option value="">⚠️ يرجى تسجيل الدخول أولاً</option>';
+            studentSearchInput.value =
+                '';
+
+            studentSearchInput.placeholder =
+                '⚠️ يرجى تسجيل الدخول أولاً';
+
+            studentSearchInput.disabled =
+                true;
 
             return;
         }
@@ -230,46 +229,27 @@ async function init() {
             'loading'
         );
 
+
+        // الشهر الحالي
+
         const now =
             new Date();
+
 
         const currentMonth =
             `${now.getFullYear()}-${String(
                 now.getMonth() + 1
             ).padStart(2, '0')}`;
 
+
         monthSelect.value =
             currentMonth;
 
 
-        const [
-            halaqat,
-            students
-        ] = await Promise.all([
+        // تحميل الطلاب فقط
 
-            loadHalaqatList(),
-
-            loadAllStudents()
-
-        ]);
-
-
-        halaqatCache =
-            Array.isArray(halaqat)
-                ? halaqat
-                : [];
-
-
-        halaqatMap = {};
-
-        halaqatCache.forEach(
-            halaqa => {
-
-                halaqatMap[halaqa.id] =
-                    halaqa.name ||
-                    'حلقة بدون اسم';
-            }
-        );
+        const students =
+            await loadAllStudents();
 
 
         /*
@@ -282,6 +262,7 @@ async function init() {
 
         studentsCache =
             Array.isArray(students)
+
                 ? students
                     .filter(
                         student =>
@@ -294,23 +275,25 @@ async function init() {
 
                             halaqaName:
                                 student.halaqaName ||
-                                halaqatMap[
-                                    student.halaqaId
-                                ] ||
                                 'غير محدد'
 
                         })
                     )
+
                 : [];
 
 
-        populateHalaqat();
-
-        populateStudents();
+        setupStudentSearch();
 
         setupEvents();
 
+        updateStudentDropdown(
+            ''
+        );
+
+
         await updateReportPreview();
+
 
         setStatus(
             'جاهز',
@@ -324,6 +307,7 @@ async function init() {
             error
         );
 
+
         setStatus(
             'تعذر تحميل البيانات',
             'error'
@@ -333,85 +317,342 @@ async function init() {
 
 
 // ============================================================
-// الحلقات
+// البحث عن الطالب
 // ============================================================
 
-function populateHalaqat() {
+function setupStudentSearch() {
 
-    halaqaSelect.innerHTML =
-        '<option value="">اختر الحلقة...</option>';
+    // فتح القائمة عند الضغط
 
-    halaqatCache
-        .slice()
-        .sort(
-            (a, b) =>
-                String(a.name || '')
-                    .localeCompare(
-                        String(b.name || ''),
-                        'ar'
-                    )
-        )
-        .forEach(
-            halaqa => {
+    studentSearchInput.addEventListener(
+        'focus',
+        () => {
 
-                const option =
-                    document.createElement(
-                        'option'
-                    );
+            studentDropdown.classList.add(
+                'open'
+            );
 
-                option.value =
-                    halaqa.id;
+            updateStudentDropdown(
+                studentSearchInput.value
+            );
+        }
+    );
 
-                option.textContent =
-                    halaqa.name ||
-                    'حلقة بدون اسم';
 
-                halaqaSelect.appendChild(
-                    option
+    studentSearchInput.addEventListener(
+        'click',
+        () => {
+
+            studentDropdown.classList.add(
+                'open'
+            );
+
+            updateStudentDropdown(
+                studentSearchInput.value
+            );
+        }
+    );
+
+
+    // البحث أثناء الكتابة
+
+    studentSearchInput.addEventListener(
+        'input',
+        () => {
+
+            const search =
+                studentSearchInput.value.trim();
+
+
+            /*
+             * إذا بدأ المستخدم بتغيير النص
+             * بعد اختيار طالب، يتم إلغاء الاختيار.
+             */
+
+            if (
+                selectedStudent &&
+                search !== selectedStudent.name
+            ) {
+
+                selectedStudent =
+                    null;
+
+                studentSelect.value =
+                    '';
+
+                schedulePreview();
+            }
+
+
+            studentSearchClear.style.display =
+                search
+                    ? 'flex'
+                    : 'none';
+
+
+            studentDropdown.classList.add(
+                'open'
+            );
+
+
+            updateStudentDropdown(
+                search
+            );
+        }
+    );
+
+
+    // زر المسح
+
+    studentSearchClear.addEventListener(
+        'click',
+        event => {
+
+            event.stopPropagation();
+
+
+            selectedStudent =
+                null;
+
+
+            studentSelect.value =
+                '';
+
+
+            studentSearchInput.value =
+                '';
+
+
+            studentSearchClear.style.display =
+                'none';
+
+
+            updateStudentDropdown(
+                ''
+            );
+
+
+            studentSearchInput.focus();
+
+
+            schedulePreview();
+        }
+    );
+
+
+    // إغلاق القائمة عند الضغط خارجها
+
+    document.addEventListener(
+        'click',
+        event => {
+
+            if (
+                !studentPicker.contains(
+                    event.target
+                )
+            ) {
+
+                studentDropdown.classList.remove(
+                    'open'
                 );
             }
-        );
+        }
+    );
 }
 
 
 // ============================================================
-// الطلاب
+// تعبئة قائمة الطلاب
 // ============================================================
 
-function populateStudents() {
+function updateStudentDropdown(
+    searchText = ''
+) {
 
-    studentSelect.innerHTML =
-        '<option value="">اختر الطالب...</option>';
-
-    studentsCache
-        .slice()
-        .sort(
-            (a, b) =>
-                String(a.name || '')
-                    .localeCompare(
-                        String(b.name || ''),
-                        'ar'
-                    )
+    const search =
+        String(
+            searchText || ''
         )
-        .forEach(
-            student => {
+            .trim()
+            .toLocaleLowerCase('ar');
 
-                const option =
-                    document.createElement(
-                        'option'
+
+    studentDropdown.innerHTML =
+        '';
+
+
+    let students =
+        studentsCache
+            .slice()
+            .sort(
+                (a, b) =>
+                    String(a.name || '')
+                        .localeCompare(
+                            String(b.name || ''),
+                            'ar'
+                        )
+            );
+
+
+    // البحث بالاسم
+
+    if (search) {
+
+        students =
+            students.filter(
+                student => {
+
+                    const name =
+                        String(
+                            student.name || ''
+                        )
+                            .toLocaleLowerCase('ar');
+
+
+                    return name.includes(
+                        search
                     );
+                }
+            );
+    }
 
-                option.value =
-                    student.id;
 
-                option.textContent =
-                    `${student.name || 'طالب بدون اسم'} — ${student.halaqaName || 'غير محدد'}`;
+    // لا توجد نتائج
 
-                studentSelect.appendChild(
-                    option
+    if (!students.length) {
+
+        const empty =
+            document.createElement(
+                'div'
+            );
+
+
+        empty.className =
+            'student-dropdown-empty';
+
+
+        empty.textContent =
+            search
+                ? 'لا يوجد طالب بهذا الاسم'
+                : 'لا يوجد طلاب متاحون';
+
+
+        studentDropdown.appendChild(
+            empty
+        );
+
+
+        return;
+    }
+
+
+    // عرض النتائج
+
+    students.forEach(
+        student => {
+
+            const item =
+                document.createElement(
+                    'button'
+                );
+
+
+            item.type =
+                'button';
+
+
+            item.className =
+                'student-option';
+
+
+            if (
+                selectedStudent &&
+                selectedStudent.id ===
+                student.id
+            ) {
+
+                item.classList.add(
+                    'selected'
                 );
             }
-        );
+
+
+            item.innerHTML = `
+
+                <span class="student-option-icon">
+                    👤
+                </span>
+
+                <span class="student-option-info">
+
+                    <strong>
+                        ${escapeHtml(
+                            student.name ||
+                            'طالب بدون اسم'
+                        )}
+                    </strong>
+
+                    <small>
+                        ${escapeHtml(
+                            student.halaqaName ||
+                            'غير محدد'
+                        )}
+                    </small>
+
+                </span>
+
+            `;
+
+
+            item.addEventListener(
+                'click',
+                () => {
+
+                    selectStudent(
+                        student
+                    );
+                }
+            );
+
+
+            studentDropdown.appendChild(
+                item
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// اختيار الطالب
+// ============================================================
+
+function selectStudent(
+    student
+) {
+
+    selectedStudent =
+        student;
+
+
+    studentSelect.value =
+        student.id;
+
+
+    studentSearchInput.value =
+        student.name || '';
+
+
+    studentSearchClear.style.display =
+        'flex';
+
+
+    studentDropdown.classList.remove(
+        'open'
+    );
+
+
+    schedulePreview();
 }
 
 
@@ -421,49 +662,11 @@ function populateStudents() {
 
 function setupEvents() {
 
-    scopeSelect.addEventListener(
-        'change',
-        async () => {
-
-            const scope =
-                scopeSelect.value;
-
-            if (scope === 'halaqa') {
-
-                halaqaGroup.style.display =
-                    'block';
-
-                studentGroup.style.display =
-                    'none';
-
-            } else {
-
-                halaqaGroup.style.display =
-                    'none';
-
-                studentGroup.style.display =
-                    'block';
-            }
-
-            await updateReportPreview();
-        }
-    );
-
-
-    halaqaSelect.addEventListener(
-        'change',
-        schedulePreview
-    );
-
-    studentSelect.addEventListener(
-        'change',
-        schedulePreview
-    );
-
     monthSelect.addEventListener(
         'change',
         schedulePreview
     );
+
 
     reportTypeSelect.addEventListener(
         'change',
@@ -494,7 +697,7 @@ function setupEvents() {
 
 
 // ============================================================
-// تأخير التحديث حتى لا تتكرر الاستعلامات
+// تأخير التحديث
 // ============================================================
 
 function schedulePreview() {
@@ -502,6 +705,7 @@ function schedulePreview() {
     clearTimeout(
         updateTimer
     );
+
 
     updateTimer =
         setTimeout(
@@ -517,11 +721,9 @@ function schedulePreview() {
 
 async function updateReportPreview() {
 
-    const scope =
-        scopeSelect.value;
-
     const month =
         monthSelect.value;
+
 
     const reportType =
         reportTypeSelect.value;
@@ -543,29 +745,24 @@ async function updateReportPreview() {
 
     try {
 
-        if (scope === 'student') {
-
-            await generateStudentReport(
-                month,
-                reportType
-            );
-
-        } else {
-
-            await generateHalaqaReport(
-                month,
-                reportType
-            );
-        }
+        await generateStudentReport(
+            month,
+            reportType
+        );
 
 
         updateNotes();
 
 
         currentReportData = {
-            scope,
+
+            scope:
+                'student',
+
             month,
+
             reportType
+
         };
 
 
@@ -580,6 +777,7 @@ async function updateReportPreview() {
             'Report Preview Error:',
             error
         );
+
 
         setStatus(
             'تعذر إنشاء التقرير',
@@ -610,27 +808,51 @@ async function generateStudentReport(
         `الفترة: ${formatMonth(month)}`;
 
 
+    // لم يتم اختيار طالب
+
     if (!studentId) {
 
         pdfReportBadge.textContent =
             'تقرير أداء الطالب';
 
+
         pdfMainTitle.textContent =
             'تقرير الأداء والمتابعة';
+
 
         pdfStudentName.textContent =
             'يرجى اختيار طالب';
 
+
+        pdfHalaqaName.textContent =
+            '-';
+
+
         studentSummarySection.style.display =
             'block';
 
+
+        detailedSection.style.display =
+            'none';
+
+
+        achievementSection.style.display =
+            'none';
+
+
         pdfSummaryText.innerHTML = `
+
             <strong>
                 لم يتم اختيار طالب بعد.
             </strong>
+
             <br>
-            اختر طالبًا من لوحة التحكم لعرض التقرير.
+
+            اضغط على حقل الطالب واكتب اسمه
+            للبحث عنه ثم اختره لعرض التقرير.
+
         `;
+
 
         return;
     }
@@ -644,9 +866,19 @@ async function generateStudentReport(
 
 
     if (!student) {
+
+        selectedStudent =
+            null;
+
+        studentSelect.value =
+            '';
+
+
         return;
     }
 
+
+    // جلب سجلات الطالب
 
     const records =
         await fetchStudentRecordsForMonth(
@@ -655,35 +887,43 @@ async function generateStudentReport(
         );
 
 
+    // حساب الإحصائيات
+
     const stats =
-        calculateStats(records);
+        calculateStats(
+            records
+        );
 
 
-    fillHeader(
-        {
-            badge:
-                reportType === 'summary'
-                    ? 'تقرير أداء مختصر'
-                    : 'تقرير أداء تفصيلي',
+    // الرأس
 
-            title:
-                'تقرير أداء الطالب',
+    fillHeader({
 
-            type:
-                'تقرير طالب',
+        badge:
+            reportType === 'summary'
+                ? 'تقرير أداء مختصر'
+                : 'تقرير أداء تفصيلي',
 
-            name:
-                student.name ||
-                'طالب بدون اسم',
+        title:
+            'تقرير أداء الطالب',
 
-            halaqa:
-                student.halaqaName ||
-                'غير محدد',
+        type:
+            'تقرير طالب',
 
-            month
-        }
-    );
+        name:
+            student.name ||
+            'طالب بدون اسم',
 
+        halaqa:
+            student.halaqaName ||
+            'غير محدد',
+
+        month
+
+    });
+
+
+    // الإحصائيات
 
     fillStats(
         stats,
@@ -692,28 +932,29 @@ async function generateStudentReport(
     );
 
 
+    // الأقسام
+
     studentSummarySection.style.display =
         reportType === 'summary'
             ? 'block'
             : 'none';
 
-    halaqaSummarySection.style.display =
-        'none';
 
     detailedSection.style.display =
         reportType === 'detailed'
             ? 'block'
             : 'none';
 
+
     achievementSection.style.display =
         'block';
 
 
-    studentColumnHeader.style.display =
-        'none';
+    // المحتوى
 
-
-    if (reportType === 'summary') {
+    if (
+        reportType === 'summary'
+    ) {
 
         generateStudentSummary(
             records,
@@ -722,7 +963,9 @@ async function generateStudentReport(
     }
 
 
-    if (reportType === 'detailed') {
+    if (
+        reportType === 'detailed'
+    ) {
 
         generateStudentDetailedReport(
             records
@@ -737,200 +980,7 @@ async function generateStudentReport(
 
 
 // ============================================================
-// تقرير الحلقة
-// ============================================================
-
-async function generateHalaqaReport(
-    month,
-    reportType
-) {
-
-    const halaqaId =
-        halaqaSelect.value;
-
-
-    pdfReportType.textContent =
-        'تقرير الحلقة';
-
-
-    pdfReportPeriod.textContent =
-        `الفترة: ${formatMonth(month)}`;
-
-
-    if (!halaqaId) {
-
-        fillHeader({
-
-            badge:
-                'تقرير الحلقة',
-
-            title:
-                'تقرير أداء الحلقة',
-
-            type:
-                'تقرير حلقة',
-
-            name:
-                'يرجى اختيار الحلقة',
-
-            halaqa:
-                '-',
-
-            month
-
-        });
-
-        return;
-    }
-
-
-    const halaqa =
-        halaqatCache.find(
-            item =>
-                item.id === halaqaId
-        );
-
-
-    const halaqaName =
-        halaqa?.name ||
-        halaqatMap[halaqaId] ||
-        'حلقة بدون اسم';
-
-
-    /*
-     * جلب سجلات الحلقة كلها مرة واحدة.
-     */
-
-    const allRecords =
-        await fetchHalaqaRecordsForMonth(
-            halaqaId,
-            month
-        );
-
-
-    const halaqaStudents =
-        studentsCache.filter(
-            student =>
-                student.halaqaId === halaqaId
-        );
-
-
-    const studentData =
-        halaqaStudents.map(
-            student => {
-
-                const records =
-                    allRecords.filter(
-                        record =>
-                            record.studentId ===
-                            student.id
-                    );
-
-                return {
-
-                    student,
-
-                    records,
-
-                    stats:
-                        calculateStats(
-                            records
-                        )
-                };
-            }
-        );
-
-
-    const totalStats =
-        combineStats(
-            studentData.map(
-                item =>
-                    item.stats
-            )
-        );
-
-
-    fillHeader({
-
-        badge:
-            reportType === 'summary'
-                ? 'تقرير الحلقة - مختصر'
-                : 'تقرير الحلقة - تفصيلي',
-
-        title:
-            'تقرير أداء الحلقة',
-
-        type:
-            'تقرير الحلقة كاملة',
-
-        name:
-            halaqaName,
-
-        halaqa:
-            halaqaName,
-
-        month
-
-    });
-
-
-    fillStats(
-        totalStats,
-        halaqaStudents.length,
-        allRecords.length
-    );
-
-
-    studentSummarySection.style.display =
-        'none';
-
-
-    halaqaSummarySection.style.display =
-        reportType === 'summary'
-            ? 'block'
-            : 'none';
-
-
-    detailedSection.style.display =
-        reportType === 'detailed'
-            ? 'block'
-            : 'none';
-
-
-    achievementSection.style.display =
-        'block';
-
-
-    studentColumnHeader.style.display =
-        reportType === 'detailed'
-            ? 'table-cell'
-            : 'none';
-
-
-    if (reportType === 'summary') {
-
-        generateHalaqaSummaryReport(
-            studentData
-        );
-    }
-
-
-    if (reportType === 'detailed') {
-
-        generateHalaqaDetailedReport(
-            studentData
-        );
-    }
-
-
-    generateHalaqaAchievement(
-        studentData
-    );
-}
-
-
-// ============================================================
-// جلب سجلات الطالب
+// جلب سجلات الطالب للشهر
 // ============================================================
 
 async function fetchStudentRecordsForMonth(
@@ -968,10 +1018,6 @@ async function fetchStudentRecordsForMonth(
                     docSnap.data();
 
 
-                /*
-                 * date أصبح Firestore Timestamp
-                 */
-
                 if (
                     isRecordInMonth(
                         data.date,
@@ -985,6 +1031,7 @@ async function fetchStudentRecordsForMonth(
                             docSnap.id,
 
                         ...data
+
                     });
                 }
             }
@@ -1002,83 +1049,6 @@ async function fetchStudentRecordsForMonth(
             error
         );
 
-        return [];
-    }
-}
-
-
-// ============================================================
-// جلب سجلات الحلقة
-// ============================================================
-
-async function fetchHalaqaRecordsForMonth(
-    halaqaId,
-    month
-) {
-
-    try {
-
-        const q =
-            query(
-                collection(
-                    db,
-                    'records'
-                ),
-                where(
-                    'halaqaId',
-                    '==',
-                    halaqaId
-                )
-            );
-
-
-        const snapshot =
-            await getDocs(q);
-
-
-        const records = [];
-
-
-        snapshot.forEach(
-            docSnap => {
-
-                const data =
-                    docSnap.data();
-
-
-                /*
-                 * date أصبح Firestore Timestamp
-                 */
-
-                if (
-                    isRecordInMonth(
-                        data.date,
-                        month
-                    )
-                ) {
-
-                    records.push({
-
-                        id:
-                            docSnap.id,
-
-                        ...data
-                    });
-                }
-            }
-        );
-
-
-        return sortRecords(
-            records
-        );
-
-    } catch (error) {
-
-        console.error(
-            'Halaqa Records Error:',
-            error
-        );
 
         return [];
     }
@@ -1086,7 +1056,7 @@ async function fetchHalaqaRecordsForMonth(
 
 
 // ============================================================
-// تحويل Timestamp إلى Date
+// Timestamp -> Date
 // ============================================================
 
 function timestampToDate(
@@ -1098,20 +1068,16 @@ function timestampToDate(
     }
 
 
-    /*
-     * Firestore Timestamp
-     *
-     * يحتوي على:
-     *
-     * toDate()
-     */
+    // Firestore Timestamp
 
     if (
-        typeof value.toDate === 'function'
+        typeof value.toDate ===
+        'function'
     ) {
 
         const date =
             value.toDate();
+
 
         return isNaN(
             date.getTime()
@@ -1121,9 +1087,7 @@ function timestampToDate(
     }
 
 
-    /*
-     * JavaScript Date
-     */
+    // Date
 
     if (
         value instanceof Date
@@ -1137,14 +1101,7 @@ function timestampToDate(
     }
 
 
-    /*
-     * Timestamp بصيغة:
-     *
-     * {
-     *   seconds,
-     *   nanoseconds
-     * }
-     */
+    // Firestore Timestamp object
 
     if (
         typeof value === 'object' &&
@@ -1154,8 +1111,9 @@ function timestampToDate(
         const milliseconds =
             value.seconds * 1000 +
             Math.floor(
-                (Number(value.nanoseconds) || 0) /
-                1000000
+                (Number(
+                    value.nanoseconds
+                ) || 0) / 1000000
             );
 
 
@@ -1173,9 +1131,7 @@ function timestampToDate(
     }
 
 
-    /*
-     * في حال كان التاريخ رقمًا
-     */
+    // رقم
 
     if (
         typeof value === 'number'
@@ -1193,21 +1149,18 @@ function timestampToDate(
     }
 
 
-    /*
-     * دعم التاريخ النصي القديم
-     * حتى لا تنكسر السجلات القديمة.
-     */
+    // نص
 
     if (
         typeof value === 'string'
     ) {
 
-        /*
-         * YYYY-MM-DD
-         */
+        // YYYY-MM-DD
 
         if (
-            /^\d{4}-\d{2}-\d{2}$/.test(value)
+            /^\d{4}-\d{2}-\d{2}$/.test(
+                value
+            )
         ) {
 
             const [
@@ -1215,7 +1168,8 @@ function timestampToDate(
                 month,
                 day
             ] =
-                value.split('-')
+                value
+                    .split('-')
                     .map(Number);
 
 
@@ -1252,7 +1206,7 @@ function timestampToDate(
 
 
 // ============================================================
-// هل السجل في الشهر؟
+// هل السجل داخل الشهر؟
 // ============================================================
 
 function isRecordInMonth(
@@ -1266,7 +1220,11 @@ function isRecordInMonth(
         );
 
 
-    if (!date || !month) {
+    if (
+        !date ||
+        !month
+    ) {
+
         return false;
     }
 
@@ -1303,19 +1261,26 @@ function sortRecords(
                     a.date
                 );
 
+
             const dateB =
                 timestampToDate(
                     b.date
                 );
 
 
-            if (!dateA && !dateB) {
+            if (
+                !dateA &&
+                !dateB
+            ) {
+
                 return 0;
             }
+
 
             if (!dateA) {
                 return 1;
             }
+
 
             if (!dateB) {
                 return -1;
@@ -1341,25 +1306,36 @@ function calculateStats(
 
     const stats = {
 
-        total: records.length,
+        total:
+            records.length,
 
-        attendance: 0,
+        attendance:
+            0,
 
-        absence: 0,
+        absence:
+            0,
 
-        leave: 0,
+        leave:
+            0,
 
-        permission: 0,
+        permission:
+            0,
 
-        review: 0,
+        review:
+            0,
 
-        recitations: 0,
+        recitations:
+            0,
 
-        points: 0,
+        points:
+            0,
 
-        averagePoints: 0,
+        averagePoints:
+            0,
 
-        attendanceRate: 0
+        attendanceRate:
+            0
+
     };
 
 
@@ -1379,29 +1355,30 @@ function calculateStats(
                     stats.attendance++;
                     break;
 
+
                 case 'غائب':
 
                     stats.absence++;
                     break;
+
 
                 case 'إجازة':
 
                     stats.leave++;
                     break;
 
+
                 case 'مستأذن':
 
                     stats.permission++;
                     break;
+
 
                 case 'مراجعة':
 
                     stats.review++;
                     break;
 
-                default:
-
-                    break;
             }
 
 
@@ -1429,120 +1406,31 @@ function calculateStats(
 
     stats.attendanceRate =
         attendanceBase > 0
+
             ? Math.round(
                 (
                     stats.attendance /
                     attendanceBase
                 ) * 100
             )
+
             : 0;
 
 
     stats.averagePoints =
         records.length > 0
+
             ? Number(
                 (
                     stats.points /
                     records.length
                 ).toFixed(1)
             )
+
             : 0;
 
 
     return stats;
-}
-
-
-// ============================================================
-// دمج إحصائيات الحلقة
-// ============================================================
-
-function combineStats(
-    statsList
-) {
-
-    const result = {
-
-        total: 0,
-
-        attendance: 0,
-
-        absence: 0,
-
-        leave: 0,
-
-        permission: 0,
-
-        review: 0,
-
-        recitations: 0,
-
-        points: 0,
-
-        averagePoints: 0,
-
-        attendanceRate: 0
-    };
-
-
-    statsList.forEach(
-        stats => {
-
-            result.total +=
-                stats.total;
-
-            result.attendance +=
-                stats.attendance;
-
-            result.absence +=
-                stats.absence;
-
-            result.leave +=
-                stats.leave;
-
-            result.permission +=
-                stats.permission;
-
-            result.review +=
-                stats.review;
-
-            result.recitations +=
-                stats.recitations;
-
-            result.points +=
-                stats.points;
-        }
-    );
-
-
-    const base =
-        result.attendance +
-        result.absence;
-
-
-    result.attendanceRate =
-        base > 0
-            ? Math.round(
-                (
-                    result.attendance /
-                    base
-                ) * 100
-            )
-            : 0;
-
-
-    result.averagePoints =
-        result.total > 0
-            ? Number(
-                (
-                    result.points /
-                    result.total
-                ).toFixed(1)
-            )
-            : 0;
-
-
-    return result;
 }
 
 
@@ -1557,23 +1445,33 @@ function fillHeader(
     pdfReportBadge.textContent =
         data.badge || '-';
 
+
     pdfMainTitle.textContent =
         data.title || '-';
+
 
     pdfReportType.textContent =
         data.type || '-';
 
+
     pdfStudentName.textContent =
         data.name || '-';
+
 
     pdfHalaqaName.textContent =
         data.halaqa || '-';
 
+
     pdfMonth.textContent =
-        formatMonth(data.month);
+        formatMonth(
+            data.month
+        );
+
 
     pdfReportPeriod.textContent =
-        `الفترة: ${formatMonth(data.month)}`;
+        `الفترة: ${formatMonth(
+            data.month
+        )}`;
 }
 
 
@@ -1590,26 +1488,34 @@ function fillStats(
     pdfAttendCount.textContent =
         stats.attendance;
 
+
     pdfAbsentCount.textContent =
         stats.absence;
+
 
     pdfRecitations.textContent =
         stats.recitations;
 
+
     pdfPoints.textContent =
         stats.points;
+
 
     pdfAttendanceRate.textContent =
         `${stats.attendanceRate}%`;
 
+
     pdfAttendanceProgress.style.width =
         `${stats.attendanceRate}%`;
+
 
     pdfAveragePoints.textContent =
         stats.averagePoints;
 
+
     pdfStudentCount.textContent =
         studentCount;
+
 
     pdfRecordsCount.textContent =
         recordCount;
@@ -1618,14 +1524,18 @@ function fillStats(
     pdfPresentStatus.textContent =
         stats.attendance;
 
+
     pdfAbsentStatus.textContent =
         stats.absence;
+
 
     pdfLeaveStatus.textContent =
         stats.leave;
 
+
     pdfPermissionStatus.textContent =
         stats.permission;
+
 
     pdfReviewStatus.textContent =
         stats.review;
@@ -1652,11 +1562,16 @@ function generateStudentSummary(
     if (!records.length) {
 
         pdfSummaryText.innerHTML = `
+
             <strong>
                 لا توجد سجلات خلال هذه الفترة.
             </strong>
+
             <br>
-            لم يتم تسجيل أي حضور أو متابعة لهذا الطالب خلال الشهر المحدد.
+
+            لم يتم تسجيل أي حضور أو متابعة
+            لهذا الطالب خلال الشهر المحدد.
+
         `;
 
         return;
@@ -1665,6 +1580,7 @@ function generateStudentSummary(
 
     const first =
         recitations[0];
+
 
     const last =
         recitations[
@@ -1687,16 +1603,26 @@ function generateStudentSummary(
             </strong>
 
             تم تسجيل
-            <strong>${stats.total}</strong>
+            <strong>
+                ${stats.total}
+            </strong>
             سجلًا خلال الفترة، منها
-            <strong>${stats.attendance}</strong>
+            <strong>
+                ${stats.attendance}
+            </strong>
             حضورًا و
-            <strong>${stats.absence}</strong>
+            <strong>
+                ${stats.absence}
+            </strong>
             غيابًا، مع نسبة حضور بلغت
-            <strong>${stats.attendanceRate}%</strong>.
+            <strong>
+                ${stats.attendanceRate}%
+            </strong>.
 
             وقد بلغ إجمالي النقاط
-            <strong>${stats.points}</strong>
+            <strong>
+                ${stats.points}
+            </strong>
             نقطة.
 
         </div>
@@ -1724,11 +1650,19 @@ function generateStudentSummary(
                 </span>
 
                 <strong>
+
                     ${
                         first
-                            ? `سورة ${escapeHtml(first.surah)} — آية ${escapeHtml(first.fromAyah || '1')}`
+
+                            ? `سورة ${escapeHtml(
+                                first.surah
+                            )} — آية ${escapeHtml(
+                                first.fromAyah || '1'
+                            )}`
+
                             : '-'
                     }
+
                 </strong>
 
             </div>
@@ -1741,11 +1675,19 @@ function generateStudentSummary(
                 </span>
 
                 <strong>
+
                     ${
                         last
-                            ? `سورة ${escapeHtml(last.surah)} — آية ${escapeHtml(last.toAyah || 'النهاية')}`
+
+                            ? `سورة ${escapeHtml(
+                                last.surah
+                            )} — آية ${escapeHtml(
+                                last.toAyah || 'النهاية'
+                            )}`
+
                             : '-'
                     }
+
                 </strong>
 
             </div>
@@ -1756,16 +1698,23 @@ function generateStudentSummary(
         ${
             latest?.tomorrowRequirement &&
             latest.tomorrowRequirement !== 'لا يوجد'
+
                 ? `
+
                     <div style="margin-top:10px;">
+
                         <strong>
                             متطلب المتابعة القادمة:
                         </strong>
+
                         ${escapeHtml(
                             latest.tomorrowRequirement
                         )}
+
                     </div>
+
                 `
+
                 : ''
         }
 
@@ -1774,7 +1723,7 @@ function generateStudentSummary(
 
 
 // ============================================================
-// إنجاز الطالب
+// الإنجاز القرآني
 // ============================================================
 
 function generateAchievement(
@@ -1801,6 +1750,7 @@ function generateAchievement(
     const first =
         recitations[0];
 
+
     const last =
         recitations[
             recitations.length - 1
@@ -1817,20 +1767,48 @@ function generateAchievement(
                     المسار المسجل خلال الفترة
                 </div>
 
+
                 <div style="margin-top:6px;">
+
                     البداية:
+
                     <strong>
-                        سورة ${escapeHtml(first.surah)}
-                        (${escapeHtml(first.fromAyah || '1')})
+
+                        سورة
+                        ${escapeHtml(
+                            first.surah
+                        )}
+
+                        (
+                        ${escapeHtml(
+                            first.fromAyah || '1'
+                        )}
+                        )
+
                     </strong>
+
                 </div>
 
+
                 <div>
+
                     آخر إنجاز:
+
                     <strong>
-                        سورة ${escapeHtml(last.surah)}
-                        (${escapeHtml(last.toAyah || 'النهاية')})
+
+                        سورة
+                        ${escapeHtml(
+                            last.surah
+                        )}
+
+                        (
+                        ${escapeHtml(
+                            last.toAyah || 'النهاية'
+                        )}
+                        )
+
                     </strong>
+
                 </div>
 
             </div>
@@ -1853,205 +1831,7 @@ function generateAchievement(
 
 
 // ============================================================
-// ملخص الحلقة
-// ============================================================
-
-function generateHalaqaSummaryReport(
-    studentData
-) {
-
-    pdfHalaqaSummaryBody.innerHTML =
-        '';
-
-
-    if (!studentData.length) {
-
-        pdfHalaqaSummaryBody.innerHTML = `
-
-            <tr>
-
-                <td colspan="8">
-                    لا يوجد طلاب نشطون في هذه الحلقة.
-                </td>
-
-            </tr>
-        `;
-
-        return;
-    }
-
-
-    const sorted =
-        studentData
-            .slice()
-            .sort(
-                (a, b) =>
-                    b.stats.points -
-                    a.stats.points
-            );
-
-
-    sorted.forEach(
-        (item, index) => {
-
-            const stats =
-                item.stats;
-
-            const student =
-                item.student;
-
-
-            const level =
-                getAchievementLevel(
-                    stats
-                );
-
-
-            const tr =
-                document.createElement(
-                    'tr'
-                );
-
-
-            tr.innerHTML = `
-
-                <td>
-                    ${index + 1}
-                </td>
-
-                <td style="font-weight:700;">
-                    ${escapeHtml(
-                        student.name || '-'
-                    )}
-                </td>
-
-                <td>
-                    ${stats.attendance}
-                </td>
-
-                <td>
-                    ${stats.absence}
-                </td>
-
-                <td>
-                    ${stats.recitations}
-                </td>
-
-                <td>
-                    <span class="points-badge">
-                        ${stats.points}
-                    </span>
-                </td>
-
-                <td>
-                    ${stats.attendanceRate}%
-                </td>
-
-                <td>
-                    ${escapeHtml(level)}
-                </td>
-            `;
-
-
-            pdfHalaqaSummaryBody.appendChild(
-                tr
-            );
-        }
-    );
-
-
-    generateHalaqaAchievement(
-        sorted
-    );
-}
-
-
-// ============================================================
-// إنجاز الحلقة
-// ============================================================
-
-function generateHalaqaAchievement(
-    studentData
-) {
-
-    if (!studentData.length) {
-
-        pdfAchievement.textContent =
-            'لا توجد بيانات كافية.';
-
-        return;
-    }
-
-
-    const topStudent =
-        studentData
-            .slice()
-            .sort(
-                (a, b) =>
-                    b.stats.points -
-                    a.stats.points
-            )[0];
-
-
-    const totalRecitations =
-        studentData.reduce(
-            (sum, item) =>
-                sum +
-                item.stats.recitations,
-            0
-        );
-
-
-    pdfAchievement.innerHTML = `
-
-        <div class="achievement-main">
-
-            <div>
-
-                <div class="achievement-title">
-                    أبرز مؤشرات الحلقة
-                </div>
-
-                <div style="margin-top:6px;">
-                    أعلى نقاط:
-                    <strong>
-                        ${escapeHtml(
-                            topStudent.student.name ||
-                            '-'
-                        )}
-                    </strong>
-                    —
-                    ${topStudent.stats.points}
-                    نقطة
-                </div>
-
-                <div>
-                    إجمالي جلسات التسميع:
-                    <strong>
-                        ${totalRecitations}
-                    </strong>
-                </div>
-
-            </div>
-
-
-            <div class="achievement-value">
-
-                ${studentData.length}
-
-                <small>
-                    طالب نشط
-                </small>
-
-            </div>
-
-        </div>
-    `;
-}
-
-
-// ============================================================
-// التقرير التفصيلي للطالب
+// التقرير التفصيلي
 // ============================================================
 
 function generateStudentDetailedReport(
@@ -2068,13 +1848,15 @@ function generateStudentDetailedReport(
 
             <tr>
 
-                <td
-                    colspan="8"
-                >
-                    لا توجد سجلات مسجلة خلال هذه الفترة.
+                <td colspan="7">
+
+                    لا توجد سجلات مسجلة
+                    خلال هذه الفترة.
+
                 </td>
 
             </tr>
+
         `;
 
         return;
@@ -2092,8 +1874,7 @@ function generateStudentDetailedReport(
 
             tr.innerHTML =
                 createRecordRow(
-                    record,
-                    false
+                    record
                 );
 
 
@@ -2106,78 +1887,11 @@ function generateStudentDetailedReport(
 
 
 // ============================================================
-// التقرير التفصيلي للحلقة
-// ============================================================
-
-function generateHalaqaDetailedReport(
-    studentData
-) {
-
-    pdfTableBody.innerHTML =
-        '';
-
-
-    let count = 0;
-
-
-    studentData.forEach(
-        item => {
-
-            item.records.forEach(
-                record => {
-
-                    count++;
-
-
-                    const tr =
-                        document.createElement(
-                            'tr'
-                        );
-
-
-                    tr.innerHTML =
-                        createRecordRow(
-                            record,
-                            true,
-                            item.student.name
-                        );
-
-
-                    pdfTableBody.appendChild(
-                        tr
-                    );
-                }
-            );
-        }
-    );
-
-
-    if (!count) {
-
-        pdfTableBody.innerHTML = `
-
-            <tr>
-
-                <td
-                    colspan="8"
-                >
-                    لا توجد سجلات مسجلة لهذه الحلقة خلال الفترة المحددة.
-                </td>
-
-            </tr>
-        `;
-    }
-}
-
-
-// ============================================================
-// إنشاء صف سجل
+// إنشاء صف السجل
 // ============================================================
 
 function createRecordRow(
-    record,
-    showStudent,
-    studentName = ''
+    record
 ) {
 
     const status =
@@ -2192,26 +1906,12 @@ function createRecordRow(
 
     return `
 
-        <td
-            style="
-                display:${showStudent
-                    ? 'table-cell'
-                    : 'none'};
-                font-weight:700;
-            "
-        >
-            ${escapeHtml(
-                studentName ||
-                record.studentName ||
-                '-'
-            )}
-        </td>
-
-
         <td>
+
             ${formatDate(
                 record.date
             )}
+
         </td>
 
 
@@ -2220,94 +1920,76 @@ function createRecordRow(
             <span
                 class="status-badge ${statusClass}"
             >
-                ${escapeHtml(status)}
+
+                ${escapeHtml(
+                    status
+                )}
+
             </span>
 
         </td>
 
 
         <td>
+
             ${escapeHtml(
                 record.surah ||
                 '-'
             )}
+
         </td>
 
 
         <td>
+
             ${escapeHtml(
                 record.fromAyah ||
                 '-'
             )}
+
         </td>
 
 
         <td>
+
             ${escapeHtml(
                 record.toAyah ||
                 '-'
             )}
+
         </td>
 
 
         <td>
+
             ${escapeHtml(
                 record.grade ||
                 '-'
             )}
+
         </td>
 
 
         <td>
+
             <span class="points-badge">
-                ${Number(
-                    record.pointsGiven
-                ) || 0}
+
+                ${
+                    Number(
+                        record.pointsGiven
+                    ) || 0
+                }
+
             </span>
+
         </td>
+
     `;
 }
 
 
 // ============================================================
-// مستوى الإنجاز
-// ============================================================
-
-function getAchievementLevel(
-    stats
-) {
-
-    if (
-        stats.attendanceRate >= 90 &&
-        stats.points >= 100
-    ) {
-
-        return 'متميز';
-    }
-
-
-    if (
-        stats.attendanceRate >= 80
-    ) {
-
-        return 'جيد جدًا';
-    }
-
-
-    if (
-        stats.attendanceRate >= 60
-    ) {
-
-        return 'جيد';
-    }
-
-
-    return 'يحتاج متابعة';
-}
-
-
-// ============================================================
-// نوع حالة الحضور
+// نوع الحالة
 // ============================================================
 
 function getStatusClass(
@@ -2319,20 +2001,26 @@ function getStatusClass(
         case 'حاضر':
             return 'status-present';
 
+
         case 'غائب':
             return 'status-absent';
+
 
         case 'إجازة':
             return 'status-leave';
 
+
         case 'مستأذن':
             return 'status-permission';
+
 
         case 'مراجعة':
             return 'status-review';
 
+
         default:
             return '';
+
     }
 }
 
@@ -2362,11 +2050,14 @@ function resetReport() {
     pdfStudentName.textContent =
         '-';
 
+
     pdfHalaqaName.textContent =
         '-';
 
+
     pdfMonth.textContent =
         '-';
+
 
     pdfReportPeriod.textContent =
         '-';
@@ -2375,26 +2066,34 @@ function resetReport() {
     pdfAttendCount.textContent =
         '0';
 
+
     pdfAbsentCount.textContent =
         '0';
+
 
     pdfRecitations.textContent =
         '0';
 
+
     pdfPoints.textContent =
         '0';
+
 
     pdfAttendanceRate.textContent =
         '0%';
 
+
     pdfAttendanceProgress.style.width =
         '0%';
+
 
     pdfAveragePoints.textContent =
         '0';
 
+
     pdfStudentCount.textContent =
         '0';
+
 
     pdfRecordsCount.textContent =
         '0';
@@ -2403,14 +2102,18 @@ function resetReport() {
     pdfPresentStatus.textContent =
         '0';
 
+
     pdfAbsentStatus.textContent =
         '0';
+
 
     pdfLeaveStatus.textContent =
         '0';
 
+
     pdfPermissionStatus.textContent =
         '0';
+
 
     pdfReviewStatus.textContent =
         '0';
@@ -2419,11 +2122,10 @@ function resetReport() {
     pdfSummaryText.innerHTML =
         '';
 
+
     pdfAchievement.innerHTML =
         '';
 
-    pdfHalaqaSummaryBody.innerHTML =
-        '';
 
     pdfTableBody.innerHTML =
         '';
@@ -2432,11 +2134,10 @@ function resetReport() {
     studentSummarySection.style.display =
         'none';
 
-    halaqaSummarySection.style.display =
-        'none';
 
     detailedSection.style.display =
         'none';
+
 
     achievementSection.style.display =
         'block';
@@ -2477,6 +2178,7 @@ function formatMonth(
         'أكتوبر',
         'نوفمبر',
         'ديسمبر'
+
     ];
 
 
@@ -2487,7 +2189,7 @@ function formatMonth(
 
 
 // ============================================================
-// التاريخ - Timestamp
+// التاريخ
 // ============================================================
 
 function formatDate(
@@ -2549,22 +2251,27 @@ function escapeHtml(
 
 
     return String(value)
+
         .replaceAll(
             '&',
             '&amp;'
         )
+
         .replaceAll(
             '<',
             '&lt;'
         )
+
         .replaceAll(
             '>',
             '&gt;'
         )
+
         .replaceAll(
             '"',
             '&quot;'
         )
+
         .replaceAll(
             "'",
             '&#039;'
@@ -2587,17 +2294,25 @@ function setStatus(
 
     previewStatus.style.background =
         type === 'error'
+
             ? '#faeeee'
+
             : type === 'loading'
+
                 ? '#f5ead0'
+
                 : '#eaf4ef';
 
 
     previewStatus.style.color =
         type === 'error'
+
             ? '#b84545'
+
             : type === 'loading'
+
                 ? '#86651e'
+
                 : '#185443';
 }
 
@@ -2607,9 +2322,6 @@ function setStatus(
 // ============================================================
 
 async function downloadPDF() {
-
-    const scope =
-        scopeSelect.value;
 
     const month =
         monthSelect.value;
@@ -2626,25 +2338,11 @@ async function downloadPDF() {
 
 
     if (
-        scope === 'student' &&
         !studentSelect.value
     ) {
 
         alert(
             'يرجى اختيار الطالب أولاً.'
-        );
-
-        return;
-    }
-
-
-    if (
-        scope === 'halaqa' &&
-        !halaqaSelect.value
-    ) {
-
-        alert(
-            'يرجى اختيار الحلقة أولاً.'
         );
 
         return;
@@ -2684,11 +2382,7 @@ async function downloadPDF() {
 
 
     const filename =
-        scope === 'halaqa'
-
-            ? `تقرير_الحلقة_${name}_${safeMonth}.pdf`
-
-            : `تقرير_${name}_${safeMonth}.pdf`;
+        `تقرير_الطالب_${name}_${safeMonth}.pdf`;
 
 
     const originalText =
@@ -2697,6 +2391,7 @@ async function downloadPDF() {
 
     generatePdfBtn.innerHTML =
         '<span>⏳</span> جاري إنشاء التقرير...';
+
 
     generatePdfBtn.disabled =
         true;
@@ -2722,7 +2417,9 @@ async function downloadPDF() {
                 4
             ],
 
+
             filename,
+
 
             image: {
 
@@ -2731,7 +2428,9 @@ async function downloadPDF() {
 
                 quality:
                     0.98
+
             },
+
 
             html2canvas: {
 
@@ -2755,7 +2454,9 @@ async function downloadPDF() {
 
                 scrollY:
                     0
+
             },
+
 
             jsPDF: {
 
@@ -2770,7 +2471,9 @@ async function downloadPDF() {
 
                 compress:
                     true
+
             },
+
 
             pagebreak: {
 
@@ -2780,13 +2483,21 @@ async function downloadPDF() {
                 ],
 
                 avoid: [
+
                     '.report-section',
+
                     '.status-section',
+
                     '.achievement-section',
+
                     '.notes-section',
+
                     'tr'
+
                 ]
+
             }
+
         };
 
 
@@ -2808,9 +2519,11 @@ async function downloadPDF() {
             error
         );
 
+
         alert(
             'حدث خطأ أثناء إنشاء ملف PDF.'
         );
+
 
         setStatus(
             'فشل استخراج PDF',
@@ -2821,6 +2534,7 @@ async function downloadPDF() {
 
         generatePdfBtn.innerHTML =
             originalText;
+
 
         generatePdfBtn.disabled =
             false;
