@@ -2286,9 +2286,11 @@ function resetReport() {
 // الشهر
 // ============================================================
 
-function formatMonth(
-    month
-) {
+// ============================================================
+// الشهر — هجري + ميلادي
+// ============================================================
+
+function formatMonth(month) {
 
     if (!month) {
         return '-';
@@ -2298,11 +2300,25 @@ function formatMonth(
     const [
         year,
         monthNumber
-    ] =
-        month.split('-');
+    ] = month.split('-').map(Number);
 
 
-    const names = [
+    if (
+        !year ||
+        !monthNumber ||
+        monthNumber < 1 ||
+        monthNumber > 12
+    ) {
+
+        return '-';
+    }
+
+
+    // ========================================================
+    // أسماء الأشهر الميلادية
+    // ========================================================
+
+    const gregorianMonths = [
 
         'يناير',
         'فبراير',
@@ -2320,11 +2336,188 @@ function formatMonth(
     ];
 
 
-    return `${names[
-        Number(monthNumber) - 1
-    ] || monthNumber} ${year}`;
-}
+    const gregorianMonthName =
+        gregorianMonths[
+            monthNumber - 1
+        ];
 
+
+    // ========================================================
+    // أول يوم وآخر يوم من الشهر الميلادي
+    // ========================================================
+
+    const firstDay =
+        new Date(
+            year,
+            monthNumber - 1,
+            1
+        );
+
+
+    const lastDay =
+        new Date(
+            year,
+            monthNumber,
+            0
+        );
+
+
+    // ========================================================
+    // التقويم الهجري أم القرى
+    // ========================================================
+
+    const hijriFormatter =
+        new Intl.DateTimeFormat(
+            'ar-SA-u-ca-islamic-umalqura',
+            {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }
+        );
+
+
+    // ========================================================
+    // تحويل أول وآخر يوم إلى هجري
+    // ========================================================
+
+    const firstHijri =
+        hijriFormatter.format(
+            firstDay
+        );
+
+
+    const lastHijri =
+        hijriFormatter.format(
+            lastDay
+        );
+
+
+    // ========================================================
+    // استخراج أجزاء التاريخ الهجري
+    // ========================================================
+
+    const firstParts =
+        new Intl.DateTimeFormat(
+            'ar-SA-u-ca-islamic-umalqura',
+            {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }
+        ).formatToParts(
+            firstDay
+        );
+
+
+    const lastParts =
+        new Intl.DateTimeFormat(
+            'ar-SA-u-ca-islamic-umalqura',
+            {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            }
+        ).formatToParts(
+            lastDay
+        );
+
+
+    function getPart(
+        parts,
+        type
+    ) {
+
+        return (
+            parts.find(
+                part =>
+                    part.type === type
+            )?.value || ''
+        );
+    }
+
+
+    const firstHijriDay =
+        getPart(
+            firstParts,
+            'day'
+        );
+
+
+    const firstHijriMonth =
+        getPart(
+            firstParts,
+            'month'
+        );
+
+
+    const firstHijriYear =
+        getPart(
+            firstParts,
+            'year'
+        );
+
+
+    const lastHijriDay =
+        getPart(
+            lastParts,
+            'day'
+        );
+
+
+    const lastHijriMonth =
+        getPart(
+            lastParts,
+            'month'
+        );
+
+
+    const lastHijriYear =
+        getPart(
+            lastParts,
+            'year'
+        );
+
+
+    // ========================================================
+    // إذا كان الشهر الميلادي بالكامل داخل شهر هجري واحد
+    // ========================================================
+
+    if (
+        firstHijriMonth === lastHijriMonth &&
+        firstHijriYear === lastHijriYear
+    ) {
+
+        return `
+            ${firstHijriMonth}
+            ${firstHijriYear}هـ
+            — ${gregorianMonthName} ${year}م
+        `.replace(
+            /\s+/g,
+            ' '
+        ).trim();
+    }
+
+
+    // ========================================================
+    // إذا كان الشهر الميلادي يمتد على شهرين هجريين
+    // ========================================================
+
+    return `
+        ${gregorianMonthName} ${year}م
+        — من
+        ${firstHijriDay}
+        ${firstHijriMonth}
+        ${firstHijriYear}هـ
+        إلى
+        ${lastHijriDay}
+        ${lastHijriMonth}
+        ${lastHijriYear}هـ
+    `.replace(
+        /\s+/g,
+        ' '
+    ).trim();
+}
 
 // ============================================================
 // التاريخ
