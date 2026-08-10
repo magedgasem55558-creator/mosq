@@ -6,17 +6,49 @@
     <link rel="stylesheet" href="manage-students.css">
 </head>
 <body>
-    <h1>📋 إدارة الطلاب</h1>
-    <p class="subtitle">تعديل أو حذف بيانات الطلاب</p>
-    <div style="margin-bottom: 1.5rem; display: flex; gap: 1rem; align-items: center;">
-    <label style="margin:0;">🔍 ابحث عن طالب:</label>
-    <input type="text" id="studentSearchInput" placeholder="اكتب اسم الطالب هنا..." style="flex:1;">
-    <button id="resetAllPointsBtn" class="btn-warning">🔄 تصفير نقاط الجميع</button>
-</div>
-        <div id="manageStudentsList" class="manage-list">
-            <div class="loading">جاري تحميل الطلاب...</div>
-        </div>
+ <h1>📋 إدارة الطلاب</h1>
+<p class="subtitle">إدارة بيانات الطلاب ومتابعة حالة النشاط</p><!-- إحصائيات الطلاب --><div class="students-stats"><div class="stat-card stat-total">
+    <div class="stat-icon">👨‍🎓</div>
+    <div class="stat-info">
+        <span class="stat-number" id="totalStudentsCount">0</span>
+        <span class="stat-label">إجمالي الطلاب</span>
     </div>
+</div>
+
+<div class="stat-card stat-active">
+    <div class="stat-icon">🟢</div>
+    <div class="stat-info">
+        <span class="stat-number" id="activeStudentsCount">0</span>
+        <span class="stat-label">الطلاب النشطين</span>
+    </div>
+</div>
+
+<div class="stat-card stat-inactive">
+    <div class="stat-icon">🔴</div>
+    <div class="stat-info">
+        <span class="stat-number" id="inactiveStudentsCount">0</span>
+        <span class="stat-label">غير النشطين</span>
+    </div>
+</div>
+
+</div><!-- شريط الأدوات --><div class="students-toolbar"><div class="search-wrapper">
+    <span class="search-icon">🔍</span>
+
+    <input
+        type="search"
+        id="studentSearchInput"
+        placeholder="ابحث باسم الطالب..."
+        autocomplete="off"
+    >
+</div>
+
+<button id="resetAllPointsBtn" class="btn-warning">
+    🔄 تصفير نقاط الجميع
+</button>
+
+</div><!-- قائمة الطلاب --><div id="manageStudentsList" class="manage-list">
+    <div class="loading">جاري تحميل الطلاب...</div>
+</div>
 
     <!-- نافذة تعديل الطالب -->
     <div id="editStudentModal" class="modal">
