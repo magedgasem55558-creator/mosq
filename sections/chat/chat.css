@@ -1,0 +1,1022 @@
+/* ============================================================
+   💬 chat.css
+   تصميم صفحة محادثة ولي الأمر
+   ============================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+
+/* ============================================================
+   الصفحة
+   ============================================================ */
+
+body {
+    margin: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f4f8f7,
+            #eef5f3
+        );
+}
+
+
+.chat-page {
+
+    width: 100%;
+
+    max-width: 1050px;
+
+    height: 100vh;
+    height: 100dvh;
+
+    margin: 0 auto;
+
+    padding: 18px;
+
+    display: flex;
+
+    flex-direction: column;
+}
+
+
+/* ============================================================
+   رأس الصفحة
+   ============================================================ */
+
+.chat-page-header {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    margin-bottom: 14px;
+
+    flex-shrink: 0;
+}
+
+
+.back-chat-btn {
+
+    width: 46px;
+
+    height: 46px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background: #176b5b;
+
+    color: white;
+
+    font-size: 22px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition: .2s;
+
+    box-shadow:
+        0 5px 15px
+        rgba(23, 107, 91, .18);
+}
+
+
+.back-chat-btn:hover {
+
+    transform: translateY(-2px);
+
+    background: #125849;
+}
+
+
+.back-chat-btn:active {
+
+    transform: scale(.95);
+}
+
+
+.chat-page-title {
+
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.chat-page-title h1 {
+
+    margin: 0;
+
+    color: #173b35;
+
+    font-size: 22px;
+
+    font-weight: 800;
+}
+
+
+.chat-page-title p {
+
+    margin: 4px 0 0;
+
+    color: #71807c;
+
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   البطاقة الرئيسية
+   ============================================================ */
+
+.chat-page-card {
+
+    flex: 1;
+
+    min-height: 0;
+
+    background: white;
+
+    border-radius: 22px;
+
+    overflow: hidden;
+
+    display: flex;
+
+    flex-direction: column;
+
+    box-shadow:
+        0 12px 40px
+        rgba(20, 70, 60, .10);
+
+    border:
+        1px solid rgba(23, 107, 91, .07);
+}
+
+
+/* ============================================================
+   معلومات الطالب
+   ============================================================ */
+
+.chat-profile {
+
+    min-height: 78px;
+
+    padding:
+        14px 18px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8fcfb,
+            #f0f7f5
+        );
+
+    border-bottom:
+        1px solid #e6eeec;
+
+    flex-shrink: 0;
+}
+
+
+.chat-profile-avatar {
+
+    width: 52px;
+
+    height: 52px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #176b5b,
+            #238b76
+        );
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 25px;
+
+    box-shadow:
+        0 5px 15px
+        rgba(23, 107, 91, .18);
+
+    flex-shrink: 0;
+}
+
+
+.chat-profile-info {
+
+    flex: 1;
+
+    min-width: 0;
+}
+
+
+.chat-profile-info strong {
+
+    display: block;
+
+    color: #183c36;
+
+    font-size: 16px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+.chat-profile-info small {
+
+    display: block;
+
+    margin-top: 5px;
+
+    color: #71807c;
+
+    font-size: 12px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+/* ============================================================
+   حالة المحادثة
+   ============================================================ */
+
+.chat-online {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    font-size: 11px;
+
+    color: #27876f;
+
+    margin-top: 4px;
+}
+
+
+.chat-online-dot {
+
+    width: 7px;
+
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #2cad89;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(44, 173, 137, .10);
+}
+
+
+/* ============================================================
+   منطقة الرسائل
+   ============================================================ */
+
+.chat-messages {
+
+    flex: 1;
+
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding:
+        25px 22px;
+
+    background: #f4f7f6;
+
+    background-image:
+        radial-gradient(
+            rgba(23, 107, 91, .035) 1px,
+            transparent 1px
+        );
+
+    background-size: 18px 18px;
+
+    scroll-behavior: smooth;
+}
+
+
+/* ============================================================
+   Scrollbar
+   ============================================================ */
+
+.chat-messages::-webkit-scrollbar {
+
+    width: 6px;
+}
+
+
+.chat-messages::-webkit-scrollbar-track {
+
+    background: transparent;
+}
+
+
+.chat-messages::-webkit-scrollbar-thumb {
+
+    background: #c8d8d4;
+
+    border-radius: 20px;
+}
+
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+
+    background: #aebfba;
+}
+
+
+/* ============================================================
+   رسالة فارغة
+   ============================================================ */
+
+.chat-empty {
+
+    height: 100%;
+
+    min-height: 300px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    text-align: center;
+
+    color: #7a8985;
+
+    gap: 7px;
+}
+
+
+.chat-empty-icon {
+
+    width: 75px;
+
+    height: 75px;
+
+    border-radius: 24px;
+
+    background: #e4f1ed;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 34px;
+
+    margin-bottom: 8px;
+}
+
+
+.chat-empty strong {
+
+    color: #405852;
+
+    font-size: 15px;
+}
+
+
+.chat-empty small {
+
+    font-size: 12px;
+
+    color: #879590;
+}
+
+
+/* ============================================================
+   الرسائل
+   ============================================================ */
+
+.chat-message {
+
+    position: relative;
+
+    max-width: 70%;
+
+    padding:
+        10px 14px;
+
+    margin-bottom: 14px;
+
+    border-radius: 17px;
+
+    word-break: break-word;
+
+    animation:
+        chatMessageIn .2s ease;
+}
+
+
+@keyframes chatMessageIn {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(5px);
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
+}
+
+
+/* ============================================================
+   رسالة الشيخ
+   ============================================================ */
+
+.chat-message.teacher {
+
+    margin-right: auto;
+
+    margin-left: 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #176b5b,
+            #197563
+        );
+
+    color: white;
+
+    border-bottom-right-radius: 5px;
+
+    box-shadow:
+        0 4px 12px
+        rgba(23, 107, 91, .12);
+}
+
+
+/* ============================================================
+   رسالة ولي الأمر
+   ============================================================ */
+
+.chat-message.parent {
+
+    margin-left: auto;
+
+    margin-right: 0;
+
+    background: white;
+
+    color: #263b37;
+
+    border:
+        1px solid #e0e8e5;
+
+    border-bottom-left-radius: 5px;
+
+    box-shadow:
+        0 3px 10px
+        rgba(0, 0, 0, .04);
+}
+
+
+/* ============================================================
+   اسم المرسل
+   ============================================================ */
+
+.chat-sender {
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    margin-bottom: 5px;
+
+    opacity: .78;
+}
+
+
+/* ============================================================
+   نص الرسالة
+   ============================================================ */
+
+.chat-text {
+
+    font-size: 14px;
+
+    line-height: 1.75;
+
+    white-space: pre-wrap;
+}
+
+
+/* ============================================================
+   وقت الرسالة
+   ============================================================ */
+
+.chat-message-meta {
+
+    display: flex;
+
+    justify-content: flex-start;
+
+    font-size: 10px;
+
+    margin-top: 6px;
+
+    opacity: .58;
+}
+
+
+/* ============================================================
+   منطقة الكتابة
+   ============================================================ */
+
+.chat-input-area {
+
+    min-height: 72px;
+
+    display: flex;
+
+    align-items: flex-end;
+
+    gap: 9px;
+
+    padding:
+        12px 15px;
+
+    background: white;
+
+    border-top:
+        1px solid #e6eeec;
+
+    flex-shrink: 0;
+}
+
+
+.chat-input-area textarea {
+
+    flex: 1;
+
+    resize: none;
+
+    min-height: 46px;
+
+    max-height: 115px;
+
+    border:
+        1px solid #d8e2df;
+
+    border-radius: 15px;
+
+    padding:
+        12px 14px;
+
+    background: #f8faf9;
+
+    color: #263b37;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+
+    outline: none;
+
+    transition: .2s;
+}
+
+
+.chat-input-area textarea::placeholder {
+
+    color: #9aa8a4;
+}
+
+
+.chat-input-area textarea:focus {
+
+    background: white;
+
+    border-color: #176b5b;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(23, 107, 91, .08);
+}
+
+
+/* ============================================================
+   زر الإرسال
+   ============================================================ */
+
+.send-chat-btn {
+
+    width: 46px;
+
+    height: 46px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #176b5b,
+            #238875
+        );
+
+    color: white;
+
+    font-size: 19px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    box-shadow:
+        0 5px 15px
+        rgba(23, 107, 91, .20);
+
+    transition: .2s;
+}
+
+
+.send-chat-btn:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 7px 18px
+        rgba(23, 107, 91, .25);
+}
+
+
+.send-chat-btn:active {
+
+    transform: scale(.95);
+}
+
+
+.send-chat-btn:disabled {
+
+    opacity: .55;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+    box-shadow: none;
+}
+
+
+/* ============================================================
+   حالة التحميل
+   ============================================================ */
+
+.chat-loading {
+
+    height: 100%;
+
+    min-height: 300px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 12px;
+
+    color: #758681;
+
+    font-size: 14px;
+
+    text-align: center;
+}
+
+
+.chat-loading span {
+
+    font-size: 28px;
+
+    animation:
+        chatLoadingPulse 1.2s ease-in-out infinite;
+}
+
+
+@keyframes chatLoadingPulse {
+
+    0%,
+    100% {
+
+        opacity: .45;
+
+        transform: scale(.95);
+    }
+
+    50% {
+
+        opacity: 1;
+
+        transform: scale(1);
+    }
+}
+
+
+/* ============================================================
+   الهاتف
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+    .chat-page {
+
+        padding: 0;
+
+        height: 100vh;
+
+        height: 100dvh;
+    }
+
+
+    .chat-page-header {
+
+        margin: 0;
+
+        padding:
+            10px 12px;
+
+        min-height: 64px;
+
+        background: white;
+
+        border-bottom:
+            1px solid #e7eeec;
+    }
+
+
+    .back-chat-btn {
+
+        width: 42px;
+
+        height: 42px;
+
+        border-radius: 12px;
+
+        font-size: 20px;
+    }
+
+
+    .chat-page-title h1 {
+
+        font-size: 18px;
+    }
+
+
+    .chat-page-title p {
+
+        font-size: 11px;
+
+        margin-top: 3px;
+    }
+
+
+    .chat-page-card {
+
+        border-radius: 0;
+
+        border: none;
+
+        box-shadow: none;
+    }
+
+
+    .chat-profile {
+
+        min-height: 70px;
+
+        padding:
+            10px 14px;
+    }
+
+
+    .chat-profile-avatar {
+
+        width: 45px;
+
+        height: 45px;
+
+        border-radius: 13px;
+
+        font-size: 22px;
+    }
+
+
+    .chat-profile-info strong {
+
+        font-size: 14px;
+    }
+
+
+    .chat-profile-info small {
+
+        font-size: 11px;
+    }
+
+
+    .chat-online {
+
+        font-size: 10px;
+    }
+
+
+    .chat-messages {
+
+        padding:
+            18px 12px;
+    }
+
+
+    .chat-message {
+
+        max-width: 84%;
+
+        padding:
+            9px 12px;
+
+        border-radius: 15px;
+    }
+
+
+    .chat-text {
+
+        font-size: 13px;
+
+        line-height: 1.7;
+    }
+
+
+    .chat-sender {
+
+        font-size: 10px;
+    }
+
+
+    .chat-message-meta {
+
+        font-size: 9px;
+    }
+
+
+    .chat-input-area {
+
+        padding:
+            9px 10px;
+
+        min-height: 64px;
+    }
+
+
+    .chat-input-area textarea {
+
+        min-height: 44px;
+
+        font-size: 13px;
+
+        border-radius: 13px;
+    }
+
+
+    .send-chat-btn {
+
+        width: 44px;
+
+        height: 44px;
+
+        border-radius: 13px;
+
+        font-size: 18px;
+    }
+}
+
+
+/* ============================================================
+   الشاشات الصغيرة جدًا
+   ============================================================ */
+
+@media (max-width: 380px) {
+
+    .chat-page-title p {
+
+        display: none;
+    }
+
+
+    .chat-message {
+
+        max-width: 90%;
+    }
+
+
+    .chat-messages {
+
+        padding:
+            15px 9px;
+    }
+
+
+    .chat-profile {
+
+        padding:
+            9px 11px;
+    }
+}
+
+
+/* ============================================================
+   تقليل الحركة لمن يفضل ذلك
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .chat-message {
+
+        animation: none;
+    }
+
+    .chat-loading span {
+
+        animation: none;
+    }
+
+    .back-chat-btn,
+    .send-chat-btn,
+    .chat-input-area textarea {
+
+        transition: none;
+    }
+
+    .chat-messages {
+
+        scroll-behavior: auto;
+    }
+}
