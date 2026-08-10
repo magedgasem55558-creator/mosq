@@ -1,76 +1,329 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <link rel="stylesheet" href="../../style.css">
     <link rel="stylesheet" href="manage-records.css">
+
+    <title>إدارة سجلات التسميع</title>
 </head>
+
 <body>
+
     <h1>📋 إدارة سجلات التسميع</h1>
-    <p class="subtitle">عرض وتعديل وحذف سجلات التسميع</p>
+
+    <p class="subtitle">
+        عرض وتعديل وحذف سجلات التسميع والحضور
+    </p>
+
+    <!-- الإحصائيات -->
+    <div class="records-stats">
+
+        <div class="stat-card stat-total">
+            <div class="stat-icon">📊</div>
+
+            <div class="stat-content">
+                <span
+                    id="totalRecordsCount"
+                    class="stat-number"
+                >0</span>
+
+                <span class="stat-label">
+                    إجمالي السجلات
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card stat-present">
+            <div class="stat-icon">✅</div>
+
+            <div class="stat-content">
+                <span
+                    id="presentRecordsCount"
+                    class="stat-number"
+                >0</span>
+
+                <span class="stat-label">
+                    حاضر
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card stat-absent">
+            <div class="stat-icon">❌</div>
+
+            <div class="stat-content">
+                <span
+                    id="absentRecordsCount"
+                    class="stat-number"
+                >0</span>
+
+                <span class="stat-label">
+                    غائب
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card stat-leave">
+            <div class="stat-icon">🔵</div>
+
+            <div class="stat-content">
+                <span
+                    id="leaveRecordsCount"
+                    class="stat-number"
+                >0</span>
+
+                <span class="stat-label">
+                    إجازة
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- البحث والفلترة -->
+    <div class="records-toolbar">
+
+        <div class="search-wrapper">
+
+            <span>🔍</span>
+
+            <input
+                type="search"
+                id="recordSearchInput"
+                placeholder="ابحث باسم الطالب..."
+                autocomplete="off"
+            >
+
+        </div>
+
+        <select id="recordStatusFilter">
+
+            <option value="">كل الحالات</option>
+            <option value="حاضر">✅ حاضر</option>
+            <option value="غائب">❌ غائب</option>
+            <option value="إجازة">🔵 إجازة</option>
+
+        </select>
+
+    </div>
+
+    <!-- القائمة -->
     <div class="card">
-        <div id="manageRecordsList" class="manage-list">
-            <div class="loading">جاري تحميل السجلات...</div>
+
+        <div
+            id="manageRecordsList"
+            class="manage-list"
+        >
+
+            <div class="loading">
+                جاري تحميل السجلات...
+            </div>
+
         </div>
+
     </div>
 
-    <!-- نافذة تعديل السجل -->
-    <div id="editRecordModal" class="modal">
+    <!-- نافذة التعديل -->
+    <div
+        id="editRecordModal"
+        class="modal"
+    >
+
         <div class="modal-content">
+
             <div class="modal-header">
-                <h3>✏️ تعديل بيانات السجل</h3>
-                <button class="modal-close" id="closeModalBtn">&times;</button>
+
+                <h3>
+                    ✏️ تعديل بيانات السجل
+                </h3>
+
+                <button
+                    class="modal-close"
+                    id="closeModalBtn"
+                    type="button"
+                >
+                    &times;
+                </button>
+
             </div>
+
             <div class="modal-body">
-                <input type="hidden" id="editRecordId">
+
+                <input
+                    type="hidden"
+                    id="editRecordId"
+                >
+
                 <div class="form-group">
-                    <label>👨‍🎓 الطالب:</label>
-                    <input type="text" id="editRecordStudentName" readonly>
+
+                    <label>
+                        👨‍🎓 الطالب:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editRecordStudentName"
+                        readonly
+                    >
+
                 </div>
+
                 <div class="form-group">
-                    <label>📅 التاريخ:</label>
-                    <input type="text" id="editRecordDate" readonly>
+
+                    <label>
+                        📅 التاريخ:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editRecordDate"
+                        readonly
+                    >
+
                 </div>
+
                 <div class="form-group">
-                    <label>📌 الحالة:</label>
+
+                    <label>
+                        📌 الحالة:
+                    </label>
+
                     <select id="editRecordStatus">
-                        <option value="حاضر">✅ حاضر</option>
-                        <option value="غائب">❌ غائب</option>
-                        <option value="إجازة">🔵 إجازة</option>
+
+                        <option value="حاضر">
+                            ✅ حاضر
+                        </option>
+
+                        <option value="غائب">
+                            ❌ غائب
+                        </option>
+
+                        <option value="إجازة">
+                            🔵 إجازة
+                        </option>
+
                     </select>
+
                 </div>
+
                 <div id="recordSurahFields">
+
                     <div class="form-group">
-                        <label>📖 السورة:</label>
-                        <input type="text" id="editRecordSurah" placeholder="اسم السورة">
+
+                        <label>
+                            📖 السورة:
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editRecordSurah"
+                            placeholder="اسم السورة"
+                        >
+
                     </div>
+
                     <div class="grid-inputs">
+
                         <div class="form-group">
-                            <label>من آية:</label>
-                            <input type="number" id="editRecordFromAyah">
+
+                            <label>
+                                من آية:
+                            </label>
+
+                            <input
+                                type="number"
+                                id="editRecordFromAyah"
+                                min="0"
+                            >
+
                         </div>
+
                         <div class="form-group">
-                            <label>إلى آية:</label>
-                            <input type="number" id="editRecordToAyah">
+
+                            <label>
+                                إلى آية:
+                            </label>
+
+                            <input
+                                type="number"
+                                id="editRecordToAyah"
+                                min="0"
+                            >
+
                         </div>
+
                     </div>
+
                 </div>
+
                 <div class="form-group">
-                    <label>⭐ النقاط:</label>
-                    <input type="number" id="editRecordPoints" step="1">
+
+                    <label>
+                        ⭐ النقاط:
+                    </label>
+
+                    <input
+                        type="number"
+                        id="editRecordPoints"
+                        step="1"
+                        min="0"
+                    >
+
                 </div>
+
                 <div class="form-group">
-                    <label>📖 الأسطر:</label>
-                    <input type="number" id="editRecordLines" step="1">
+
+                    <label>
+                        📖 الأسطر:
+                    </label>
+
+                    <input
+                        type="number"
+                        id="editRecordLines"
+                        step="1"
+                        min="0"
+                    >
+
                 </div>
+
             </div>
+
             <div class="modal-footer">
-                <button class="btn-cancel" id="cancelEditBtn">إلغاء</button>
-                <button class="btn-save" id="saveRecordBtn">💾 حفظ التعديلات</button>
+
+                <button
+                    class="btn-cancel"
+                    id="cancelEditBtn"
+                    type="button"
+                >
+                    إلغاء
+                </button>
+
+                <button
+                    class="btn-save"
+                    id="saveRecordBtn"
+                    type="button"
+                >
+                    💾 حفظ التعديلات
+                </button>
+
             </div>
+
         </div>
+
     </div>
 
-    <script type="module" src="manage-records.js"></script>
+    <script
+        type="module"
+        src="manage-records.js"
+    ></script>
+
 </body>
 </html>
