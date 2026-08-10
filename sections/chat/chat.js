@@ -1,6 +1,8 @@
 // ============================================================
 // 💬 صندوق رسائل أولياء الأمور
-// 📄 صفحة مستقلة
+// 📄 صفحة المدير
+// 👨‍👩‍👦 ولي الأمر ⇄ المدير
+// 🚫 لا يوجد مدرس في المحادثة
 // ============================================================
 
 import {
@@ -12,12 +14,10 @@ import {
     collection,
     query,
     where,
-    getDocs,
     addDoc,
     onSnapshot,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
 
 // ============================================================
 // العناصر
@@ -56,7 +56,6 @@ const chatMessageInput =
 const sendChatMessageButton =
     document.getElementById('sendChatMessageBtn');
 
-
 // ============================================================
 // المتغيرات
 // ============================================================
@@ -69,51 +68,36 @@ let unsubscribeInbox = null;
 
 let unsubscribeChat = null;
 
-let currentTeacherId = null;
-
+let currentAdminId = null;
 
 // ============================================================
 // رسالة
 // ============================================================
 
 function showMessage(message) {
-
     alert(message);
-
 }
-
 
 // ============================================================
 // تنظيف النص
 // ============================================================
 
 function cleanText(value) {
-
     return String(value ?? '').trim();
-
 }
-
 
 // ============================================================
 // حماية HTML
 // ============================================================
 
 function escapeHtml(value) {
-
     return String(value ?? '')
-
         .replace(/&/g, '&amp;')
-
         .replace(/</g, '&lt;')
-
         .replace(/>/g, '&gt;')
-
         .replace(/"/g, '&quot;')
-
         .replace(/'/g, '&#039;');
-
 }
-
 
 // ============================================================
 // معرف المحادثة
@@ -127,79 +111,34 @@ function getConversationKey(message) {
     const studentId =
         cleanText(message.studentId);
 
-    const halaqaId =
-        cleanText(message.halaqaId);
-
-
     /*
-     * الأولوية:
+     * المحادثة الأساسية:
      *
-     * ولي الأمر + الطالب + الحلقة
+     * ولي الأمر + الطالب
      *
-     * وإذا كانت بيانات الطالب أو الحلقة ناقصة:
-     *
-     * ولي الأمر فقط
-     *
-     * حتى لا تختفي الرسالة.
+     * لا نعتمد على الحلقة.
      */
 
-    if (parentId && studentId && halaqaId) {
-
-        return [
-            parentId,
-            studentId,
-            halaqaId
-        ].join('_');
-
-    }
-
-
     if (parentId && studentId) {
-
         return [
             parentId,
             studentId
         ].join('_');
-
     }
-
 
     if (parentId) {
-
         return parentId;
-
     }
-
-
-    /*
-     * في حال الرسالة لا تحتوي parentId
-     * نستخدم senderId كحل أخير.
-     *
-     * ولكن الرد لن يكون ممكناً إلا إذا
-     * كان parentId موجوداً في إحدى رسائل
-     * نفس المحادثة.
-     */
 
     const senderId =
         cleanText(message.senderId);
 
-
     if (senderId) {
-
         return `sender_${senderId}`;
-
     }
 
-
-    /*
-     * لا نحذف الرسالة.
-     * نعطيها معرفاً خاصاً.
-     */
-
     return `message_${message.id || Date.now()}`;
-
 }
-
 
 // ============================================================
 // وقت الرسالة
@@ -211,60 +150,44 @@ function getTimestampMillis(timestamp) {
         return 0;
     }
 
-
     try {
 
         if (
             typeof timestamp.toMillis ===
             'function'
         ) {
-
             return timestamp.toMillis();
-
         }
-
 
         if (
             typeof timestamp.toDate ===
             'function'
         ) {
-
             return timestamp
                 .toDate()
                 .getTime();
-
         }
-
 
         if (
             timestamp.seconds !== undefined
         ) {
-
             return Number(timestamp.seconds) * 1000;
-
         }
-
 
         const date =
             new Date(timestamp);
 
-
         const time =
             date.getTime();
-
 
         return Number.isNaN(time)
             ? 0
             : time;
 
     } catch {
-
         return 0;
-
     }
-
 }
-
 
 // ============================================================
 // تنسيق وقت الرسالة
@@ -275,17 +198,14 @@ function formatMessageTime(timestamp) {
     const millis =
         getTimestampMillis(timestamp);
 
-
     if (!millis) {
         return 'الآن';
     }
-
 
     try {
 
         const date =
             new Date(millis);
-
 
         return date.toLocaleTimeString(
             'ar-YE',
@@ -296,13 +216,9 @@ function formatMessageTime(timestamp) {
         );
 
     } catch {
-
         return 'الآن';
-
     }
-
 }
-
 
 // ============================================================
 // تنسيق وقت المحادثة
@@ -313,11 +229,9 @@ function formatConversationTime(timestamp) {
     const millis =
         getTimestampMillis(timestamp);
 
-
     if (!millis) {
         return 'الآن';
     }
-
 
     try {
 
@@ -326,7 +240,6 @@ function formatConversationTime(timestamp) {
 
         const now =
             new Date();
-
 
         const sameDay =
             date.getFullYear() ===
@@ -338,7 +251,6 @@ function formatConversationTime(timestamp) {
             date.getDate() ===
                 now.getDate();
 
-
         if (sameDay) {
 
             return date.toLocaleTimeString(
@@ -348,9 +260,7 @@ function formatConversationTime(timestamp) {
                     minute: '2-digit'
                 }
             );
-
         }
-
 
         return date.toLocaleDateString(
             'ar-YE',
@@ -361,13 +271,9 @@ function formatConversationTime(timestamp) {
         );
 
     } catch {
-
         return '';
-
     }
-
 }
-
 
 // ============================================================
 // الحرف الأول
@@ -378,19 +284,15 @@ function getInitial(name) {
     const value =
         cleanText(name);
 
-
     if (!value) {
         return '👤';
     }
 
-
     return value.charAt(0);
-
 }
 
-
 // ============================================================
-// تحميل صندوق الوارد
+// تحميل صندوق الوارد للمدير
 // ============================================================
 
 function subscribeToInbox() {
@@ -400,14 +302,11 @@ function subscribeToInbox() {
         unsubscribeInbox();
 
         unsubscribeInbox = null;
-
     }
 
-
-    if (!currentTeacherId) {
+    if (!currentAdminId) {
         return;
     }
-
 
     chatList.innerHTML = `
 
@@ -425,38 +324,37 @@ function subscribeToInbox() {
 
     `;
 
-
     /*
      * ========================================================
-     * مهم جداً:
+     * مهم:
      *
-     * نبحث فقط عن teacherId.
+     * المدير يستمع إلى كل الرسائل التي adminId فيها
+     * يساوي UID المدير.
      *
-     * لا نشترط parentId
-     * ولا studentId
-     * ولا halaqaId.
+     * سواء كانت الرسالة:
      *
-     * لذلك أي رسالة وصلت لهذا المدرس
-     * سيتم التقاطها.
+     * parent
+     *
+     * أو
+     *
+     * admin
+     *
      * ========================================================
      */
 
     const messagesQuery =
         query(
-
             collection(
                 db,
                 'messages'
             ),
 
             where(
-                'teacherId',
+                'adminId',
                 '==',
-                currentTeacherId
+                currentAdminId
             )
-
         );
-
 
     unsubscribeInbox =
         onSnapshot(
@@ -465,17 +363,18 @@ function subscribeToInbox() {
 
             snapshot => {
 
-                buildConversations(snapshot);
+                buildConversations(
+                    snapshot
+                );
 
             },
 
             error => {
 
                 console.error(
-                    'Inbox Listener Error:',
+                    'Admin Inbox Listener Error:',
                     error
                 );
-
 
                 chatList.innerHTML = `
 
@@ -498,13 +397,9 @@ function subscribeToInbox() {
                     </div>
 
                 `;
-
             }
-
         );
-
 }
-
 
 // ============================================================
 // بناء المحادثات
@@ -514,7 +409,6 @@ function buildConversations(snapshot) {
 
     const grouped =
         new Map();
-
 
     snapshot.forEach(doc => {
 
@@ -526,34 +420,32 @@ function buildConversations(snapshot) {
 
         };
 
-
         /*
-         * ====================================================
-         * لا يوجد هنا:
-         *
-         * if (!parentId || !studentId || !halaqaId) return;
-         *
-         * لأننا نريد عرض الرسالة مهما كانت بياناتها.
-         * ====================================================
+         * لا نستبعد أي رسالة.
          */
 
         const parentId =
-            cleanText(message.parentId);
+            cleanText(
+                message.parentId
+            );
 
         const studentId =
-            cleanText(message.studentId);
+            cleanText(
+                message.studentId
+            );
 
         const halaqaId =
-            cleanText(message.halaqaId);
-
+            cleanText(
+                message.halaqaId
+            );
 
         const key =
-            getConversationKey(message);
-
+            getConversationKey(
+                message
+            );
 
         let existing =
             grouped.get(key);
-
 
         if (!existing) {
 
@@ -585,17 +477,11 @@ function buildConversations(snapshot) {
                     ) ||
                     'ولي الأمر',
 
-                teacherId:
+                adminId:
                     cleanText(
-                        message.teacherId
+                        message.adminId
                     ) ||
-                    currentTeacherId,
-
-                teacherName:
-                    cleanText(
-                        message.teacherName
-                    ) ||
-                    'المدرس',
+                    currentAdminId,
 
                 lastMessage:
                     message,
@@ -605,30 +491,19 @@ function buildConversations(snapshot) {
 
             };
 
-
             grouped.set(
                 key,
                 existing
             );
 
-
             return;
-
         }
-
-
-        // ====================================================
-        // تحديث بيانات المحادثة
-        // ====================================================
 
         existing.messageCount++;
 
-
-        /*
-         * إذا كانت بيانات سابقة ناقصة
-         * وأتت رسالة جديدة فيها البيانات،
-         * نستخدم البيانات الجديدة.
-         */
+        // ====================================================
+        // استكمال البيانات
+        // ====================================================
 
         if (
             !existing.parentId &&
@@ -637,9 +512,7 @@ function buildConversations(snapshot) {
 
             existing.parentId =
                 parentId;
-
         }
-
 
         if (
             !existing.studentId &&
@@ -648,9 +521,7 @@ function buildConversations(snapshot) {
 
             existing.studentId =
                 studentId;
-
         }
-
 
         if (
             !existing.halaqaId &&
@@ -659,73 +530,61 @@ function buildConversations(snapshot) {
 
             existing.halaqaId =
                 halaqaId;
-
         }
-
 
         if (
             (
                 !existing.studentName ||
-                existing.studentName === 'الطالب'
+                existing.studentName ===
+                    'الطالب'
             ) &&
-            cleanText(message.studentName)
+            cleanText(
+                message.studentName
+            )
         ) {
 
             existing.studentName =
                 cleanText(
                     message.studentName
                 );
-
         }
-
 
         if (
             (
                 !existing.halaqaName ||
-                existing.halaqaName === 'الحلقة'
+                existing.halaqaName ===
+                    'الحلقة'
             ) &&
-            cleanText(message.halaqaName)
+            cleanText(
+                message.halaqaName
+            )
         ) {
 
             existing.halaqaName =
                 cleanText(
                     message.halaqaName
                 );
-
         }
-
 
         if (
             (
                 !existing.parentName ||
-                existing.parentName === 'ولي الأمر'
+                existing.parentName ===
+                    'ولي الأمر'
             ) &&
-            cleanText(message.parentName)
+            cleanText(
+                message.parentName
+            )
         ) {
 
             existing.parentName =
                 cleanText(
                     message.parentName
                 );
-
         }
-
-
-        if (
-            !existing.teacherName &&
-            cleanText(message.teacherName)
-        ) {
-
-            existing.teacherName =
-                cleanText(
-                    message.teacherName
-                );
-
-        }
-
 
         // ====================================================
-        // تحديد آخر رسالة
+        // آخر رسالة
         // ====================================================
 
         const currentTime =
@@ -733,12 +592,10 @@ function buildConversations(snapshot) {
                 message.createdAt
             );
 
-
         const oldTime =
             getTimestampMillis(
                 existing.lastMessage?.createdAt
             );
-
 
         if (
             currentTime >= oldTime
@@ -746,20 +603,17 @@ function buildConversations(snapshot) {
 
             existing.lastMessage =
                 message;
-
         }
 
     });
-
 
     conversations =
         Array.from(
             grouped.values()
         );
 
-
     // ========================================================
-    // ترتيب الأحدث أولاً
+    // الأحدث أولاً
     // ========================================================
 
     conversations.sort(
@@ -770,27 +624,20 @@ function buildConversations(snapshot) {
                     a.lastMessage?.createdAt
                 );
 
-
             const timeB =
                 getTimestampMillis(
                     b.lastMessage?.createdAt
                 );
 
-
             return timeB - timeA;
-
         }
     );
-
 
     chatCount.textContent =
         conversations.length;
 
-
     renderConversationList();
-
 }
-
 
 // ============================================================
 // عرض قائمة المحادثات
@@ -803,10 +650,8 @@ function renderConversationList() {
             chatSearch?.value
         ).toLowerCase();
 
-
     let filtered =
         conversations;
-
 
     if (search) {
 
@@ -825,18 +670,15 @@ function renderConversationList() {
                         conversation.lastMessage?.text
 
                     ]
-
                         .join(' ')
                         .toLowerCase();
 
-
-                    return text.includes(search);
-
+                    return text.includes(
+                        search
+                    );
                 }
             );
-
     }
-
 
     if (!filtered.length) {
 
@@ -869,7 +711,7 @@ function renderConversationList() {
                     ${
                         search
                             ? 'لم يتم العثور على رسالة مطابقة للبحث.'
-                            : 'لم تصل أي رسالة إلى هذا المدرس حتى الآن.'
+                            : 'لم تصل أي رسالة إلى الإدارة حتى الآن.'
                     }
 
                 </small>
@@ -879,23 +721,20 @@ function renderConversationList() {
         `;
 
         return;
-
     }
 
-
     chatList.innerHTML = '';
-
 
     filtered.forEach(
         conversation => {
 
             const item =
-                document.createElement('div');
-
+                document.createElement(
+                    'div'
+                );
 
             item.className =
                 'chat-list-item';
-
 
             if (
                 currentConversation &&
@@ -903,32 +742,27 @@ function renderConversationList() {
                     conversation.key
             ) {
 
-                item.classList.add('active');
-
+                item.classList.add(
+                    'active'
+                );
             }
-
 
             const lastMessage =
                 conversation.lastMessage;
 
-
-            /*
-             * حتى لو كانت الرسالة بدون text
-             * لا نخفيها.
-             */
-
             const lastText =
-                lastMessage?.text !== undefined
-                    ? String(lastMessage.text)
+                lastMessage?.text !==
+                undefined
+
+                    ? String(
+                        lastMessage.text
+                    )
+
                     : 'رسالة';
 
-
             const isParent =
-                lastMessage?.senderRole === 'parent' ||
-                lastMessage?.senderRole === 'guardian' ||
-                lastMessage?.senderRole === 'user' ||
-                lastMessage?.senderRole === 'ولي الأمر';
-
+                lastMessage?.senderRole ===
+                    'parent';
 
             item.innerHTML = `
 
@@ -942,7 +776,6 @@ function renderConversationList() {
 
                 </div>
 
-
                 <div class="chat-list-content">
 
                     <div class="chat-list-name-row">
@@ -955,7 +788,6 @@ function renderConversationList() {
 
                         </div>
 
-
                         <div class="chat-list-time">
 
                             ${formatConversationTime(
@@ -965,7 +797,6 @@ function renderConversationList() {
                         </div>
 
                     </div>
-
 
                     <div class="chat-list-student">
 
@@ -983,23 +814,22 @@ function renderConversationList() {
 
                     </div>
 
-
                     <div class="chat-list-last">
 
                         ${
                             isParent
-                                ? '👤 '
-                                : '👨‍🏫 '
+                                ? '👤'
+                                : '👨‍💼'
                         }
 
                         ${escapeHtml(
-                            lastText || 'رسالة'
+                            lastText ||
+                                'رسالة'
                         )}
 
                     </div>
 
                 </div>
-
 
                 ${
                     isParent
@@ -1016,7 +846,6 @@ function renderConversationList() {
 
             `;
 
-
             item.addEventListener(
                 'click',
                 () => {
@@ -1028,35 +857,32 @@ function renderConversationList() {
                 }
             );
 
-
-            chatList.appendChild(item);
+            chatList.appendChild(
+                item
+            );
 
         }
     );
-
 }
-
 
 // ============================================================
 // فتح المحادثة
 // ============================================================
 
-function openConversation(conversation) {
+function openConversation(
+    conversation
+) {
 
     currentConversation =
         conversation;
 
-
     renderConversationList();
 
-
-    // ========================================================
-    // بيانات الرأس
-    // ========================================================
-
     chatStudentName.textContent =
-        `ولي أمر ${conversation.studentName || 'الطالب'}`;
-
+        `ولي أمر ${
+            conversation.studentName ||
+            'الطالب'
+        }`;
 
     chatHalaqaName.textContent =
 
@@ -1068,25 +894,13 @@ function openConversation(conversation) {
             'الحلقة'
         }`;
 
-
-    // ========================================================
-    // تفعيل الإدخال
-    // ========================================================
-
     chatMessageInput.disabled =
         false;
-
 
     sendChatMessageButton.disabled =
         false;
 
-
     chatMessageInput.focus();
-
-
-    // ========================================================
-    // الهاتف
-    // ========================================================
 
     if (
         window.innerWidth <= 750
@@ -1095,17 +909,13 @@ function openConversation(conversation) {
         chatPage.classList.add(
             'mobile-conversation'
         );
-
     }
 
-
     subscribeToConversation();
-
 }
 
-
 // ============================================================
-// الاستماع إلى المحادثة
+// الاستماع للمحادثة
 // ============================================================
 
 function subscribeToConversation() {
@@ -1115,14 +925,11 @@ function subscribeToConversation() {
         unsubscribeChat();
 
         unsubscribeChat = null;
-
     }
-
 
     if (!currentConversation) {
         return;
     }
-
 
     chatMessages.innerHTML = `
 
@@ -1134,50 +941,31 @@ function subscribeToConversation() {
 
     `;
 
-
-    /*
-     * ========================================================
-     * مهم:
-     *
-     * سابقاً كان الاستعلام يشترط:
-     *
-     * teacherId
-     * parentId
-     * studentId
-     * halaqaId
-     *
-     * وهذا يجعل بعض الرسائل تختفي.
-     *
-     * الآن نستخدم:
-     *
-     * teacherId + parentId
-     *
-     * فقط.
-     *
-     * وبالتالي تظهر كل رسائل ولي الأمر
-     * مع المدرس حتى لو كانت رسالة معينة
-     * ناقصة studentId أو halaqaId.
-     * ========================================================
-     */
-
-    if (!currentConversation.parentId) {
-
-        /*
-         * إذا كانت الرسالة فعلاً لا تحتوي
-         * parentId، لا نستطيع معرفة صاحبها
-         * بشكل آمن للرد عليه.
-         *
-         * لكننا لا نخفي الرسالة.
-         */
+    if (
+        !currentConversation.parentId
+    ) {
 
         renderSingleConversationMessage(
             currentConversation.lastMessage
         );
 
         return;
-
     }
 
+    /*
+     * ========================================================
+     * المحادثة تعتمد على:
+     *
+     * adminId
+     * parentId
+     *
+     * فقط.
+     *
+     * لا teacherId
+     * لا teacherName
+     * لا halaqaId
+     * ========================================================
+     */
 
     const messagesQuery =
         query(
@@ -1188,9 +976,9 @@ function subscribeToConversation() {
             ),
 
             where(
-                'teacherId',
+                'adminId',
                 '==',
-                currentTeacherId
+                currentAdminId
             ),
 
             where(
@@ -1200,7 +988,6 @@ function subscribeToConversation() {
             )
 
         );
-
 
     unsubscribeChat =
         onSnapshot(
@@ -1221,7 +1008,6 @@ function subscribeToConversation() {
                     'Conversation Listener Error:',
                     error
                 );
-
 
                 chatMessages.innerHTML = `
 
@@ -1244,19 +1030,17 @@ function subscribeToConversation() {
                     </div>
 
                 `;
-
             }
-
         );
-
 }
-
 
 // ============================================================
 // عرض رسالة منفردة
 // ============================================================
 
-function renderSingleConversationMessage(message) {
+function renderSingleConversationMessage(
+    message
+) {
 
     if (!message) {
 
@@ -1277,25 +1061,22 @@ function renderSingleConversationMessage(message) {
         `;
 
         return;
-
     }
 
-
     chatMessages.innerHTML = '';
-
 
     renderMessageElement(
         message
     );
-
 }
-
 
 // ============================================================
 // عرض الرسائل
 // ============================================================
 
-function renderChatMessages(snapshot) {
+function renderChatMessages(
+    snapshot
+) {
 
     if (snapshot.empty) {
 
@@ -1320,12 +1101,9 @@ function renderChatMessages(snapshot) {
         `;
 
         return;
-
     }
 
-
     const messages = [];
-
 
     snapshot.forEach(doc => {
 
@@ -1338,7 +1116,6 @@ function renderChatMessages(snapshot) {
         });
 
     });
-
 
     messages.sort(
         (a, b) => {
@@ -1356,13 +1133,10 @@ function renderChatMessages(snapshot) {
                 )
 
             );
-
         }
     );
 
-
     chatMessages.innerHTML = '';
-
 
     messages.forEach(
         message => {
@@ -1374,44 +1148,40 @@ function renderChatMessages(snapshot) {
         }
     );
 
-
     scrollChatToBottom();
-
 }
-
 
 // ============================================================
 // إنشاء عنصر الرسالة
 // ============================================================
 
-function renderMessageElement(message) {
+function renderMessageElement(
+    message
+) {
 
     const senderRole =
         cleanText(
             message.senderRole
         ).toLowerCase();
 
-
-    const isTeacher =
-        senderRole === 'teacher' ||
-        senderRole === 'admin' ||
-        senderRole === 'مدرس';
-
+    const isAdmin =
+        senderRole === 'admin';
 
     const text =
         message.text !== undefined
-            ? String(message.text)
+            ? String(
+                message.text
+            )
             : '';
 
-
     const senderName =
-        isTeacher
+        isAdmin
 
             ? (
                 cleanText(
-                    message.teacherName
+                    message.adminName
                 ) ||
-                'المدرس'
+                'المدير'
             )
 
             : (
@@ -1426,32 +1196,30 @@ function renderMessageElement(message) {
                 'ولي الأمر'
             );
 
-
     const time =
         formatMessageTime(
             message.createdAt
         );
 
-
     const messageElement =
-        document.createElement('div');
-
+        document.createElement(
+            'div'
+        );
 
     messageElement.className =
         `chat-message ${
-            isTeacher
+            isAdmin
                 ? 'teacher'
                 : 'parent'
         }`;
-
 
     messageElement.innerHTML = `
 
         <div class="chat-sender">
 
             ${
-                isTeacher
-                    ? '👨‍🏫'
+                isAdmin
+                    ? '👨‍💼'
                     : '👤'
             }
 
@@ -1461,17 +1229,17 @@ function renderMessageElement(message) {
 
         </div>
 
-
         <div class="chat-text">
 
             ${
                 text
-                    ? escapeHtml(text)
+                    ? escapeHtml(
+                        text
+                    )
                     : '<span style="opacity:.6">رسالة بدون نص</span>'
             }
 
         </div>
-
 
         <div class="chat-message-meta">
 
@@ -1485,13 +1253,10 @@ function renderMessageElement(message) {
 
     `;
 
-
     chatMessages.appendChild(
         messageElement
     );
-
 }
-
 
 // ============================================================
 // النزول لآخر الرسائل
@@ -1503,7 +1268,6 @@ function scrollChatToBottom() {
         return;
     }
 
-
     requestAnimationFrame(
         () => {
 
@@ -1512,30 +1276,22 @@ function scrollChatToBottom() {
 
         }
     );
-
 }
 
-
 // ============================================================
-// إرسال رد المدرس
+// إرسال رد المدير
 // ============================================================
 
-async function sendTeacherMessage() {
+async function sendAdminMessage() {
 
     const text =
         cleanText(
             chatMessageInput.value
         );
 
-
-    /*
-     * الرسالة يجب أن تحتوي نصاً عند الإرسال.
-     */
-
     if (!text) {
         return;
     }
-
 
     if (!currentConversation) {
 
@@ -1544,33 +1300,19 @@ async function sendTeacherMessage() {
         );
 
         return;
-
     }
-
 
     const user =
         auth.currentUser;
 
-
     if (!user) {
 
         showMessage(
-            '⚠️ يجب تسجيل دخول المدرس أولاً.'
+            '⚠️ يجب تسجيل الدخول أولاً.'
         );
 
         return;
-
     }
-
-
-    /*
-     * ========================================================
-     * لا يمكن إرسال رد لولي الأمر إذا لم نعرف parentId.
-     *
-     * هذه الحالة لا يمكن حلها من جهة المدرس،
-     * لأن Firestore لا يخبرنا من هو المستلم.
-     * ========================================================
-     */
 
     if (
         !cleanText(
@@ -1579,17 +1321,14 @@ async function sendTeacherMessage() {
     ) {
 
         showMessage(
-            '⚠️ هذه الرسالة لا تحتوي على معرف ولي الأمر (parentId)، لذلك لا يمكن إرسال رد آمن عليها.'
+            '⚠️ لا يمكن تحديد ولي الأمر لهذه المحادثة.'
         );
 
         return;
-
     }
-
 
     sendChatMessageButton.disabled =
         true;
-
 
     try {
 
@@ -1603,78 +1342,103 @@ async function sendTeacherMessage() {
             {
 
                 // =================================================
-                // بيانات الطالب
+                // المحادثة
+                // =================================================
+
+                conversationId:
+
+                    `${
+                        currentConversation.parentId
+                    }_${
+                        currentConversation.studentId ||
+                        ''
+                    }`,
+
+                // =================================================
+                // الطالب
                 // =================================================
 
                 studentId:
+
                     cleanText(
                         currentConversation.studentId
                     ) || null,
 
                 studentName:
+
                     cleanText(
                         currentConversation.studentName
                     ) ||
                     'الطالب',
 
-
                 // =================================================
-                // بيانات الحلقة
+                // الحلقة
                 // =================================================
 
                 halaqaId:
+
                     cleanText(
                         currentConversation.halaqaId
                     ) || null,
 
                 halaqaName:
+
                     cleanText(
                         currentConversation.halaqaName
                     ) ||
                     'الحلقة',
 
-
                 // =================================================
-                // بيانات ولي الأمر
+                // ولي الأمر
                 // =================================================
 
                 parentId:
+
                     cleanText(
                         currentConversation.parentId
                     ),
 
                 parentName:
+
                     cleanText(
                         currentConversation.parentName
                     ) ||
                     'ولي الأمر',
 
-
                 // =================================================
-                // بيانات المدرس
+                // المدير
                 // =================================================
 
-                teacherId:
-                    currentTeacherId,
+                adminId:
 
-                teacherName:
-                    cleanText(
-                        currentConversation.teacherName
-                    ) ||
+                    currentAdminId,
+
+                adminName:
+
                     user.displayName ||
-                    'المدرس',
-
+                    'المدير',
 
                 // =================================================
-                // المرسل
+                // المرسل والمستقبل
                 // =================================================
 
                 senderId:
+
                     user.uid,
 
                 senderRole:
-                    'teacher',
 
+                    'admin',
+
+                receiverId:
+
+                    cleanText(
+                        currentConversation.parentId
+                    ),
+
+                receiverRole:
+
+                    'parent',
 
                 // =================================================
                 // الرسالة
@@ -1682,37 +1446,34 @@ async function sendTeacherMessage() {
 
                 text,
 
-
                 // =================================================
                 // الوقت
                 // =================================================
 
                 createdAt:
+
                     serverTimestamp(),
 
                 updatedAt:
+
                     serverTimestamp()
 
             }
 
         );
 
-
         chatMessageInput.value =
             '';
-
 
         chatMessageInput.style.height =
             'auto';
 
-
     } catch (error) {
 
         console.error(
-            'Send Chat Error:',
+            'Send Admin Message Error:',
             error
         );
-
 
         showMessage(
             '❌ تعذر إرسال الرسالة.\n\n' +
@@ -1725,11 +1486,8 @@ async function sendTeacherMessage() {
             false;
 
         chatMessageInput.focus();
-
     }
-
 }
-
 
 // ============================================================
 // الرجوع في الجوال
@@ -1742,38 +1500,29 @@ function closeMobileConversation() {
         unsubscribeChat();
 
         unsubscribeChat = null;
-
     }
-
 
     currentConversation =
         null;
-
 
     chatPage.classList.remove(
         'mobile-conversation'
     );
 
-
     chatStudentName.textContent =
         'اختر محادثة';
-
 
     chatHalaqaName.textContent =
         'ستظهر تفاصيل الطالب والحلقة هنا';
 
-
     chatMessageInput.value =
         '';
-
 
     chatMessageInput.disabled =
         true;
 
-
     sendChatMessageButton.disabled =
         true;
-
 
     chatMessages.innerHTML = `
 
@@ -1795,11 +1544,8 @@ function closeMobileConversation() {
 
     `;
 
-
     renderConversationList();
-
 }
-
 
 // ============================================================
 // البحث
@@ -1811,9 +1557,7 @@ if (chatSearch) {
         'input',
         renderConversationList
     );
-
 }
-
 
 // ============================================================
 // إرسال
@@ -1823,11 +1567,9 @@ if (sendChatMessageButton) {
 
     sendChatMessageButton.addEventListener(
         'click',
-        sendTeacherMessage
+        sendAdminMessage
     );
-
 }
-
 
 // ============================================================
 // Enter
@@ -1846,13 +1588,11 @@ if (chatMessageInput) {
 
                 event.preventDefault();
 
-                sendTeacherMessage();
-
+                sendAdminMessage();
             }
 
         }
     );
-
 
     chatMessageInput.addEventListener(
         'input',
@@ -1861,21 +1601,17 @@ if (chatMessageInput) {
             chatMessageInput.style.height =
                 'auto';
 
-
             chatMessageInput.style.height =
                 Math.min(
                     chatMessageInput.scrollHeight,
                     115
                 ) + 'px';
-
         }
     );
-
 }
 
-
 // ============================================================
-// الرجوع للصفحة السابقة
+// الرجوع
 // ============================================================
 
 if (backChatBtn) {
@@ -1885,13 +1621,11 @@ if (backChatBtn) {
         () => {
 
             window.location.href =
-                'halaqat.html';
+                'index.html';
 
         }
     );
-
 }
-
 
 // ============================================================
 // رجوع الجوال
@@ -1903,9 +1637,7 @@ if (mobileBackChatBtn) {
         'click',
         closeMobileConversation
     );
-
 }
-
 
 // ============================================================
 // تنظيف Listeners
@@ -1916,54 +1648,44 @@ window.addEventListener(
     () => {
 
         if (unsubscribeInbox) {
-
             unsubscribeInbox();
-
         }
 
-
         if (unsubscribeChat) {
-
             unsubscribeChat();
-
         }
 
     }
 );
 
-
 // ============================================================
 // تشغيل الصفحة
 // ============================================================
 
-async function initializeChatInbox() {
+async function initializeAdminChat() {
 
     try {
 
         if (!auth.currentUser) {
 
             showMessage(
-                '⚠️ يجب تسجيل دخول المدرس أولاً.'
+                '⚠️ يجب تسجيل الدخول للمدير أولاً.'
             );
 
             return;
-
         }
 
-
-        currentTeacherId =
+        currentAdminId =
             auth.currentUser.uid;
-
 
         subscribeToInbox();
 
     } catch (error) {
 
         console.error(
-            'Chat Inbox Initialization Error:',
+            'Admin Chat Initialization Error:',
             error
         );
-
 
         chatList.innerHTML = `
 
@@ -1986,11 +1708,8 @@ async function initializeChatInbox() {
             </div>
 
         `;
-
     }
-
 }
-
 
 // ============================================================
 // انتظار تسجيل الدخول
@@ -1998,10 +1717,11 @@ async function initializeChatInbox() {
 
 if (auth.currentUser) {
 
-    initializeChatInbox();
+    initializeAdminChat();
 
 } else if (
-    typeof auth.onAuthStateChanged === 'function'
+    typeof auth.onAuthStateChanged ===
+    'function'
 ) {
 
     const unsubscribeAuth =
@@ -2012,11 +1732,10 @@ if (auth.currentUser) {
 
                     unsubscribeAuth?.();
 
-                    initializeChatInbox();
+                    initializeAdminChat();
 
                 }
 
             }
         );
-
-        }
+}
