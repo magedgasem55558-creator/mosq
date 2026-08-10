@@ -1,316 +1,1715 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <!-- رابط مكتبة html2pdf لتنزيل الملف مباشرة في التنزيلات -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<!DOCTYPE html><html lang="ar" dir="rtl"><head>  <!-- ============================================================
+       HTML2PDF
+  ============================================================ -->  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>  <meta charset="UTF-8"><meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
- <title>تقرير الطالب</title>
+«»
 
-  <link rel="stylesheet" href="style.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Tajawal', sans-serif; }
-    
-    html, body { 
-      height: 100%; 
-      width: 100%; 
-      overflow: hidden; 
-      background: #f0fdf4; 
+<meta
+name="theme-color"
+content="#064e3b"
+
+«»
+
+  <title>إدارة المسجد | نظام متابعة الحلقات</title>  <link
+    rel="stylesheet"
+    href="style.css"
+  >  <style>
+
+    /* ============================================================
+       RESET
+    ============================================================ */
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Tajawal', 'Arial', sans-serif;
     }
 
-    .container { 
-      display: flex; 
-      width: 100%; 
-      height: 100vh; 
-      height: 100dvh; 
-      position: relative;
+    :root {
+      --dark-green: #022c22;
+      --deep-green: #064e3b;
+      --green: #059669;
+      --light-green: #34d399;
+      --mint: #a7f3d0;
+
+      --gold: #f5d76e;
+
+      --red: #dc2626;
+      --red-dark: #b91c1c;
+
+      --background: #f0fdf4;
+
+      --white: #ffffff;
+
+      --shadow:
+        0 10px 30px rgba(0, 0, 0, 0.12);
+
+      --shadow-heavy:
+        0 15px 45px rgba(0, 0, 0, 0.18);
     }
-    
-    /* === القائمة الجانبية للشاشات الكبيرة === */
-    .sidebar {
-      width: 280px;
-      background: linear-gradient(180deg, #022c22 0%, #064e3b 100%);
-      color: white;
-      padding: 1.8rem 1rem;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 10px 0 30px rgba(0,0,0,0.2);
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-    .sidebar-header h2 { font-size: 1.3rem; font-weight: 800; color: #f5d76e; }
-    .sidebar-header p { font-size: 0.75rem; color: #a7f3d0; }
-    .user-info { background: rgba(255,255,255,0.08); padding: 0.8rem 1rem; border-radius: 0.8rem; margin: 1.2rem 0; font-size: 0.85rem; }
-    .section-title { font-size: 0.7rem; color: #6ee7b7; margin: 1.2rem 0 0.5rem; letter-spacing: 2px; text-align: center; }
-    .sidebar ul { list-style: none; }
-    .sidebar li {
-      padding: 0.75rem 1rem;
-      margin: 0.3rem 0;
-      border-radius: 0.7rem;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-weight: 500;
-      font-size: 0.95rem;
-    }
-    .sidebar li:hover, .sidebar li.active { background: rgba(255,255,255,0.15); transform: translateX(-4px); }
-    .logout-btn {
-      margin-top: auto;
-      background: rgba(220,38,38,0.2);
-      padding: 0.75rem;
-      text-align: center;
-      border-radius: 0.7rem;
-      cursor: pointer;
-      transition: 0.3s;
-      border: 1px solid rgba(220,38,38,0.4);
-    }
-    .logout-btn:hover { background: rgba(220,38,38,0.5); }
-    
-    /* === محتوى الصفحة الإطار الحاوي === */
-    .content { 
-      flex: 1; 
+
+
+    /* ============================================================
+       BODY
+    ============================================================ */
+
+    html,
+    body {
+
       width: 100%;
       height: 100%;
+
+      overflow: hidden;
+
+      background:
+        radial-gradient(
+          circle at top right,
+          rgba(52, 211, 153, 0.12),
+          transparent 35%
+        ),
+        #f0fdf4;
+    }
+
+
+    /* ============================================================
+       MAIN CONTAINER
+    ============================================================ */
+
+    .container {
+
       display: flex;
-      flex-direction: column;
+
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+
+      position: relative;
+
       overflow: hidden;
     }
-    #contentFrame { 
-      width: 100%; 
-      height: 100%; 
-      flex: 1;
-      border: none; 
-      display: block; 
-    }
-    
-    /* === عناصر الجوال === */
-    .mobile-navbar {
-      display: none;
-      background: #022c22;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 1000;
+
+
+    /* ============================================================
+       DESKTOP SIDEBAR
+    ============================================================ */
+
+    .sidebar {
+
+      width: 285px;
+
+      height: 100%;
+
       flex-shrink: 0;
-    }
-    
-    .mobile-header-top {
+
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.6rem 1rem;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .mobile-header-top h2 { font-size: 1rem; color: #f5d76e; }
-    .mobile-logout-btn {
-      background: rgba(220,38,38,0.8);
+      flex-direction: column;
+
+      padding: 1.5rem 1rem;
+
       color: white;
-      border: none;
-      padding: 0.3rem 0.7rem;
-      border-radius: 0.4rem;
-      font-size: 0.75rem;
-      cursor: pointer;
+
+      background:
+        linear-gradient(
+          180deg,
+          #022c22 0%,
+          #064e3b 55%,
+          #065f46 100%
+        );
+
+      box-shadow:
+        8px 0 35px rgba(0, 0, 0, 0.18);
+
+      overflow-y: auto;
+
+      position: relative;
+
+      z-index: 100;
     }
+
+
+    /* زخرفة */
+
+    .sidebar::before {
+
+      content: "";
+
+      position: absolute;
+
+      width: 180px;
+      height: 180px;
+
+      top: -80px;
+      right: -80px;
+
+      border-radius: 50%;
+
+      background:
+        rgba(52, 211, 153, 0.08);
+
+      pointer-events: none;
+    }
+
+
+    .sidebar-header {
+
+      position: relative;
+
+      padding: 0.5rem 0.4rem 0.2rem;
+    }
+
+
+    .sidebar-logo {
+
+      width: 48px;
+      height: 48px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 15px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #059669,
+          #10b981
+        );
+
+      box-shadow:
+        0 8px 20px rgba(16, 185, 129, 0.25);
+
+      font-size: 23px;
+
+      margin-bottom: 12px;
+    }
+
+
+    .sidebar-header h2 {
+
+      font-size: 1.25rem;
+
+      font-weight: 900;
+
+      color: var(--gold);
+
+      letter-spacing: -0.3px;
+    }
+
+
+    .sidebar-header p {
+
+      margin-top: 5px;
+
+      font-size: 0.74rem;
+
+      color: var(--mint);
+
+      opacity: 0.9;
+    }
+
+
+    /* ============================================================
+       USER INFO
+    ============================================================ */
+
+    .user-info {
+
+      margin: 1.2rem 0;
+
+      padding: 0.9rem 1rem;
+
+      border-radius: 15px;
+
+      background:
+        rgba(255,255,255,0.07);
+
+      border:
+        1px solid rgba(255,255,255,0.08);
+
+      color: #d1fae5;
+
+      font-size: 0.78rem;
+
+      display: flex;
+      align-items: center;
+
+      gap: 7px;
+
+      word-break: break-all;
+
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+
+    #currentUserEmail {
+
+      color: white;
+
+      font-weight: 600;
+    }
+
+
+    /* ============================================================
+       SECTION TITLE
+    ============================================================ */
+
+    .section-title {
+
+      font-size: 0.68rem;
+
+      color: #6ee7b7;
+
+      margin:
+        1rem 0 0.5rem;
+
+      text-align: center;
+
+      letter-spacing: 1.5px;
+
+      opacity: 0.85;
+    }
+
+
+    /* ============================================================
+       SIDEBAR MENU
+    ============================================================ */
+
+    .sidebar ul {
+
+      list-style: none;
+    }
+
+
+    .sidebar li {
+
+      position: relative;
+
+      display: flex;
+      align-items: center;
+
+      min-height: 47px;
+
+      padding:
+        0.72rem 0.9rem;
+
+      margin:
+        0.25rem 0;
+
+      border-radius: 13px;
+
+      cursor: pointer;
+
+      transition:
+        transform 0.25s ease,
+        background 0.25s ease,
+        box-shadow 0.25s ease;
+
+      font-size: 0.88rem;
+
+      font-weight: 600;
+
+      color: #d1fae5;
+    }
+
+
+    .sidebar li:hover {
+
+      background:
+        rgba(255,255,255,0.09);
+
+      transform:
+        translateX(-4px);
+    }
+
+
+    .sidebar li.active {
+
+      color: white;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(16,185,129,0.95),
+          rgba(5,150,105,0.75)
+        );
+
+      box-shadow:
+        0 7px 20px rgba(5,150,105,0.25);
+    }
+
+
+    .sidebar li.active::before {
+
+      content: "";
+
+      position: absolute;
+
+      right: 0;
+
+      top: 10px;
+
+      bottom: 10px;
+
+      width: 4px;
+
+      border-radius: 10px;
+
+      background: var(--gold);
+    }
+
+
+    /* ============================================================
+       LOGOUT
+    ============================================================ */
+
+    .logout-btn {
+
+      margin-top: auto;
+
+      padding: 0.8rem;
+
+      border-radius: 13px;
+
+      text-align: center;
+
+      cursor: pointer;
+
+      background:
+        rgba(220,38,38,0.13);
+
+      border:
+        1px solid rgba(248,113,113,0.25);
+
+      color: #fecaca;
+
+      font-size: 0.85rem;
+
+      font-weight: 700;
+
+      transition:
+        all 0.25s ease;
+    }
+
+
+    .logout-btn:hover {
+
+      background:
+        rgba(220,38,38,0.35);
+
+      color: white;
+
+      transform:
+        translateY(-2px);
+    }
+
+
+    /* ============================================================
+       CONTENT
+    ============================================================ */
+
+    .content {
+
+      flex: 1;
+
+      width: 100%;
+      height: 100%;
+
+      display: flex;
+      flex-direction: column;
+
+      overflow: hidden;
+
+      position: relative;
+
+      background:
+        #f0fdf4;
+    }
+
+
+    #contentFrame {
+
+      width: 100%;
+      height: 100%;
+
+      flex: 1;
+
+      border: none;
+
+      display: block;
+
+      background: #f0fdf4;
+    }
+
+
+    /* ============================================================
+       MOBILE NAVBAR
+    ============================================================ */
+
+    .mobile-navbar {
+
+      display: none;
+
+      width: 100%;
+
+      background:
+        linear-gradient(
+          135deg,
+          #022c22,
+          #064e3b
+        );
+
+      box-shadow:
+        0 5px 25px rgba(0,0,0,0.18);
+
+      z-index: 1000;
+
+      flex-shrink: 0;
+
+      position: relative;
+    }
+
+
+    .mobile-header-top {
+
+      min-height: 58px;
+
+      display: flex;
+
+      align-items: center;
+
+      justify-content: space-between;
+
+      padding:
+        0.65rem 1rem;
+
+      border-bottom:
+        1px solid rgba(255,255,255,0.08);
+    }
+
+
+    .mobile-brand {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 9px;
+    }
+
+
+    .mobile-brand-icon {
+
+      width: 36px;
+      height: 36px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      border-radius: 11px;
+
+      background:
+        linear-gradient(
+          135deg,
+          #059669,
+          #10b981
+        );
+
+      font-size: 17px;
+    }
+
+
+    .mobile-header-top h2 {
+
+      font-size: 0.95rem;
+
+      color: var(--gold);
+
+      font-weight: 900;
+    }
+
+
+    .mobile-logout-btn {
+
+      border: none;
+
+      color: white;
+
+      background:
+        rgba(220,38,38,0.85);
+
+      padding:
+        0.45rem 0.75rem;
+
+      border-radius: 9px;
+
+      font-size: 0.72rem;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 4px 10px rgba(220,38,38,0.18);
+
+      transition:
+        0.2s ease;
+    }
+
+
+    .mobile-logout-btn:hover {
+
+      background:
+        #b91c1c;
+
+      transform:
+        scale(1.03);
+    }
+
+
+    /* ============================================================
+       MOBILE TABS
+    ============================================================ */
 
     .mobile-scroll-tabs {
+
       display: flex;
+
       overflow-x: auto;
+
       white-space: nowrap;
-      padding: 0.5rem 0.6rem;
-      gap: 0.5rem;
+
+      padding:
+        0.55rem 0.7rem;
+
+      gap: 0.45rem;
+
       -webkit-overflow-scrolling: touch;
+
       scrollbar-width: none;
     }
-    .mobile-scroll-tabs::-webkit-scrollbar { display: none; }
+
+
+    .mobile-scroll-tabs::-webkit-scrollbar {
+
+      display: none;
+    }
+
 
     .tab-btn {
-      background: rgba(255,255,255,0.08);
-      color: #a7f3d0;
-      border: 1px solid rgba(255,255,255,0.15);
-      padding: 0.45rem 0.9rem;
-      border-radius: 20px;
-      font-size: 0.82rem;
-      font-weight: 600;
+
+      min-height: 38px;
+
+      border:
+        1px solid rgba(255,255,255,0.12);
+
+      background:
+        rgba(255,255,255,0.06);
+
+      color:
+        #a7f3d0;
+
+      padding:
+        0.45rem 0.85rem;
+
+      border-radius: 30px;
+
+      font-size: 0.77rem;
+
+      font-weight: 700;
+
       cursor: pointer;
+
       flex-shrink: 0;
-      transition: all 0.2s ease;
-    }
-    .tab-btn.active {
-      background: #059669;
-      color: #ffffff;
-      border-color: #34d399;
-      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4);
+
+      transition:
+        all 0.25s ease;
     }
 
-    /* === زر خروج عائم مخصص لحسابات المعلمين فقط === */
-    .teacher-logout-btn {
-      display: none;
-      position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 9999;
-      background: #dc2626;
+
+    .tab-btn:hover {
+
+      background:
+        rgba(255,255,255,0.12);
+
       color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 50px;
-      font-size: 0.85rem;
-      font-weight: bold;
-      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .teacher-logout-btn:hover {
-      background: #b91c1c;
-      transform: scale(1.05);
     }
 
-    /* === استجابة الجوال === */
+
+    .tab-btn.active {
+
+      color: white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #059669,
+          #10b981
+        );
+
+      border-color:
+        rgba(52,211,153,0.7);
+
+      box-shadow:
+        0 4px 14px rgba(5,150,105,0.3);
+    }
+
+
+    /* ============================================================
+       TEACHER MODE
+       ============================================================ */
+
+    .teacher-navbar {
+
+      display: none;
+
+      position: fixed;
+
+      top: 14px;
+
+      left: 50%;
+
+      transform:
+        translateX(-50%);
+
+      z-index: 9999;
+
+      width:
+        min(94%, 650px);
+
+      padding: 7px;
+
+      border-radius: 18px;
+
+      background:
+        rgba(2,44,34,0.96);
+
+      border:
+        1px solid rgba(255,255,255,0.1);
+
+      box-shadow:
+        0 12px 40px rgba(0,0,0,0.25);
+
+      backdrop-filter:
+        blur(12px);
+
+      -webkit-backdrop-filter:
+        blur(12px);
+    }
+
+
+    .teacher-navbar-inner {
+
+      display: flex;
+
+      align-items: center;
+
+      gap: 6px;
+    }
+
+
+    .teacher-title {
+
+      padding:
+        0 12px;
+
+      color:
+        #a7f3d0;
+
+      font-size:
+        0.78rem;
+
+      font-weight: 700;
+
+      white-space: nowrap;
+    }
+
+
+    .teacher-nav-btn {
+
+      flex: 1;
+
+      min-height: 40px;
+
+      border: none;
+
+      border-radius: 12px;
+
+      background:
+        transparent;
+
+      color:
+        #d1fae5;
+
+      font-size:
+        0.78rem;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+      transition:
+        all 0.25s ease;
+    }
+
+
+    .teacher-nav-btn:hover {
+
+      background:
+        rgba(255,255,255,0.08);
+    }
+
+
+    .teacher-nav-btn.active {
+
+      color: white;
+
+      background:
+        linear-gradient(
+          135deg,
+          #059669,
+          #10b981
+        );
+
+      box-shadow:
+        0 5px 15px rgba(5,150,105,0.3);
+    }
+
+
+    .teacher-logout {
+
+      width: 40px;
+      height: 40px;
+
+      border: none;
+
+      border-radius: 12px;
+
+      background:
+        rgba(220,38,38,0.85);
+
+      color: white;
+
+      cursor: pointer;
+
+      font-size: 17px;
+
+      transition:
+        0.25s ease;
+    }
+
+
+    .teacher-logout:hover {
+
+      background:
+        #b91c1c;
+
+      transform:
+        scale(1.04);
+    }
+
+
+    /* ============================================================
+       TEACHER FLOATING BUTTON
+       ============================================================ */
+
+    .teacher-logout-btn {
+
+      display: none;
+
+      position: fixed;
+
+      top: 14px;
+
+      left: 14px;
+
+      z-index: 10000;
+
+      border: none;
+
+      background:
+        #dc2626;
+
+      color: white;
+
+      padding:
+        0.55rem 0.9rem;
+
+      border-radius: 50px;
+
+      font-size: 0.78rem;
+
+      font-weight: 700;
+
+      cursor: pointer;
+
+      box-shadow:
+        0 6px 18px rgba(220,38,38,0.3);
+    }
+
+
+    /* ============================================================
+       LOADING FRAME
+    ============================================================ */
+
+    .frame-loading {
+
+      position: absolute;
+
+      inset: 0;
+
+      display: none;
+
+      align-items: center;
+
+      justify-content: center;
+
+      background:
+        rgba(240,253,244,0.75);
+
+      backdrop-filter:
+        blur(3px);
+
+      z-index: 20;
+    }
+
+
+    .loading-box {
+
+      padding:
+        1.2rem 1.5rem;
+
+      border-radius: 18px;
+
+      background: white;
+
+      box-shadow:
+        var(--shadow);
+
+      color: var(--deep-green);
+
+      font-size: 0.85rem;
+
+      font-weight: 700;
+    }
+
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+
     @media (max-width: 768px) {
-      .container { 
-        flex-direction: column; 
+
+      .container {
+
+        flex-direction: column;
+
         height: 100vh;
         height: 100dvh;
       }
-      .sidebar { display: none; }
-      
-      .mobile-navbar:not(.teacher-mode) { display: block; }
-      
-      .content { 
-        flex: 1; 
-        height: 0; 
+
+
+      .sidebar {
+
+        display: none;
+      }
+
+
+      .mobile-navbar {
+
+        display: block;
+      }
+
+
+      .content {
+
+        flex: 1;
+
+        height: 0;
+
         min-height: 0;
       }
+
+
+      .teacher-navbar {
+
+        top: auto;
+
+        bottom: 12px;
+
+        width: calc(100% - 18px);
+
+        border-radius: 17px;
+      }
+
+
+      .teacher-title {
+
+        display: none;
+      }
+
+
+      .teacher-nav-btn {
+
+        font-size: 0.73rem;
+      }
+
+
+      .teacher-logout {
+
+        width: 38px;
+        height: 38px;
+      }
     }
-  </style>
-</head>
-<body>
 
-  <!-- زر خروج عائم يظهر فقط عند الدخول ببريد المعلم -->
-  <button id="teacherLogoutBtn" class="teacher-logout-btn" onclick="logout()">🚪 خروج</button>
 
-  <div class="container">
-    <!-- شريط الجوال العلوي مع التبويبات -->
-    <nav class="mobile-navbar" id="mobileNavbar">
-      <div class="mobile-header-top">
-        <h2>🏛️ إدارة المسجد</h2>
-        <button class="mobile-logout-btn" onclick="logout()">🚪 خروج</button>
-      </div>
-      
-      <div class="mobile-scroll-tabs" id="mobileTabs">
-        <button class="tab-btn active" data-id="students" onclick="navigate('students')">👥 إضافة طالب</button>
-        <button class="tab-btn" data-id="reports" onclick="navigate('reports')">📊 التقارير</button>
+    @media (min-width: 769px) {
 
-        <button class="tab-btn" data-id="halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</button>
-        <button class="tab-btn" data-id="events" onclick="navigate('events')">📅 الفعاليات</button>
-        <button class="tab-btn" data-id="khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</button>
-        <button class="tab-btn" data-id="add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة</button>
-        <button class="tab-btn" data-id="manage-donations" onclick="navigate('manage-donations')">💳 التبرعات</button>
-        <button class="tab-btn" data-id="lectures" onclick="navigate('lectures')">🎤 المحاضرات</button>
+      .teacher-navbar {
 
-        <button class="tab-btn admin-tab" data-id="manage-students" onclick="navigate('manage-students')">📋 إ.الطلاب</button>
-        <button class="tab-btn admin-tab" data-id="manage-halaqat" onclick="navigate('manage-halaqat')">📋 إ.الحلقات</button>
-        <button class="tab-btn admin-tab" data-id="manage-records" onclick="navigate('manage-records')">📋 إ.السجلات</button>
-        <button class="tab-btn admin-tab" data-id="manage-lectures" onclick="navigate('manage-lectures')">📋 إ.المحاضرات</button>
-      </div>
-    </nav>
+        display: none !important;
+      }
+    }
 
-    <!-- السايدبار للكمبيوتر -->
-    <aside class="sidebar" id="desktopSidebar">
-      <div class="sidebar-header">
-        <h2>🏛️ إدارة المسجد</h2>
-        <p>نظام متابعة الحلقات</p>
-      </div>
-      <div class="user-info">📧 <span id="currentUserEmail">جاري التحميل...</span></div>
-      
-      <div class="section-title">━━━ الرئيسية ━━━</div>
-      <ul>
-        <li data-id="students" onclick="navigate('students')">👥 إضافة طالب جديد</li>
-        <li data-id="halaqat" onclick="navigate('halaqat')">📖 رصد التسميع</li>
-        <li data-id="events" onclick="navigate('events')">📅 الفعاليات القادمة</li>
-        <li data-id="khutba" onclick="navigate('khutba')">🕌 خطبة الجمعة</li>
-        <li data-id="reports" onclick="navigate('reports')">📊 تقارير الطلاب</li>
 
-        <li data-id="add-halaqa" onclick="navigate('add-halaqa')">🏫 إضافة حلقة جديدة</li>
-        <li data-id="manage-donations" onclick="navigate('manage-donations')">💳 إدارة التبرعات</li>
-        <li data-id="lectures" onclick="navigate('lectures')">🎤 المحاضرات</li>
-      </ul>
-      
-      <div class="section-title admin-title">━━━ الإدارة ━━━</div>
-      <ul id="adminMenu">
-        <li data-id="manage-students" onclick="navigate('manage-students')">📋 إدارة الطلاب</li>
-        <li data-id="manage-halaqat" onclick="navigate('manage-halaqat')">📋 إدارة الحلقات</li>
-        <li data-id="manage-records" onclick="navigate('manage-records')">📋 إدارة سجلات التسميع</li>
-        <li data-id="manage-lectures" onclick="navigate('manage-lectures')">📋 إدارة المحاضرات</li>
-      </ul>
-      
-      <div class="logout-btn" onclick="logout()">🚪 تسجيل الخروج</div>
-    </aside>
+  </style></head><body>  <!-- ============================================================
+       TEACHER NAVIGATION
+       يظهر فقط لحسابات المعلمين
+  ============================================================ -->  <div
+    id="teacherNavbar"
+    class="teacher-navbar"
+  ><div class="teacher-navbar-inner">
 
-    <!-- منطقة عرض المحتوى الرئيسي -->
-    <main class="content">
-      <iframe id="contentFrame" src="about:blank"></iframe>
-    </main>
+  <div class="teacher-title">
+    👨‍🏫 لوحة المعلم
   </div>
 
-  <script type="module">
-    import { auth } from './firebase.js';
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+  <button
+    id="teacherHalaqatBtn"
+    class="teacher-nav-btn active"
+    onclick="navigate('halaqat')"
+  >
+    📖 رصد التسميع
+  </button>
 
-    const iframe = document.getElementById('contentFrame');
-    const userEmailSpan = document.getElementById('currentUserEmail');
-    const desktopSidebar = document.getElementById('desktopSidebar');
-    const mobileNavbar = document.getElementById('mobileNavbar');
-    const teacherLogoutBtn = document.getElementById('teacherLogoutBtn');
+  <button
+    id="teacherReportsBtn"
+    class="teacher-nav-btn"
+    onclick="navigate('reports')"
+  >
+    📊 تقارير الطلاب
+  </button>
+
+  <button
+    class="teacher-logout"
+    onclick="logout()"
+    title="تسجيل الخروج"
+  >
+    🚪
+  </button>
+
+</div>
+
+  </div>  <!-- ============================================================
+       MAIN
+  ============================================================ -->  <div class="container"><!-- ============================================================
+     MOBILE NAVIGATION
+============================================================ -->
+
+<nav
+  class="mobile-navbar"
+  id="mobileNavbar"
+>
+
+  <div class="mobile-header-top">
+
+    <div class="mobile-brand">
+
+      <div class="mobile-brand-icon">
+        🕌
+      </div>
+
+      <h2>
+        إدارة المسجد
+      </h2>
+
+    </div>
+
+
+    <button
+      class="mobile-logout-btn"
+      onclick="logout()"
+    >
+      🚪 خروج
+    </button>
+
+  </div>
+
+
+  <div
+    class="mobile-scroll-tabs"
+    id="mobileTabs"
+  >
+
+    <button
+      class="tab-btn active"
+      data-id="students"
+      onclick="navigate('students')"
+    >
+      👥 إضافة طالب
+    </button>
+
+
+    <button
+      class="tab-btn"
+      data-id="reports"
+      onclick="navigate('reports')"
+    >
+      📊 التقارير
+    </button>
+
+
+    <button
+      class="tab-btn"
+      data-id="halaqat"
+      onclick="navigate('halaqat')"
+    >
+      📖 رصد التسميع
+    </button>
+
+
+    <button
+      class="tab-btn"
+      data-id="events"
+      onclick="navigate('events')"
+    >
+      📅 الفعاليات
+    </button>
+
+
+    <button
+      class="tab-btn"
+      data-id="khutba"
+      onclick="navigate('khutba')"
+    >
+      🕌 خطبة الجمعة
+    </button>
+
+
+    <button
+      class="tab-btn"
+      data-id="add-halaqa"
+      onclick="navigate('add-halaqa')"
+    >
+      🏫 إضافة حلقة
+    </button>
+
+
+    <button
+      class="tab-btn"
+      data-id="manage-donations"
+      onclick="navigate('manage-donations')"
+    >
+      💳 التبرعات
+    </button>
+
+
+    <button
+      class="tab-btn"
+      data-id="lectures"
+      onclick="navigate('lectures')"
+    >
+      🎤 المحاضرات
+    </button>
+
+
+    <button
+      class="tab-btn admin-tab"
+      data-id="manage-students"
+      onclick="navigate('manage-students')"
+    >
+      📋 إدارة الطلاب
+    </button>
+
+
+    <button
+      class="tab-btn admin-tab"
+      data-id="manage-halaqat"
+      onclick="navigate('manage-halaqat')"
+    >
+      📋 إدارة الحلقات
+    </button>
+
+
+    <button
+      class="tab-btn admin-tab"
+      data-id="manage-records"
+      onclick="navigate('manage-records')"
+    >
+      📋 إدارة السجلات
+    </button>
+
+
+    <button
+      class="tab-btn admin-tab"
+      data-id="manage-lectures"
+      onclick="navigate('manage-lectures')"
+    >
+      📋 إدارة المحاضرات
+    </button>
+
+  </div>
+
+</nav>
+
+
+<!-- ============================================================
+     DESKTOP SIDEBAR
+============================================================ -->
+
+<aside
+  class="sidebar"
+  id="desktopSidebar"
+>
+
+  <div class="sidebar-header">
+
+    <div class="sidebar-logo">
+      🕌
+    </div>
+
+    <h2>
+      إدارة المسجد
+    </h2>
+
+    <p>
+      نظام متابعة الحلقات والطلاب
+    </p>
+
+  </div>
+
+
+  <div class="user-info">
+
+    📧
+
+    <span id="currentUserEmail">
+      جاري التحميل...
+    </span>
+
+  </div>
+
+
+  <!-- الرئيسية -->
+
+  <div class="section-title">
+    ━━━ الرئيسية ━━━
+  </div>
+
+
+  <ul>
+
+    <li
+      data-id="students"
+      onclick="navigate('students')"
+    >
+      👥 إضافة طالب جديد
+    </li>
+
+
+    <li
+      data-id="halaqat"
+      onclick="navigate('halaqat')"
+    >
+      📖 رصد التسميع
+    </li>
+
+
+    <li
+      data-id="reports"
+      onclick="navigate('reports')"
+    >
+      📊 تقارير الطلاب
+    </li>
+
+
+    <li
+      data-id="events"
+      onclick="navigate('events')"
+    >
+      📅 الفعاليات القادمة
+    </li>
+
+
+    <li
+      data-id="khutba"
+      onclick="navigate('khutba')"
+    >
+      🕌 خطبة الجمعة
+    </li>
+
+
+    <li
+      data-id="add-halaqa"
+      onclick="navigate('add-halaqa')"
+    >
+      🏫 إضافة حلقة جديدة
+    </li>
+
+
+    <li
+      data-id="manage-donations"
+      onclick="navigate('manage-donations')"
+    >
+      💳 إدارة التبرعات
+    </li>
+
+
+    <li
+      data-id="lectures"
+      onclick="navigate('lectures')"
+    >
+      🎤 المحاضرات
+    </li>
+
+  </ul>
+
+
+  <!-- الإدارة -->
+
+  <div class="section-title admin-title">
+
+    ━━━ الإدارة ━━━
+
+  </div>
+
+
+  <ul id="adminMenu">
+
+    <li
+      data-id="manage-students"
+      onclick="navigate('manage-students')"
+    >
+      📋 إدارة الطلاب
+    </li>
+
+
+    <li
+      data-id="manage-halaqat"
+      onclick="navigate('manage-halaqat')"
+    >
+      📋 إدارة الحلقات
+    </li>
+
+
+    <li
+      data-id="manage-records"
+      onclick="navigate('manage-records')"
+    >
+      📋 إدارة سجلات التسميع
+    </li>
+
+
+    <li
+      data-id="manage-lectures"
+      onclick="navigate('manage-lectures')"
+    >
+      📋 إدارة المحاضرات
+    </li>
+
+  </ul>
+
+
+  <!-- خروج -->
+
+  <div
+    class="logout-btn"
+    onclick="logout()"
+  >
+    🚪 تسجيل الخروج
+  </div>
+
+</aside>
+
+
+<!-- ============================================================
+     CONTENT
+============================================================ -->
+
+<main class="content">
+
+  <div
+    id="frameLoading"
+    class="frame-loading"
+  >
+
+    <div class="loading-box">
+      ⏳ جاري تحميل الصفحة...
+    </div>
+
+  </div>
+
+
+  <iframe
+    id="contentFrame"
+    src="about:blank"
+    loading="eager"
+  ></iframe>
+
+</main>
+
+  </div>  <!-- ============================================================
+       FIREBASE
+  ============================================================ -->  <script type="module">
+
+    import { auth } from './firebase.js';
+
+    import {
+      onAuthStateChanged,
+      signOut
+    }
+    from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+
+    /* ============================================================
+       ELEMENTS
+    ============================================================ */
+
+    const iframe =
+      document.getElementById('contentFrame');
+
+    const userEmailSpan =
+      document.getElementById('currentUserEmail');
+
+    const desktopSidebar =
+      document.getElementById('desktopSidebar');
+
+    const mobileNavbar =
+      document.getElementById('mobileNavbar');
+
+    const teacherNavbar =
+      document.getElementById('teacherNavbar');
+
+    const frameLoading =
+      document.getElementById('frameLoading');
+
+
+    /* ============================================================
+       CURRENT USER MODE
+    ============================================================ */
+
+    let currentMode = 'admin';
+
+
+    /* ============================================================
+       NAVIGATION
+    ============================================================ */
 
     window.navigate = function(sectionId) {
-      iframe.src = `sections/${sectionId}/${sectionId}.html`;
 
-      document.querySelectorAll('.tab-btn, .sidebar li').forEach(el => {
-        if (el.getAttribute('data-id') === sectionId) {
-          el.classList.add('active');
-          if (el.classList.contains('tab-btn')) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      if (!sectionId) {
+        return;
+      }
+
+
+      /* ----------------------------------------------------------
+         تحديد الصفحة
+      ---------------------------------------------------------- */
+
+      iframe.src =
+        `sections/${sectionId}/${sectionId}.html`;
+
+
+      /* ----------------------------------------------------------
+         إظهار التحميل
+      ---------------------------------------------------------- */
+
+      if (frameLoading) {
+        frameLoading.style.display = 'flex';
+      }
+
+
+      /* ----------------------------------------------------------
+         القوائم العادية
+      ---------------------------------------------------------- */
+
+      document
+        .querySelectorAll(
+          '.tab-btn, .sidebar li'
+        )
+        .forEach((el) => {
+
+          if (
+            el.getAttribute('data-id') ===
+            sectionId
+          ) {
+
+            el.classList.add('active');
+
+
+            /* تحريك التبويب للجوال */
+
+            if (
+              el.classList.contains(
+                'tab-btn'
+              )
+            ) {
+
+              el.scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+              });
+
+            }
+
+          } else {
+
+            el.classList.remove('active');
+
           }
-        } else {
-          el.classList.remove('active');
-        }
-      });
+
+        });
+
+
+      /* ----------------------------------------------------------
+         أزرار المعلم
+      ---------------------------------------------------------- */
+
+      const teacherHalaqatBtn =
+        document.getElementById(
+          'teacherHalaqatBtn'
+        );
+
+      const teacherReportsBtn =
+        document.getElementById(
+          'teacherReportsBtn'
+        );
+
+
+      if (teacherHalaqatBtn) {
+
+        teacherHalaqatBtn.classList.toggle(
+          'active',
+          sectionId === 'halaqat'
+        );
+
+      }
+
+
+      if (teacherReportsBtn) {
+
+        teacherReportsBtn.classList.toggle(
+          'active',
+          sectionId === 'reports'
+        );
+
+      }
+
     };
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (userEmailSpan) userEmailSpan.innerText = user.email;
 
-        if (user.email === 'hammed@gmail.com') {
-          // حساب الأدمن: إظهار القوائم وإخفاء زر الخروج العائم الخاص بالمعلمين
-          if (desktopSidebar) desktopSidebar.style.display = '';
-          if (mobileNavbar) {
-            mobileNavbar.classList.remove('teacher-mode');
-            mobileNavbar.style.display = '';
+    /* ============================================================
+       IFRAME LOADED
+    ============================================================ */
+
+    iframe.addEventListener(
+      'load',
+      () => {
+
+        if (frameLoading) {
+          frameLoading.style.display =
+            'none';
+        }
+
+      }
+    );
+
+
+    /* ============================================================
+       AUTH STATE
+    ============================================================ */
+
+    onAuthStateChanged(
+      auth,
+      (user) => {
+
+        /* --------------------------------------------------------
+           المستخدم غير مسجل
+        -------------------------------------------------------- */
+
+        if (!user) {
+
+          window.location.href =
+            'login.html';
+
+          return;
+        }
+
+
+        /* --------------------------------------------------------
+           البريد
+        -------------------------------------------------------- */
+
+        if (userEmailSpan) {
+
+          userEmailSpan.innerText =
+            user.email || 'مستخدم';
+
+        }
+
+
+        /* ========================================================
+           ADMIN
+        ======================================================== */
+
+        if (
+          user.email ===
+          'hammed@gmail.com'
+        ) {
+
+          currentMode = 'admin';
+
+
+          /* Sidebar */
+
+          if (desktopSidebar) {
+
+            desktopSidebar.style.display =
+              '';
+
           }
-          if (teacherLogoutBtn) teacherLogoutBtn.style.display = 'none';
+
+
+          /* Mobile Navbar */
+
+          if (mobileNavbar) {
+
+            mobileNavbar.style.display =
+              '';
+
+          }
+
+
+          /* Teacher Navbar */
+
+          if (teacherNavbar) {
+
+            teacherNavbar.style.display =
+              'none';
+
+          }
+
+
+          /* إخفاء عناصر الإدارة في حالة غير مناسبة */
+
+          document
+            .querySelectorAll(
+              '.admin-tab'
+            )
+            .forEach((el) => {
+
+              el.style.display = '';
+
+            });
+
+
+          /* الصفحة الافتراضية */
 
           navigate('students');
-        } else {
-          // حسابات المعلمين: إخفاء أشرطة التنقل وإظهار زر الخروج العائم
-          if (desktopSidebar) desktopSidebar.style.display = 'none';
-          if (mobileNavbar) {
-            mobileNavbar.classList.add('teacher-mode');
-            mobileNavbar.style.display = 'none';
-          }
-          if (teacherLogoutBtn) teacherLogoutBtn.style.display = 'block';
 
-          // التوجيه فوراً لصفحة التسميع
-          navigate('halaqat');
         }
-      } else {
-        window.location.href = 'login.html';
-      }
-    });
 
-    window.logout = async () => {
-      await signOut(auth);
-      window.location.href = 'login.html';
+
+        /* ========================================================
+           TEACHER
+        ======================================================== */
+
+        else {
+
+          currentMode = 'teacher';
+
+
+          /* ------------------------------------------------------
+             إخفاء Sidebar
+          ------------------------------------------------------ */
+
+          if (desktopSidebar) {
+
+            desktopSidebar.style.display =
+              'none';
+
+          }
+
+
+          /* ------------------------------------------------------
+             إخفاء شريط الجوال الإداري
+          ------------------------------------------------------ */
+
+          if (mobileNavbar) {
+
+            mobileNavbar.style.display =
+              'none';
+
+          }
+
+
+          /* ------------------------------------------------------
+             إظهار شريط المعلم
+          ------------------------------------------------------ */
+
+          if (teacherNavbar) {
+
+            teacherNavbar.style.display =
+              'block';
+
+          }
+
+
+          /* ------------------------------------------------------
+             المعلم يبدأ بالرصد
+          ------------------------------------------------------ */
+
+          navigate('halaqat');
+
+        }
+
+      }
+    );
+
+
+    /* ============================================================
+       LOGOUT
+    ============================================================ */
+
+    window.logout = async function() {
+
+      try {
+
+        await signOut(auth);
+
+        window.location.href =
+          'login.html';
+
+      } catch (error) {
+
+        console.error(
+          'Logout error:',
+          error
+        );
+
+        alert(
+          'تعذر تسجيل الخروج، حاول مرة أخرى.'
+        );
+
+      }
+
     };
-  </script>
-</body>
-</html>
+
+
+  </script></body></html>
