@@ -1,5 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+
+<html
+    lang="ar"
+    dir="rtl"
+>
 
 <head>
 
@@ -15,7 +19,9 @@
         content="#176b5b"
     >
 
-    <title>رصد التسميع والحضور</title>
+    <title>
+        رصد التسميع والحضور
+    </title>
 
     <link
         rel="stylesheet"
@@ -32,7 +38,9 @@
 
 <body>
 
+
 <main class="page-container">
+
 
     <!-- ==================================================
          رأس الصفحة
@@ -57,6 +65,7 @@
         </div>
 
     </header>
+
 
 
     <!-- ==================================================
@@ -91,7 +100,9 @@
         </div>
 
 
+
         <div class="grid-inputs">
+
 
             <div class="field-wrapper">
 
@@ -108,6 +119,7 @@
                 </select>
 
             </div>
+
 
 
             <div class="field-wrapper">
@@ -129,7 +141,9 @@
 
             </div>
 
+
         </div>
+
 
 
         <!-- ==================================================
@@ -140,8 +154,11 @@
             id="recordMode"
             class="record-mode new"
         >
+
             📝 رصد جديد
+
         </div>
+
 
 
         <!-- ==================================================
@@ -150,15 +167,23 @@
 
         <div class="student-actions">
 
+
             <button
                 id="editTodayRecordBtn"
                 class="btn-edit"
                 type="button"
                 style="display:none;"
             >
+
                 ✏️ تعديل رصد اليوم
+
             </button>
 
+
+
+            <!-- ==================================================
+                 زر فتح المحادثة في صفحة مستقلة
+                 ================================================== -->
 
             <button
                 id="chatParentBtn"
@@ -166,98 +191,14 @@
                 type="button"
                 style="display:none;"
             >
+
                 💬 محادثة ولي الأمر
+
             </button>
+
 
         </div>
 
-
-        <!-- ==================================================
-             صندوق المحادثة
-             ================================================== -->
-
-        <section
-            id="parentChatSection"
-            class="parent-chat-section"
-            style="display:none;"
-        >
-
-            <div class="chat-header">
-
-                <div class="chat-header-info">
-
-                    <div class="chat-avatar">
-                        👨‍👩‍👦
-                    </div>
-
-                    <div>
-
-                        <strong id="chatStudentName">
-                            محادثة ولي الأمر
-                        </strong>
-
-                        <small id="chatHalaqaName">
-                            اختر الطالب
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    id="closeChatBtn"
-                    class="close-chat-btn"
-                    type="button"
-                >
-                    ✕
-                </button>
-
-            </div>
-
-
-            <div
-                id="chatMessages"
-                class="chat-messages"
-            >
-
-                <div class="chat-empty">
-
-                    💬
-
-                    <strong>
-                        لا توجد رسائل بعد
-                    </strong>
-
-                    <small>
-                        ستظهر هنا رسائل ولي الأمر.
-                    </small>
-
-                </div>
-
-            </div>
-
-
-            <div class="chat-input-area">
-
-                <textarea
-                    id="chatMessageInput"
-                    placeholder="اكتب رسالة لولي الأمر..."
-                    rows="1"
-                ></textarea>
-
-
-                <button
-                    id="sendChatMessageBtn"
-                    type="button"
-                    class="send-chat-btn"
-                >
-                    📤
-                </button>
-
-            </div>
-
-        </section>
 
 
         <!-- ==================================================
@@ -268,6 +209,7 @@
             id="attendanceSummary"
             class="attendance-summary-box"
         ></div>
+
 
 
         <div class="info-box">
@@ -291,7 +233,9 @@
         </div>
 
 
+
         <hr>
+
 
 
         <!-- ==================================================
@@ -317,6 +261,7 @@
             </div>
 
         </div>
+
 
 
         <div class="field-wrapper">
@@ -351,6 +296,7 @@
         </div>
 
 
+
         <!-- ==================================================
              بيانات التسميع
              ================================================== -->
@@ -360,10 +306,14 @@
             class="recitation-section"
         >
 
+
             <hr>
 
 
-            <!-- تقييم الأداء -->
+
+            <!-- ==================================================
+                 تقييم الأداء
+                 ================================================== -->
 
             <div class="section-title">
 
@@ -386,7 +336,9 @@
             </div>
 
 
+
             <div class="checkbox-group">
+
 
                 <label class="check-label">
 
@@ -417,6 +369,7 @@
                     </span>
 
                 </label>
+
 
 
                 <label class="check-label">
@@ -450,6 +403,7 @@
                 </label>
 
 
+
                 <label class="check-label">
 
                     <input
@@ -479,6 +433,7 @@
                     </span>
 
                 </label>
+
 
 
                 <label class="check-label">
@@ -511,13 +466,18 @@
 
                 </label>
 
+
             </div>
+
 
 
             <hr>
 
 
-            <!-- تفاصيل التسميع -->
+
+            <!-- ==================================================
+                 تفاصيل التسميع
+                 ================================================== -->
 
             <div class="section-title">
 
@@ -540,6 +500,7 @@
             </div>
 
 
+
             <div class="field-wrapper">
 
                 <label for="currentSurah">
@@ -556,7 +517,9 @@
             </div>
 
 
+
             <div class="grid-inputs">
+
 
                 <div class="field-wrapper">
 
@@ -575,6 +538,7 @@
                 </div>
 
 
+
                 <div class="field-wrapper">
 
                     <label for="toAya">
@@ -591,13 +555,18 @@
 
                 </div>
 
+
             </div>
+
 
 
             <hr>
 
 
-            <!-- النقاط -->
+
+            <!-- ==================================================
+                 النقاط
+                 ================================================== -->
 
             <div class="section-title">
 
@@ -620,6 +589,7 @@
             </div>
 
 
+
             <div class="points-box">
 
                 <input
@@ -638,10 +608,13 @@
 
             </div>
 
+
         </div>
 
 
+
         <hr>
+
 
 
         <!-- ==================================================
@@ -669,6 +642,7 @@
         </div>
 
 
+
         <div class="field-wrapper">
 
             <label for="tomorrowReq">
@@ -684,6 +658,7 @@
         </div>
 
 
+
         <div class="field-wrapper">
 
             <label for="teacherNotes">
@@ -696,6 +671,7 @@
             ></textarea>
 
         </div>
+
 
 
         <!-- ==================================================
@@ -722,6 +698,7 @@
     </section>
 
 
+
     <!-- ==================================================
          التذييل
          ================================================== -->
@@ -732,13 +709,16 @@
 
     </footer>
 
+
 </main>
+
 
 
 <script
     type="module"
     src="halaqat.js"
 ></script>
+
 
 </body>
 
