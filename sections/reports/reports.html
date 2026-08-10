@@ -1,184 +1,728 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>استخراج تقارير الطلاب - مسجد الخلفاء الراشدين</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;800&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="reports.css">
 
-  <!-- مكتبة html2pdf لتوليد الـ PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
-  </script>
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="theme-color"
+        content="#176b5b"
+    >
+
+    <title>تقارير الرصد والحضور</title>
+
+    <link
+        rel="stylesheet"
+        href="./reports.css"
+    >
+
 </head>
+
 <body>
 
-  <div class="app-container">
-    <!-- لوحة التحكم بالجانب -->
-    <div class="control-panel no-print">
-      <h2>📊 استخراج تقارير الطلاب</h2>
-      <p class="subtitle">اختر البيانات المطلوب استخراج التقرير لها</p>
+<div class="page-container">
 
-      <div class="form-group">
-        <label for="studentSelect">👨‍🎓 اختر الطالب:</label>
-        <select id="studentSelect">
-          <option value="">جاري التحميل...</option>
-        </select>
-      </div>
+    <!-- ================================================= -->
+    <!-- العنوان -->
+    <!-- ================================================= -->
 
-      <div class="form-group">
-        <label for="monthSelect">📅 اختر الشهر:</label>
-        <input type="month" id="monthSelect">
-      </div>
+    <header class="page-header">
 
-      <div class="form-group">
-        <label for="reportType">📝 نوع التقرير:</label>
-        <select id="reportType">
-          <option value="detailed">تفصيلي (شامل لجميع الأيام والتسميع)</option>
-          <option value="summary">مختصر (ملخص من أول لآخر رصد)</option>
-        </select>
-      </div>
+        <div class="header-icon">
+            📊
+        </div>
 
-      <div class="form-group">
-        <label for="reportNotes">✍️ ملاحظات للتسجيل في التقرير:</label>
-        <textarea id="reportNotes" rows="3" placeholder="أدخل أي ملاحظات إضافية ترغب بظهورها أسفل التقرير..."></textarea>
-      </div>
+        <div class="header-content">
 
-      <button id="generatePdfBtn" class="btn btn-primary">⚡ استخراج التقرير PDF</button>
+            <h1>
+                تقارير الرصد والحضور
+            </h1>
+
+            <p>
+                متابعة التسميع والحضور والمراجعة وأداء الطلاب
+            </p>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================================================= -->
+    <!-- الفلاتر -->
+    <!-- ================================================= -->
+
+    <section class="filter-card">
+
+        <div class="section-title">
+
+            <span>
+                🔎
+            </span>
+
+            <strong>
+                تحديد التقرير
+            </strong>
+
+        </div>
+
+
+        <div class="filters-grid">
+
+            <!-- الحلقة -->
+
+            <div class="form-group">
+
+                <label for="halaqaFilter">
+
+                    📖 الحلقة
+
+                </label>
+
+                <select id="halaqaFilter">
+
+                    <option value="">
+                        جميع الحلقات
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- التاريخ -->
+
+            <div class="form-group">
+
+                <label for="dateFilter">
+
+                    📅 التاريخ
+
+                </label>
+
+                <input
+                    type="date"
+                    id="dateFilter"
+                >
+
+            </div>
+
+
+            <!-- الطالب -->
+
+            <div class="form-group">
+
+                <label for="studentFilter">
+
+                    👤 الطالب
+
+                </label>
+
+                <select id="studentFilter">
+
+                    <option value="">
+                        جميع الطلاب
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- الحالة -->
+
+            <div class="form-group">
+
+                <label for="statusFilter">
+
+                    📌 الحالة
+
+                </label>
+
+                <select id="statusFilter">
+
+                    <option value="">
+                        جميع الحالات
+                    </option>
+
+                    <option value="حاضر">
+                        ✅ حاضر
+                    </option>
+
+                    <option value="غائب">
+                        ❌ غائب
+                    </option>
+
+                    <option value="إجازة">
+                        🔵 إجازة
+                    </option>
+
+                    <option value="مستأذن">
+                        🟠 مستأذن
+                    </option>
+
+                    <option value="مراجعة">
+                        🔷 مراجعة
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <div class="filter-actions">
+
+            <button
+                id="loadReportBtn"
+                class="primary-button"
+            >
+
+                📊 عرض التقرير
+
+            </button>
+
+
+            <button
+                id="todayBtn"
+                class="secondary-button"
+            >
+
+                📅 تقرير اليوم
+
+            </button>
+
+
+            <button
+                id="resetBtn"
+                class="light-button"
+            >
+
+                🔄 إعادة تعيين
+
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- ملخص -->
+    <!-- ================================================= -->
+
+    <section
+        id="reportSummary"
+        class="summary-card"
+    >
+
+        <div class="summary-header">
+
+            <span>
+                📊 ملخص التقرير
+            </span>
+
+            <strong id="reportPercentage">
+                0%
+            </strong>
+
+        </div>
+
+
+        <div class="summary-stats">
+
+            <div class="summary-item">
+
+                <span class="summary-icon">
+                    👥
+                </span>
+
+                <div>
+
+                    <small>
+                        إجمالي الطلاب
+                    </small>
+
+                    <strong id="totalCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-icon">
+                    ✅
+                </span>
+
+                <div>
+
+                    <small>
+                        حاضر
+                    </small>
+
+                    <strong id="presentCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-icon">
+                    ❌
+                </span>
+
+                <div>
+
+                    <small>
+                        غائب
+                    </small>
+
+                    <strong id="absentCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-icon">
+                    🔵
+                </span>
+
+                <div>
+
+                    <small>
+                        إجازة
+                    </small>
+
+                    <strong id="leaveCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-icon">
+                    🟠
+                </span>
+
+                <div>
+
+                    <small>
+                        مستأذن
+                    </small>
+
+                    <strong id="excusedCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-icon">
+                    🔷
+                </span>
+
+                <div>
+
+                    <small>
+                        مراجعة
+                    </small>
+
+                    <strong id="reviewCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <span class="summary-icon">
+                    ⭐
+                </span>
+
+                <div>
+
+                    <small>
+                        مجموع النقاط
+                    </small>
+
+                    <strong id="pointsCount">
+                        0
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="summary-progress">
+
+            <div
+                id="summaryProgressBar"
+                style="width:0%"
+            ></div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- معلومات التقرير -->
+    <!-- ================================================= -->
+
+    <section class="report-info">
+
+        <div>
+
+            <span>
+                📅 التاريخ:
+            </span>
+
+            <strong id="reportDateText">
+                -
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                📖 الحلقة:
+            </span>
+
+            <strong id="reportHalaqaText">
+                جميع الحلقات
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                📝 عدد السجلات:
+            </span>
+
+            <strong id="recordsCountText">
+                0
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- حالة التحميل -->
+    <!-- ================================================= -->
+
+    <div
+        id="loadingBox"
+        class="loading-box"
+        style="display:none"
+    >
+
+        <div class="loading-spinner"></div>
+
+        <strong>
+            جاري تحميل التقرير...
+        </strong>
+
     </div>
 
-    <!-- منطقة المعاينة والطباعة (التقرير) -->
-    <div class="preview-panel">
-      <div id="pdfContent" class="pdf-template">
 
-        <!-- الإطار الذهبي الخارجي -->
-        <div class="golden-frame">
-          <div class="corner top-right"></div>
-          <div class="corner top-left"></div>
-          <div class="corner bottom-right"></div>
-          <div class="corner bottom-left"></div>
+    <!-- ================================================= -->
+    <!-- لا توجد بيانات -->
+    <!-- ================================================= -->
 
-          <!-- الترويسة الفخمة بالشعارين -->
-          <div class="pdf-header">
-            <!-- الشعار الأيسر: مسجد الخلفاء الراشدين -->
-            <div class="logo-box left-logo">
-              <div class="logo-circle">
-                <span class="logo-icon">🕌</span>
-              </div>
-              <div class="logo-text">مسجد الخلفاء الراشدين</div>
+    <div
+        id="emptyBox"
+        class="empty-box"
+        style="display:none"
+    >
+
+        <div class="empty-icon">
+            📭
+        </div>
+
+        <strong>
+            لا توجد سجلات
+        </strong>
+
+        <small>
+            لا توجد بيانات مطابقة للفلاتر المحددة.
+        </small>
+
+    </div>
+
+
+    <!-- ================================================= -->
+    <!-- جدول التقرير -->
+    <!-- ================================================= -->
+
+    <section
+        id="reportTableSection"
+        class="table-card"
+    >
+
+        <div class="table-header">
+
+            <div>
+
+                <h2>
+                    📋 تفاصيل الرصد
+                </h2>
+
+                <p>
+                    جميع بيانات التسميع والحضور والمراجعة
+                </p>
+
             </div>
 
-            <!-- العنوان الرئيسي في المنتصف -->
-            <div class="header-center">
-              <div class="bismillah">﷽</div>
-              <h1 class="main-title">تقرير متابعة الطالب</h1>
-              <div class="title-underline"></div>
-              <h3 class="sub-title">برنامج الحلقات القرآنية والخدمات التعليمية</h3>
-              <div class="report-badge" id="pdfReportBadge">تقرير أداء الطالب</div>
-            </div>
 
-            <!-- الشعار الأيمن: مدرسة الخلفاء الراشدين -->
-            <div class="logo-box right-logo">
-              <div class="logo-circle">
-                <span class="logo-icon">📖</span>
-              </div>
-              <div class="logo-text">مدرسة الخلفاء الراشدين<br>لتعليم القرآن الكريم وعلومه<br>شبوة - عتق</div>
-            </div>
-          </div>
+            <button
+                id="printBtn"
+                class="print-button"
+            >
 
-          <div class="divider-gold"></div>
+                🖨️ طباعة التقرير
 
-          <!-- معلومات الطالب والحلقة -->
-          <div class="student-info-grid">
-            <div class="info-box">
-              <span class="label">👤 اسم الطالب:</span>
-              <span class="value" id="pdfStudentName">-</span>
-            </div>
-            <div class="info-box">
-              <span class="label">📚 اسم الحلقة:</span>
-              <span class="value" id="pdfHalaqaName">-</span>
-            </div>
-            <div class="info-box">
-              <span class="label">📅 التاريخ الميلادي:</span>
-              <span class="value" id="pdfMonth">-</span>
-            </div>
-            <div class="info-box">
-              <span class="label">☾ التاريخ الهجري:</span>
-              <span class="value gold-text" id="pdfHijriMonth">-</span>
-            </div>
-            <div class="info-box highlight">
-              <span class="label">⭐ النقاط الحالية:</span>
-              <span class="value gold-text" id="pdfPoints">0</span>
-            </div>
-          </div>
+            </button>
 
-          <!-- الملخص الإحصائي -->
-          <div class="stats-cards">
-            <div class="stat-card green">
-              <span class="stat-title">✅ أيام الحضور</span>
-              <span class="stat-num" id="pdfAttendCount">0</span>
-            </div>
-            <div class="stat-card red">
-              <span class="stat-title">❌ أيام الغياب</span>
-              <span class="stat-num" id="pdfAbsentCount">0</span>
-            </div>
-          </div>
+        </div>
 
-          <!-- عرض ملخص التسميع (للتقرير المختصر) -->
-          <div id="summarySection" class="summary-box">
-            <div class="summary-title">📖 الإنجاز الشامل لمستويات التسميع بالشهر</div>
-            <div class="summary-content" id="pdfSummaryText">
-              لا توجد بيانات رصد لهذا الشهر
-            </div>
-          </div>
 
-          <!-- الجدول التفصيلي (للتقرير التفصيلي) -->
-          <div id="detailedSection" class="table-container">
-            <table class="report-table">
-              <thead>
-                <tr>
-                  <th>التاريخ</th>
-                  <th>الحالة</th>
-                  <th>السورة</th>
-                  <th>من آية</th>
-                  <th>إلى آية</th>
-                  <th>الدرجة</th>
-                  <th>النقاط</th>
-                </tr>
-              </thead>
-              <tbody id="pdfTableBody">
-                <!-- يتم ملؤها ديناميكياً -->
-              </tbody>
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            #
+                        </th>
+
+                        <th>
+                            الطالب
+                        </th>
+
+                        <th>
+                            الحلقة
+                        </th>
+
+                        <th>
+                            الحالة
+                        </th>
+
+                        <th>
+                            السورة
+                        </th>
+
+                        <th>
+                            الآيات
+                        </th>
+
+                        <th>
+                            التقييم
+                        </th>
+
+                        <th>
+                            مراجعة الغد
+                        </th>
+
+                        <th>
+                            الملاحظات
+                        </th>
+
+                        <th>
+                            النقاط
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody id="reportTableBody">
+
+                </tbody>
+
             </table>
-          </div>
 
-          <!-- قسم الملاحظات -->
-          <div class="notes-section" id="pdfNotesContainer">
-            <div class="notes-title">📌 ملاحظات إدارة الحلقة:</div>
-            <div class="notes-content" id="pdfNotesText">لا توجد ملاحظات.</div>
-          </div>
+        </div>
 
-          <!-- التوقيع والختام -->
-          <div class="pdf-footer">
-            <div class="signature">
-              <span>توقيع مشرف الحلقة</span>
-              <div class="sig-line"></div>
+    </section>
+
+
+    <!-- ================================================= -->
+    <!-- تفاصيل الطالب -->
+    <!-- ================================================= -->
+
+    <section
+        id="studentDetails"
+        class="student-details"
+        style="display:none"
+    >
+
+        <div class="details-header">
+
+            <span>
+                👤
+            </span>
+
+            <div>
+
+                <h2 id="detailsStudentName">
+                    -
+                </h2>
+
+                <p id="detailsStudentHalaqa">
+                    -
+                </p>
+
             </div>
-            <div class="stamp-box">
-              <span>ختم المسجد</span>
-              <div class="sig-circle"></div>
-            </div>
-            <div class="signature">
-              <span>توقيع مدير المدرسة</span>
-              <div class="sig-line"></div>
-            </div>
-          </div>
 
-        </div><!-- نهاية الإطار الذهبي -->
-      </div>
-    </div>
-  </div>
+        </div>
 
-  <script type="module" src="reports.js"></script>
+
+        <div class="details-grid">
+
+            <div class="detail-box">
+
+                <small>
+                    الحالة
+                </small>
+
+                <strong id="detailsStatus">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="detail-box">
+
+                <small>
+                    السورة
+                </small>
+
+                <strong id="detailsSurah">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="detail-box">
+
+                <small>
+                    الآيات
+                </small>
+
+                <strong id="detailsAyah">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="detail-box">
+
+                <small>
+                    التقييم
+                </small>
+
+                <strong id="detailsGrade">
+                    -
+                </strong>
+
+            </div>
+
+
+            <div class="detail-box">
+
+                <small>
+                    النقاط
+                </small>
+
+                <strong id="detailsPoints">
+                    0
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="detail-text">
+
+            <h3>
+                📖 مراجعة / مطلوب الغد
+            </h3>
+
+            <p id="detailsTomorrow">
+                -
+            </p>
+
+        </div>
+
+
+        <div class="detail-text">
+
+            <h3>
+                📝 ملاحظات المدرس
+            </h3>
+
+            <p id="detailsNotes">
+                -
+            </p>
+
+        </div>
+
+    </section>
+
+</div>
+
+
+<script
+    type="module"
+    src="./reports.js"
+></script>
+
 </body>
+
 </html>
