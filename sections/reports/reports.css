@@ -204,7 +204,252 @@ body {
     color:
         var(--gray-800);
 }
+/* ============================================================
+   اختيار الطالب القابل للبحث
+============================================================ */
 
+.searchable-student {
+    position: relative;
+    width: 100%;
+}
+
+
+.student-search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+
+.student-search-box input {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 42px 0 42px;
+    border: 1px solid #d9d9d9;
+    border-radius: 10px;
+    background: #fff;
+    color: #222;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: 0.2s ease;
+    box-sizing: border-box;
+}
+
+
+.student-search-box input:focus {
+    border-color: #185443;
+    box-shadow: 0 0 0 3px rgba(24, 84, 67, 0.10);
+}
+
+
+.student-search-icon {
+    position: absolute;
+    right: 14px;
+    z-index: 2;
+    pointer-events: none;
+    font-size: 16px;
+}
+
+
+.student-search-clear {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 30px;
+    height: 30px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: #f1f1f1;
+    color: #666;
+
+    cursor: pointer;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 20px;
+    line-height: 1;
+
+    font-family: Arial, sans-serif;
+}
+
+
+.student-search-clear:hover {
+    background: #e5e5e5;
+    color: #222;
+}
+
+
+/* ============================================================
+   قائمة الطلاب
+============================================================ */
+
+.student-dropdown {
+    position: absolute;
+
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+
+    z-index: 1000;
+
+    max-height: 280px;
+    overflow-y: auto;
+
+    display: none;
+
+    padding: 6px;
+
+    background: #fff;
+
+    border: 1px solid #ddd;
+    border-radius: 12px;
+
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+
+.student-dropdown.open {
+    display: block;
+}
+
+
+.student-option {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 10px 12px;
+
+    border: none;
+    border-radius: 9px;
+
+    background: transparent;
+
+    text-align: right;
+    direction: rtl;
+
+    cursor: pointer;
+
+    font-family: 'Cairo', sans-serif;
+
+    transition: background 0.15s ease;
+}
+
+
+.student-option:hover {
+    background: #f4f8f6;
+}
+
+
+.student-option.selected {
+    background: #eaf4ef;
+}
+
+
+.student-option-icon {
+    width: 36px;
+    height: 36px;
+
+    flex: 0 0 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #f1f5f3;
+
+    font-size: 17px;
+}
+
+
+.student-option-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    flex: 1;
+}
+
+
+.student-option-info strong {
+    width: 100%;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    color: #222;
+
+    font-size: 14px;
+    font-weight: 700;
+}
+
+
+.student-option-info small {
+    width: 100%;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    margin-top: 2px;
+
+    color: #777;
+
+    font-size: 11px;
+}
+
+
+.student-dropdown-empty {
+    padding: 22px 12px;
+
+    text-align: center;
+
+    color: #888;
+
+    font-size: 13px;
+}
+
+
+/* ============================================================
+   شريط التمرير
+============================================================ */
+
+.student-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+
+.student-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
+.student-dropdown::-webkit-scrollbar-thumb {
+    background: #cfcfcf;
+    border-radius: 10px;
+}
+
+
+.student-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
 .form-group select,
 .form-group input,
 .form-group textarea {
