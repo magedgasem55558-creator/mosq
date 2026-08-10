@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,17 +10,22 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
-    <title>التقارير | مسجد الخلفاء الراشدين</title>
+    <title>تقارير الطلاب | مسجد الخلفاء الراشدين</title>
 
     <link
         href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
-    <link rel="stylesheet" href="reports.css">
+    <link
+        rel="stylesheet"
+        href="reports.css"
+    >
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
 </head>
+
 
 <body>
 
@@ -38,86 +44,95 @@
             </div>
 
             <div>
-                <h1>مركز التقارير</h1>
+
+                <h1>
+                    مركز التقارير
+                </h1>
 
                 <p>
                     مسجد الخلفاء الراشدين
                 </p>
+
             </div>
 
         </div>
 
+
         <div class="panel-divider"></div>
 
+
         <div class="panel-heading">
-            إعداد التقرير
-        </div>
-
-
-        <!-- نطاق التقرير -->
-
-        <div class="form-group">
-
-            <label for="scopeSelect">
-                <span>نوع التقرير</span>
-            </label>
-
-            <select id="scopeSelect">
-
-                <option value="student">
-                    تقرير طالب
-                </option>
-
-                <option value="halaqa">
-                    تقرير الحلقة
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <!-- الحلقة -->
-
-        <div
-            class="form-group"
-            id="halaqaGroup"
-            style="display:none;"
-        >
-
-            <label for="halaqaSelect">
-                الحلقة
-            </label>
-
-            <select id="halaqaSelect">
-
-                <option value="">
-                    جاري تحميل الحلقات...
-                </option>
-
-            </select>
-
+            إعداد تقرير الطالب
         </div>
 
 
         <!-- الطالب -->
 
-        <div
-            class="form-group"
-            id="studentGroup"
-        >
+        <div class="form-group">
 
-            <label for="studentSelect">
+            <label>
                 الطالب
             </label>
 
-            <select id="studentSelect">
 
-                <option value="">
-                    جاري تحميل الطلاب...
-                </option>
+            <!--
+                اختيار طالب قابل للبحث
+            -->
 
-            </select>
+            <div
+                class="searchable-student"
+                id="studentPicker"
+            >
+
+                <div class="student-search-box">
+
+                    <span class="student-search-icon">
+                        🔎
+                    </span>
+
+                    <input
+                        type="text"
+                        id="studentSearchInput"
+                        placeholder="اضغط هنا للبحث باسم الطالب..."
+                        autocomplete="off"
+                    >
+
+                    <button
+                        type="button"
+                        id="studentSearchClear"
+                        class="student-search-clear"
+                        aria-label="مسح"
+                        style="display:none;"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="studentDropdown"
+                    class="student-dropdown"
+                >
+
+                    <div class="student-dropdown-empty">
+                        اكتب اسم الطالب للبحث
+                    </div>
+
+                </div>
+
+
+                <!--
+                    يحتفظ بمعرف الطالب المختار
+                -->
+
+                <input
+                    type="hidden"
+                    id="studentSelect"
+                    value=""
+                >
+
+            </div>
 
         </div>
 
@@ -188,6 +203,7 @@
                 استخراج PDF
             </button>
 
+
             <button
                 id="refreshReportBtn"
                 class="btn btn-secondary"
@@ -202,11 +218,13 @@
 
         <div class="panel-hint">
 
-            <span>ℹ️</span>
+            <span>
+                ℹ️
+            </span>
 
             <p>
-                اختر نوع التقرير والشهر ثم حدد الطالب أو الحلقة
-                لعرض التقرير مباشرة.
+                اختر الطالب والشهر ثم حدد مستوى التقرير
+                لعرض تقرير الطالب مباشرة.
             </p>
 
         </div>
@@ -234,6 +252,7 @@
 
             </div>
 
+
             <div
                 class="preview-status"
                 id="previewStatus"
@@ -258,6 +277,7 @@
             <header class="report-header">
 
                 <div class="header-top-line"></div>
+
 
                 <div class="institution">
 
@@ -289,9 +309,11 @@
                         تقرير أداء الطالب
                     </span>
 
+
                     <h2 id="pdfMainTitle">
                         تقرير الأداء والمتابعة
                     </h2>
+
 
                     <p id="pdfReportPeriod">
                         -
@@ -302,7 +324,7 @@
             </header>
 
 
-            <!-- بيانات أساسية -->
+            <!-- بيانات الطالب -->
 
             <section class="identity-card">
 
@@ -322,7 +344,7 @@
                 <div class="identity-item">
 
                     <span>
-                        الطالب / الحلقة
+                        الطالب
                     </span>
 
                     <strong id="pdfStudentName">
@@ -452,7 +474,7 @@
             </section>
 
 
-            <!-- مؤشرات إضافية -->
+            <!-- المؤشرات الإضافية -->
 
             <section class="metrics-grid">
 
@@ -467,10 +489,12 @@
                     </strong>
 
                     <div class="progress">
+
                         <div
                             id="pdfAttendanceProgress"
                             style="width:0%"
                         ></div>
+
                     </div>
 
                 </div>
@@ -517,13 +541,16 @@
             </section>
 
 
-            <!-- توزيع الحالات -->
+            <!-- =================================================
+                 ملخص الحضور
+            ================================================== -->
 
             <section class="status-section">
 
                 <div class="section-title">
 
                     <div>
+
                         <span class="section-number">
                             01
                         </span>
@@ -531,6 +558,7 @@
                         <h3>
                             ملخص الحضور والمتابعة
                         </h3>
+
                     </div>
 
                 </div>
@@ -550,6 +578,7 @@
 
                     </div>
 
+
                     <div class="status-item absent">
 
                         <span>
@@ -561,6 +590,7 @@
                         </strong>
 
                     </div>
+
 
                     <div class="status-item leave">
 
@@ -574,6 +604,7 @@
 
                     </div>
 
+
                     <div class="status-item permission">
 
                         <span>
@@ -585,6 +616,7 @@
                         </strong>
 
                     </div>
+
 
                     <div class="status-item review">
 
@@ -603,7 +635,9 @@
             </section>
 
 
-            <!-- ملخص الطالب -->
+            <!-- =================================================
+                 ملخص الطالب
+            ================================================== -->
 
             <section
                 id="studentSummarySection"
@@ -637,85 +671,9 @@
             </section>
 
 
-            <!-- ملخص الحلقة -->
-
-            <section
-                id="halaqaSummarySection"
-                class="report-section"
-                style="display:none;"
-            >
-
-                <div class="section-title">
-
-                    <div>
-
-                        <span class="section-number">
-                            02
-                        </span>
-
-                        <h3>
-                            أداء طلاب الحلقة
-                        </h3>
-
-                    </div>
-
-                </div>
-
-
-                <div class="table-wrapper">
-
-                    <table class="report-table">
-
-                        <thead>
-
-                            <tr>
-
-                                <th>
-                                    #
-                                </th>
-
-                                <th>
-                                    الطالب
-                                </th>
-
-                                <th>
-                                    الحضور
-                                </th>
-
-                                <th>
-                                    الغياب
-                                </th>
-
-                                <th>
-                                    التسميع
-                                </th>
-
-                                <th>
-                                    النقاط
-                                </th>
-
-                                <th>
-                                    الحضور %
-                                </th>
-
-                                <th>
-                                    مستوى الإنجاز
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody id="pdfHalaqaSummaryBody"></tbody>
-
-                    </table>
-
-                </div>
-
-            </section>
-
-
-            <!-- سجل الطالب التفصيلي -->
+            <!-- =================================================
+                 السجل التفصيلي
+            ================================================== -->
 
             <section
                 id="detailedSection"
@@ -747,10 +705,6 @@
                         <thead>
 
                             <tr>
-
-                                <th id="studentColumnHeader">
-                                    الطالب
-                                </th>
 
                                 <th>
                                     التاريخ
@@ -784,6 +738,7 @@
 
                         </thead>
 
+
                         <tbody id="pdfTableBody"></tbody>
 
                     </table>
@@ -793,7 +748,9 @@
             </section>
 
 
-            <!-- أبرز الإنجازات -->
+            <!-- =================================================
+                 الإنجاز القرآني
+            ================================================== -->
 
             <section
                 id="achievementSection"
@@ -827,7 +784,9 @@
             </section>
 
 
-            <!-- الملاحظات -->
+            <!-- =================================================
+                 الملاحظات
+            ================================================== -->
 
             <section class="notes-section">
 
@@ -858,7 +817,9 @@
             </section>
 
 
-            <!-- التذييل -->
+            <!-- =================================================
+                 التذييل
+            ================================================== -->
 
             <footer class="report-footer">
 
