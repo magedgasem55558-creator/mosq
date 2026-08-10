@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,260 +10,81 @@
         content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
 
-    <meta name="theme-color" content="#059669">
+    <meta
+        name="theme-color"
+        content="#059669"
+    >
 
-    <title>إدارة سجلات التسميع</title>
+    <title>
+        إدارة سجلات التسميع والحضور
+    </title>
 
-    <link rel="stylesheet" href="../../style.css">
-    <link rel="stylesheet" href="manage-records.css">
+    <link
+        rel="stylesheet"
+        href="../../style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="manage-records.css"
+    >
+
 </head>
 
 <body>
 
-    <!-- ==============================
-         رأس الصفحة
-    =============================== -->
-    <header class="page-header">
+    <!-- =====================================================
+         العنوان
+         ===================================================== -->
 
-        <div class="header-icon">
-            📋
-        </div>
+    <h1>
+        📋 إدارة سجلات التسميع والحضور
+    </h1>
 
-        <div>
-            <h1>إدارة سجلات التسميع</h1>
-            <p class="subtitle">
-                عرض وتعديل وحذف سجلات الطلاب
-            </p>
-        </div>
-
-    </header>
+    <p class="subtitle">
+        عرض وتعديل وحذف سجلات الطلاب اليومية
+    </p>
 
 
-    <!-- ==============================
-         الإحصائيات
-    =============================== -->
-    <section class="stats-grid">
+    <!-- =====================================================
+         البطاقة الرئيسية
+         ===================================================== -->
 
-        <!-- إجمالي السجلات -->
-        <div class="stat-card total">
+    <div class="card">
 
-            <div class="stat-icon">
-                📊
-            </div>
-
-            <div class="stat-content">
-                <span class="stat-label">
-                    إجمالي السجلات
-                </span>
-
-                <strong id="totalRecordsCount">
-                    0
-                </strong>
-            </div>
-
-        </div>
-
-
-        <!-- حاضر -->
-        <div class="stat-card present">
-
-            <div class="stat-icon">
-                ✅
-            </div>
-
-            <div class="stat-content">
-                <span class="stat-label">
-                    حاضر
-                </span>
-
-                <strong id="presentRecordsCount">
-                    0
-                </strong>
-            </div>
-
-        </div>
-
-
-        <!-- مستأذن -->
-        <div class="stat-card excused">
-
-            <div class="stat-icon">
-                🟡
-            </div>
-
-            <div class="stat-content">
-                <span class="stat-label">
-                    مستأذن
-                </span>
-
-                <strong id="excusedRecordsCount">
-                    0
-                </strong>
-            </div>
-
-        </div>
-
-
-        <!-- إجازة -->
-        <div class="stat-card vacation">
-
-            <div class="stat-icon">
-                🔵
-            </div>
-
-            <div class="stat-content">
-                <span class="stat-label">
-                    إجازة
-                </span>
-
-                <strong id="vacationRecordsCount">
-                    0
-                </strong>
-            </div>
-
-        </div>
-
-
-        <!-- غائب -->
-        <div class="stat-card absent">
-
-            <div class="stat-icon">
-                ❌
-            </div>
-
-            <div class="stat-content">
-                <span class="stat-label">
-                    غائب
-                </span>
-
-                <strong id="absentRecordsCount">
-                    0
-                </strong>
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- ==============================
-         بطاقة السجلات
-    =============================== -->
-    <main class="card">
-
-        <!-- أدوات البحث -->
-        <div class="records-toolbar">
-
-            <div class="search-box">
-
-                <span class="search-icon">
-                    🔍
-                </span>
-
-                <input
-                    type="search"
-                    id="recordSearchInput"
-                    placeholder="ابحث باسم الطالب أو السورة..."
-                    autocomplete="off"
-                >
-
-            </div>
-
-
-            <!-- فلترة الحالة -->
-            <div class="filter-box">
-
-                <select id="recordStatusFilter">
-
-                    <option value="all">
-                        جميع الحالات
-                    </option>
-
-                    <option value="حاضر">
-                        ✅ حاضر
-                    </option>
-
-                    <option value="مستأذن">
-                        🟡 مستأذن
-                    </option>
-
-                    <option value="إجازة">
-                        🔵 إجازة
-                    </option>
-
-                    <option value="غائب">
-                        ❌ غائب
-                    </option>
-
-                </select>
-
-            </div>
-
-        </div>
-
-
-        <!-- عنوان القائمة -->
-        <div class="list-header">
-
-            <div>
-                <h2>
-                    سجلات التسميع
-                </h2>
-
-                <span id="visibleRecordsCount">
-                    0 سجل
-                </span>
-            </div>
-
-        </div>
-
-
-        <!-- قائمة السجلات -->
         <div
             id="manageRecordsList"
             class="manage-list"
         >
 
             <div class="loading">
-
-                <div class="loading-spinner"></div>
-
-                <span>
-                    جاري تحميل السجلات...
-                </span>
-
+                ⏳ جاري تحميل السجلات...
             </div>
 
         </div>
 
-    </main>
+    </div>
 
 
-    <!-- ==============================
+    <!-- =====================================================
          نافذة تعديل السجل
-    =============================== -->
+         ===================================================== -->
+
     <div
         id="editRecordModal"
         class="modal"
-        aria-hidden="true"
     >
 
         <div class="modal-content">
 
+
             <!-- رأس النافذة -->
+
             <div class="modal-header">
 
-                <div>
-
-                    <span class="modal-title-icon">
-                        ✏️
-                    </span>
-
-                    <h3>
-                        تعديل بيانات السجل
-                    </h3>
-
-                </div>
+                <h3>
+                    ✏️ تعديل بيانات السجل
+                </h3>
 
                 <button
                     type="button"
@@ -270,14 +92,18 @@
                     id="closeModalBtn"
                     aria-label="إغلاق"
                 >
-                    ×
+                    &times;
                 </button>
 
             </div>
 
 
             <!-- محتوى النافذة -->
+
             <div class="modal-body">
+
+
+                <!-- ID السجل -->
 
                 <input
                     type="hidden"
@@ -286,10 +112,11 @@
 
 
                 <!-- الطالب -->
+
                 <div class="form-group">
 
                     <label for="editRecordStudentName">
-                        👨‍🎓 الطالب
+                        👨‍🎓 الطالب:
                     </label>
 
                     <input
@@ -301,11 +128,29 @@
                 </div>
 
 
+                <!-- الحلقة -->
+
+                <div class="form-group">
+
+                    <label for="editRecordHalaqaName">
+                        📖 الحلقة:
+                    </label>
+
+                    <input
+                        type="text"
+                        id="editRecordHalaqaName"
+                        readonly
+                    >
+
+                </div>
+
+
                 <!-- التاريخ -->
+
                 <div class="form-group">
 
                     <label for="editRecordDate">
-                        📅 التاريخ
+                        📅 التاريخ:
                     </label>
 
                     <input
@@ -317,29 +162,34 @@
                 </div>
 
 
-                <!-- الحالة -->
+                <!-- =================================================
+                     حالة الحضور
+                     ================================================= -->
+
                 <div class="form-group">
 
                     <label for="editRecordStatus">
-                        📌 حالة الطالب
+                        📌 حالة الحضور:
                     </label>
 
-                    <select id="editRecordStatus">
+                    <select
+                        id="editRecordStatus"
+                    >
 
                         <option value="حاضر">
                             ✅ حاضر
                         </option>
 
-                        <option value="مستأذن">
-                            🟡 مستأذن
+                        <option value="غائب">
+                            ❌ غائب
                         </option>
 
                         <option value="إجازة">
                             🔵 إجازة
                         </option>
 
-                        <option value="غائب">
-                            ❌ غائب
+                        <option value="مستأذن">
+                            🟠 مستأذن
                         </option>
 
                     </select>
@@ -347,19 +197,22 @@
                 </div>
 
 
-                <!-- بيانات التسميع -->
-                <div id="recordSurahFields">
+                <!-- =================================================
+                     بيانات التسميع
+                     تظهر فقط عند حالة حاضر
+                     ================================================= -->
 
-                    <div class="section-title">
-                        📖 بيانات التسميع
-                    </div>
+                <div
+                    id="recordSurahFields"
+                >
 
 
                     <!-- السورة -->
+
                     <div class="form-group">
 
                         <label for="editRecordSurah">
-                            السورة
+                            📖 السورة:
                         </label>
 
                         <input
@@ -372,18 +225,22 @@
 
 
                     <!-- الآيات -->
+
                     <div class="grid-inputs">
+
 
                         <div class="form-group">
 
                             <label for="editRecordFromAyah">
-                                من آية
+                                من آية:
                             </label>
 
                             <input
                                 type="number"
                                 id="editRecordFromAyah"
                                 min="0"
+                                inputmode="numeric"
+                                placeholder="مثال: 1"
                             >
 
                         </div>
@@ -392,62 +249,196 @@
                         <div class="form-group">
 
                             <label for="editRecordToAyah">
-                                إلى آية
+                                إلى آية:
                             </label>
 
                             <input
                                 type="number"
                                 id="editRecordToAyah"
                                 min="0"
+                                inputmode="numeric"
+                                placeholder="مثال: 10"
                             >
+
+                        </div>
+
+
+                    </div>
+
+
+                    <!-- =================================================
+                         التقييم
+                         ================================================= -->
+
+                    <div class="form-group">
+
+                        <label>
+                            ⭐ التقييم:
+                        </label>
+
+
+                        <div class="evaluation-grid">
+
+
+                            <label class="evaluation-option">
+
+                                <input
+                                    type="checkbox"
+                                    class="eval-check"
+                                    value="حفظ"
+                                >
+
+                                <span>
+                                    📗 حفظ
+                                </span>
+
+                            </label>
+
+
+                            <label class="evaluation-option">
+
+                                <input
+                                    type="checkbox"
+                                    class="eval-check"
+                                    value="إتقان"
+                                >
+
+                                <span>
+                                    ⭐ إتقان
+                                </span>
+
+                            </label>
+
+
+                            <label class="evaluation-option">
+
+                                <input
+                                    type="checkbox"
+                                    class="eval-check"
+                                    value="تجويد"
+                                >
+
+                                <span>
+                                    🎯 تجويد
+                                </span>
+
+                            </label>
+
+
+                            <label class="evaluation-option">
+
+                                <input
+                                    type="checkbox"
+                                    class="eval-check"
+                                    value="مراجعة"
+                                >
+
+                                <span>
+                                    🔄 مراجعة
+                                </span>
+
+                            </label>
+
 
                         </div>
 
                     </div>
 
-                </div>
 
-
-                <!-- النقاط والأسطر -->
-                <div class="grid-inputs">
+                    <!-- =================================================
+                         المطلوب غداً
+                         ================================================= -->
 
                     <div class="form-group">
 
-                        <label for="editRecordPoints">
-                            ⭐ النقاط
+                        <label for="editRecordTomorrowRequirement">
+                            📅 المطلوب غداً:
                         </label>
 
                         <input
-                            type="number"
-                            id="editRecordPoints"
-                            min="0"
-                            step="1"
+                            type="text"
+                            id="editRecordTomorrowRequirement"
+                            placeholder="مثال: سورة البقرة من آية 20 إلى 30"
                         >
 
                     </div>
 
 
+                    <!-- =================================================
+                         ملاحظات الشيخ
+                         ================================================= -->
+
                     <div class="form-group">
 
-                        <label for="editRecordLines">
-                            📖 الأسطر
+                        <label for="editRecordNotes">
+                            📝 ملاحظات الشيخ:
                         </label>
 
-                        <input
-                            type="number"
-                            id="editRecordLines"
-                            min="0"
-                            step="1"
-                        >
+                        <textarea
+                            id="editRecordNotes"
+                            rows="3"
+                            placeholder="اكتب ملاحظات الشيخ..."
+                        ></textarea>
 
                     </div>
 
+
                 </div>
+
+
+                <!-- =================================================
+                     النقاط
+                     ================================================= -->
+
+                <div class="form-group">
+
+                    <label for="editRecordPoints">
+                        ⭐ النقاط:
+                    </label>
+
+                    <input
+                        type="number"
+                        id="editRecordPoints"
+                        min="0"
+                        step="1"
+                        inputmode="numeric"
+                    >
+
+                    <small class="field-hint">
+                        الحضور غير الفعلي لا يحصل على نقاط.
+                    </small>
+
+                </div>
+
+
+                <!-- =================================================
+                     الأسطر
+                     ================================================= -->
+
+                <div class="form-group">
+
+                    <label for="editRecordLines">
+                        📖 الأسطر:
+                    </label>
+
+                    <input
+                        type="number"
+                        id="editRecordLines"
+                        min="0"
+                        step="1"
+                        inputmode="numeric"
+                    >
+
+                </div>
+
 
             </div>
 
 
-            <!-- أزرار النافذة -->
+            <!-- =================================================
+                 أزرار النافذة
+                 ================================================= -->
+
             <div class="modal-footer">
 
                 <button
@@ -468,14 +459,16 @@
 
             </div>
 
+
         </div>
 
     </div>
 
 
-    <!-- ==============================
+    <!-- =====================================================
          JavaScript
-    =============================== -->
+         ===================================================== -->
+
     <script
         type="module"
         src="manage-records.js"
