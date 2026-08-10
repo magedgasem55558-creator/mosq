@@ -1,310 +1,506 @@
+// ============================================================
+// 📋 إدارة سجلات التسميع والحضور
+// ============================================================
+// مطابق لصفحة:
+// 📖 رصد التسميع والحضور - حلقات القرآن
+//
+// الحالات:
+// ✅ حاضر
+// ❌ غائب
+// 🔵 إجازة
+// 🟠 مستأذن
+//
+// يدعم:
+// 📖 السورة والآيات
+// ⭐ حفظ + إتقان + تجويد + مراجعة
+// 📅 المطلوب غداً
+// 📝 ملاحظات الشيخ
+// ⭐ النقاط
+// 📖 الأسطر
+// ============================================================
+
 import {
     db,
-    loadAllRecords,
-    loadAllStudents
+    loadAllRecords
 } from '../../../firebase.js';
 
 import {
     doc,
     updateDoc,
-    deleteDoc
+    deleteDoc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* =========================================================
-   عناصر الصفحة
-   ========================================================= */
+
+// ============================================================
+// العناصر
+// ============================================================
 
 const container =
-    document.getElementById('manageRecordsList');
+    document.getElementById(
+        'manageRecordsList'
+    );
 
 const modal =
-    document.getElementById('editRecordModal');
+    document.getElementById(
+        'editRecordModal'
+    );
 
 const saveBtn =
-    document.getElementById('saveRecordBtn');
+    document.getElementById(
+        'saveRecordBtn'
+    );
 
 const closeModalBtn =
-    document.getElementById('closeModalBtn');
+    document.getElementById(
+        'closeModalBtn'
+    );
 
 const cancelEditBtn =
-    document.getElementById('cancelEditBtn');
+    document.getElementById(
+        'cancelEditBtn'
+    );
 
 const statusSelect =
-    document.getElementById('editRecordStatus');
+    document.getElementById(
+        'editRecordStatus'
+    );
 
 const surahFields =
-    document.getElementById('recordSurahFields');
+    document.getElementById(
+        'recordSurahFields'
+    );
 
-const searchInput =
-    document.getElementById('recordSearchInput');
 
-const statusFilter =
-    document.getElementById('recordStatusFilter');
+// ============================================================
+// الحقول
+// ============================================================
 
-/* الإحصائيات */
+const studentNameInput =
+    document.getElementById(
+        'editRecordStudentName'
+    );
 
-const totalRecordsCount =
-    document.getElementById('totalRecordsCount');
+const halaqaNameInput =
+    document.getElementById(
+        'editRecordHalaqaName'
+    );
 
-const presentRecordsCount =
-    document.getElementById('presentRecordsCount');
+const dateInput =
+    document.getElementById(
+        'editRecordDate'
+    );
 
-const absentRecordsCount =
-    document.getElementById('absentRecordsCount');
+const surahInput =
+    document.getElementById(
+        'editRecordSurah'
+    );
 
-const leaveRecordsCount =
-    document.getElementById('leaveRecordsCount');
+const fromAyahInput =
+    document.getElementById(
+        'editRecordFromAyah'
+    );
 
-/* =========================================================
-   البيانات المحلية
-   ========================================================= */
+const toAyahInput =
+    document.getElementById(
+        'editRecordToAyah'
+    );
 
-let allRecordsCache = [];
+const tomorrowRequirementInput =
+    document.getElementById(
+        'editRecordTomorrowRequirement'
+    );
+
+const notesInput =
+    document.getElementById(
+        'editRecordNotes'
+    );
+
+const pointsInput =
+    document.getElementById(
+        'editRecordPoints'
+    );
+
+const linesInput =
+    document.getElementById(
+        'editRecordLines'
+    );
+
+
+// ============================================================
+// المتغيرات
+// ============================================================
+
 let currentRecordId = null;
 
-/* =========================================================
-   أدوات مساعدة
-   ========================================================= */
+let currentRecord = null;
 
-function escapeHtml(value) {
+let isSaveListenerAttached = false;
 
-    if (value === null || value === undefined) {
-        return '';
-    }
 
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
+// ============================================================
+// الحالات
+// ============================================================
 
-/* =========================================================
-   المودال
-   ========================================================= */
+const ATTENDANCE_STATUS = {
+
+    PRESENT: 'حاضر',
+
+    ABSENT: 'غائب',
+
+    LEAVE: 'إجازة',
+
+    EXCUSED: 'مستأذن'
+
+};
+
+
+// ============================================================
+// إغلاق النافذة
+// ============================================================
 
 function closeModal() {
 
-    if (modal) {
-        modal.style.display = 'none';
+    if (!modal) {
+        return;
     }
 
-    currentRecordId = null;
+    modal.style.display =
+        'none';
+
+    currentRecordId =
+        null;
+
+    currentRecord =
+        null;
 }
 
+
+// ============================================================
+// أحداث الإغلاق
+// ============================================================
+
 if (closeModalBtn) {
+
     closeModalBtn.addEventListener(
         'click',
         closeModal
     );
 }
 
+
 if (cancelEditBtn) {
+
     cancelEditBtn.addEventListener(
         'click',
         closeModal
     );
 }
 
-window.addEventListener('click', event => {
 
-    if (event.target === modal) {
-        closeModal();
+window.addEventListener(
+    'click',
+    event => {
+
+        if (
+            event.target === modal
+        ) {
+
+            closeModal();
+        }
     }
+);
 
-});
 
-/* إظهار/إخفاء بيانات السورة */
+// ============================================================
+// زر ESC لإغلاق النافذة
+// ============================================================
 
-if (statusSelect && surahFields) {
+window.addEventListener(
+    'keydown',
+    event => {
+
+        if (
+            event.key === 'Escape' &&
+            modal &&
+            modal.style.display === 'flex'
+        ) {
+
+            closeModal();
+        }
+    }
+);
+
+
+// ============================================================
+// تغيير حالة الحضور
+// ============================================================
+
+if (statusSelect) {
 
     statusSelect.addEventListener(
         'change',
-        () => {
-
-            surahFields.style.display =
-                statusSelect.value === 'حاضر'
-                    ? 'block'
-                    : 'none';
-
-        }
+        updateStatusFields
     );
-
 }
 
-/* =========================================================
-   Skeleton
-   ========================================================= */
 
-function showSkeleton() {
+// ============================================================
+// تحديث الحقول حسب الحالة
+// ============================================================
 
-    if (!container) return;
+function updateStatusFields() {
 
-    container.innerHTML = `
-        <div class="skeleton"></div>
-        <div class="skeleton"></div>
-        <div class="skeleton"></div>
-        <div class="skeleton"></div>
-    `;
-}
+    if (!statusSelect) {
+        return;
+    }
 
-/* =========================================================
-   تحديث الإحصائيات
-   ========================================================= */
+    const status =
+        statusSelect.value;
 
-function updateStatistics(records) {
+    const isPresent =
+        status ===
+        ATTENDANCE_STATUS.PRESENT;
 
-    let present = 0;
-    let absent = 0;
-    let leave = 0;
 
-    records.forEach(record => {
+    // إظهار بيانات التسميع للحاضر فقط
 
-        switch (record.status) {
+    if (surahFields) {
 
-            case 'حاضر':
-                present++;
-                break;
+        surahFields.style.display =
+            isPresent
+                ? 'block'
+                : 'none';
+    }
 
-            case 'غائب':
-                absent++;
-                break;
 
-            case 'إجازة':
-                leave++;
-                break;
+    // إذا لم يكن حاضرًا
 
+    if (!isPresent) {
+
+        clearRecitationFields();
+
+        if (pointsInput) {
+
+            pointsInput.value =
+                '0';
         }
-
-    });
-
-    if (totalRecordsCount) {
-        totalRecordsCount.textContent =
-            records.length.toLocaleString('ar');
     }
 
-    if (presentRecordsCount) {
-        presentRecordsCount.textContent =
-            present.toLocaleString('ar');
-    }
-
-    if (absentRecordsCount) {
-        absentRecordsCount.textContent =
-            absent.toLocaleString('ar');
-    }
-
-    if (leaveRecordsCount) {
-        leaveRecordsCount.textContent =
-            leave.toLocaleString('ar');
-    }
 }
 
-/* =========================================================
-   تحميل البيانات
-   ========================================================= */
+
+// ============================================================
+// تنظيف بيانات التسميع
+// ============================================================
+
+function clearRecitationFields() {
+
+    if (surahInput) {
+        surahInput.value = '';
+    }
+
+    if (fromAyahInput) {
+        fromAyahInput.value = '';
+    }
+
+    if (toAyahInput) {
+        toAyahInput.value = '';
+    }
+
+    if (tomorrowRequirementInput) {
+        tomorrowRequirementInput.value = '';
+    }
+
+    if (notesInput) {
+        notesInput.value = '';
+    }
+
+
+    document
+        .querySelectorAll(
+            '.eval-check'
+        )
+        .forEach(
+            checkbox => {
+
+                checkbox.checked =
+                    false;
+            }
+        );
+
+}
+
+
+// ============================================================
+// التهيئة
+// ============================================================
 
 async function init() {
 
-    if (!container) return;
+    if (!container) {
+        return;
+    }
+
 
     try {
 
-        showSkeleton();
+        container.innerHTML = `
+            <div class="loading">
+                ⏳ جاري تحميل السجلات...
+            </div>
+        `;
 
-        /*
-         * نجلب السجلات والطلاب بالتوازي.
-         *
-         * هذا أفضل من:
-         *
-         * await loadAllRecords()
-         * ثم await loadAllStudents()
-         *
-         */
 
-        const [
-            rawRecords,
-            students
-        ] = await Promise.all([
+        // ====================================================
+        // تحميل السجلات
+        // ====================================================
 
-            loadAllRecords(),
+        const rawRecords =
+            await loadAllRecords();
 
-            loadAllStudents().catch(error => {
 
-                console.warn(
-                    'تعذر تحميل الطلاب:',
-                    error
-                );
-
-                return [];
-            })
-
-        ]);
-
-        if (!Array.isArray(rawRecords)) {
+        if (
+            !Array.isArray(
+                rawRecords
+            )
+        ) {
 
             throw new Error(
                 'البيانات القادمة من loadAllRecords ليست مصفوفة.'
             );
-
         }
 
-        /*
-         * إنشاء Map للطلاب.
-         *
-         * البحث داخل Map سريع جدًا
-         * مقارنة بجلب Firestore لكل سجل.
-         */
 
-        const studentsMap = new Map();
+        if (
+            rawRecords.length === 0
+        ) {
 
-        if (Array.isArray(students)) {
+            container.innerHTML = `
+                <div class="empty-msg">
+                    📭 لا توجد سجلات حالياً
+                </div>
+            `;
 
-            students.forEach(student => {
-
-                if (student.id) {
-
-                    studentsMap.set(
-                        student.id,
-                        student.name || 'طالب بدون اسم'
-                    );
-
-                }
-
-            });
-
+            return;
         }
 
-        /*
-         * ربط أسماء الطلاب بالسجلات
-         */
 
-        allRecordsCache =
-            rawRecords.map(record => {
+        // ====================================================
+        // جلب أسماء الطلاب
+        // ====================================================
 
-                const studentName =
-                    record.studentName ||
-                    studentsMap.get(record.studentId) ||
-                    'طالب غير معروف';
+        const recordsWithNames =
+            await Promise.all(
 
-                return {
-                    ...record,
-                    studentName
-                };
+                rawRecords.map(
+                    async record => {
 
-            });
+                        // إذا كان الاسم محفوظًا داخل السجل
 
-        /*
-         * تحديث الإحصائيات
-         */
+                        if (
+                            record.studentName
+                        ) {
 
-        updateStatistics(allRecordsCache);
+                            return record;
+                        }
 
-        /*
-         * عرض القائمة
-         */
 
-        renderRecords();
+                        // محاولة جلب اسم الطالب
+
+                        if (
+                            record.studentId
+                        ) {
+
+                            try {
+
+                                const studentDoc =
+                                    await getDoc(
+                                        doc(
+                                            db,
+                                            'students',
+                                            record.studentId
+                                        )
+                                    );
+
+
+                                if (
+                                    studentDoc.exists()
+                                ) {
+
+                                    const studentData =
+                                        studentDoc.data();
+
+
+                                    return {
+
+                                        ...record,
+
+                                        studentName:
+                                            studentData.name ||
+                                            'طالب بدون اسم'
+                                    };
+                                }
+
+                            } catch (error) {
+
+                                console.warn(
+                                    'تعذر جلب اسم الطالب:',
+                                    record.studentId,
+                                    error
+                                );
+                            }
+                        }
+
+
+                        return {
+
+                            ...record,
+
+                            studentName:
+                                'طالب غير معروف'
+                        };
+                    }
+                )
+            );
+
+
+        // ====================================================
+        // ترتيب السجلات
+        // الأحدث أولاً
+        // ====================================================
+
+        recordsWithNames.sort(
+            sortRecords
+        );
+
+
+        // ====================================================
+        // عرض السجلات
+        // ====================================================
+
+        renderRecords(
+            recordsWithNames
+        );
+
+
+        // ====================================================
+        // ربط زر الحفظ مرة واحدة
+        // ====================================================
+
+        if (
+            saveBtn &&
+            !isSaveListenerAttached
+        ) {
+
+            saveBtn.addEventListener(
+                'click',
+                handleSave
+            );
+
+            isSaveListenerAttached =
+                true;
+        }
 
     } catch (error) {
 
@@ -313,8 +509,17 @@ async function init() {
             error
         );
 
+
         container.innerHTML = `
-            <div class="error-msg">
+
+            <div
+                class="error-msg"
+                style="
+                    color:red;
+                    padding:20px;
+                    text-align:center;
+                "
+            >
 
                 ❌ حدث خطأ أثناء تحميل السجلات
 
@@ -322,564 +527,1548 @@ async function init() {
 
                 <small>
                     ${escapeHtml(
-                        error.message || error
+                        error.message ||
+                        String(error)
                     )}
                 </small>
 
             </div>
         `;
-
     }
 
 }
 
-/* =========================================================
-   البحث والفلترة
-   ========================================================= */
 
-function getFilteredRecords() {
+// ============================================================
+// ترتيب السجلات
+// ============================================================
 
-    const search =
-        (searchInput?.value || '')
-            .trim()
-            .toLowerCase();
+function sortRecords(
+    a,
+    b
+) {
 
-    const status =
-        statusFilter?.value || '';
+    const dateA =
+        String(
+            a.date || ''
+        );
 
-    return allRecordsCache.filter(record => {
+    const dateB =
+        String(
+            b.date || ''
+        );
 
-        const matchesSearch =
-            !search ||
-            String(record.studentName || '')
-                .toLowerCase()
-                .includes(search);
 
-        const matchesStatus =
-            !status ||
-            record.status === status;
+    if (
+        dateA !== dateB
+    ) {
 
-        return matchesSearch && matchesStatus;
+        return dateB.localeCompare(
+            dateA
+        );
+    }
 
-    });
 
+    const timestampA =
+        getTimestampValue(
+            a.timestamp ||
+            a.updatedAt
+        );
+
+
+    const timestampB =
+        getTimestampValue(
+            b.timestamp ||
+            b.updatedAt
+        );
+
+
+    return timestampB -
+        timestampA;
 }
 
-/* =========================================================
-   عرض السجلات
-   ========================================================= */
 
-function renderRecords() {
+// ============================================================
+// استخراج الوقت
+// ============================================================
 
-    if (!container) return;
+function getTimestampValue(
+    timestamp
+) {
 
-    const records =
-        getFilteredRecords();
+    if (!timestamp) {
+        return 0;
+    }
 
-    if (records.length === 0) {
 
-        container.innerHTML = `
-            <div class="empty-msg">
-                🔎 لا توجد سجلات مطابقة
-            </div>
-        `;
+    try {
 
+        if (
+            typeof timestamp.toMillis ===
+            'function'
+        ) {
+
+            return timestamp.toMillis();
+        }
+
+
+        if (
+            typeof timestamp.toDate ===
+            'function'
+        ) {
+
+            return timestamp.toDate().getTime();
+        }
+
+
+        const date =
+            new Date(
+                timestamp
+            );
+
+
+        const time =
+            date.getTime();
+
+
+        return Number.isNaN(time)
+            ? 0
+            : time;
+
+    } catch {
+
+        return 0;
+    }
+}
+
+
+// ============================================================
+// عرض السجلات
+// ============================================================
+
+function renderRecords(
+    records
+) {
+
+    if (!container) {
         return;
     }
 
-    /*
-     * DocumentFragment يقلل عمليات تحديث DOM.
-     */
 
-    const fragment =
-        document.createDocumentFragment();
+    container.innerHTML = '';
 
-    records.forEach(record => {
 
-        const div =
-            document.createElement('div');
+    records.forEach(
+        record => {
 
-        div.className =
-            'manage-item';
+            const div =
+                document.createElement(
+                    'div'
+                );
 
-        let statusClass =
-            'status-present';
 
-        if (record.status === 'غائب') {
-            statusClass =
-                'status-absent';
-        }
+            div.className =
+                'manage-item';
 
-        if (record.status === 'إجازة') {
-            statusClass =
-                'status-leave';
-        }
 
-        let details = '';
+            const statusInfo =
+                getStatusInfo(
+                    record.status
+                );
 
-        if (record.status === 'حاضر') {
 
-            details = `
-                <small>
-                    📖 ${escapeHtml(
-                        record.surah || 'غير محددة'
-                    )}
-                    ${
-                        record.fromAyah ||
-                        record.toAyah
-                            ? `(${escapeHtml(
-                                record.fromAyah || '0'
-                              )}-${escapeHtml(
-                                record.toAyah || '0'
-                              )})`
-                            : ''
-                    }
-                </small>
-            `;
+            const studentName =
+                record.studentName ||
+                'طالب غير معروف';
 
-        } else {
 
-            details = `
-                <small class="status-badge ${statusClass}">
-                    ${
-                        record.status === 'غائب'
-                            ? '❌ غائب'
-                            : '🔵 إجازة'
-                    }
-                </small>
-            `;
+            const halaqaName =
+                record.halaqaName ||
+                'حلقة غير محددة';
 
-        }
 
-        div.innerHTML = `
+            const date =
+                record.date ||
+                'بدون تاريخ';
 
-            <div class="item-info">
 
-                <strong>
-                    👨‍🎓
-                    ${escapeHtml(
-                        record.studentName
-                    )}
-                </strong>
+            const grade =
+                record.grade ||
+                '-';
 
-                <div class="item-meta">
+
+            const points =
+                Number(
+                    record.pointsGiven ||
+                    0
+                );
+
+
+            const lines =
+                Number(
+                    record.linesGiven ||
+                    0
+                );
+
+
+            let recitationText = '';
+
+
+            if (
+                record.status ===
+                ATTENDANCE_STATUS.PRESENT
+            ) {
+
+                const surah =
+                    record.surah ||
+                    'غير محددة';
+
+
+                const from =
+                    record.fromAyah ||
+                    '0';
+
+
+                const to =
+                    record.toAyah ||
+                    '0';
+
+
+                recitationText =
+                    `
+                        📖 ${escapeHtml(
+                            surah
+                        )}
+                        (${escapeHtml(
+                            from
+                        )} - ${escapeHtml(
+                            to
+                        )})
+                    `;
+
+            } else {
+
+                recitationText =
+                    statusInfo.label;
+            }
+
+
+            div.innerHTML = `
+
+                <div class="item-info">
+
+                    <strong>
+                        👨‍🎓
+                        ${escapeHtml(
+                            studentName
+                        )}
+                    </strong>
+
+
+                    <small>
+                        📖
+                        ${escapeHtml(
+                            halaqaName
+                        )}
+                    </small>
+
 
                     <small>
                         📅
                         ${escapeHtml(
-                            record.date || 'بدون تاريخ'
+                            date
                         )}
                     </small>
 
-                    ${details}
+
+                    <small
+                        class="record-status ${statusInfo.className}"
+                    >
+                        ${statusInfo.icon}
+                        ${statusInfo.label}
+                    </small>
+
+
+                    <small>
+                        ${recitationText}
+                    </small>
+
 
                     <small>
                         ⭐
                         ${escapeHtml(
-                            record.grade || '-'
+                            grade
                         )}
                     </small>
 
+
                     <small>
-                        📊 نقاط:
-                        ${Number(
-                            record.pointsGiven || 0
-                        )}
+                        ⭐ نقاط:
+                        ${points}
                     </small>
+
 
                     <small>
                         📖 أسطر:
-                        ${Number(
-                            record.linesGiven || 0
-                        )}
+                        ${lines}
                     </small>
 
                 </div>
 
-            </div>
 
-            <div class="item-actions">
+                <div class="item-actions">
 
-                <button
-                    class="edit-btn"
-                    type="button"
-                >
-                    ✏️ تعديل
-                </button>
+                    <button
+                        type="button"
+                        class="edit-btn"
+                    >
+                        ✏️ تعديل
+                    </button>
 
-                <button
-                    class="delete-btn"
-                    type="button"
-                >
-                    🗑️ حذف
-                </button>
 
-            </div>
-        `;
+                    <button
+                        type="button"
+                        class="delete-btn"
+                    >
+                        🗑️ حذف
+                    </button>
 
-        const editBtn =
-            div.querySelector('.edit-btn');
+                </div>
+            `;
 
-        const deleteBtn =
-            div.querySelector('.delete-btn');
 
-        if (editBtn) {
+            const editBtn =
+                div.querySelector(
+                    '.edit-btn'
+                );
 
-            editBtn.addEventListener(
-                'click',
-                () => openEditModal(record)
+
+            const deleteBtn =
+                div.querySelector(
+                    '.delete-btn'
+                );
+
+
+            if (editBtn) {
+
+                editBtn.addEventListener(
+                    'click',
+                    () =>
+                        openEditModal(
+                            record
+                        )
+                );
+            }
+
+
+            if (deleteBtn) {
+
+                deleteBtn.addEventListener(
+                    'click',
+                    () =>
+                        deleteRecord(
+                            record
+                        )
+                );
+            }
+
+
+            container.appendChild(
+                div
             );
 
         }
-
-        if (deleteBtn) {
-
-            deleteBtn.addEventListener(
-                'click',
-                () => deleteRecord(record.id)
-            );
-
-        }
-
-        fragment.appendChild(div);
-
-    });
-
-    container.innerHTML = '';
-
-    container.appendChild(fragment);
-}
-
-/* =========================================================
-   البحث
-   ========================================================= */
-
-if (searchInput) {
-
-    searchInput.addEventListener(
-        'input',
-        renderRecords
     );
 
 }
 
-/* =========================================================
-   الفلترة
-   ========================================================= */
 
-if (statusFilter) {
+// ============================================================
+// معلومات الحالة
+// ============================================================
 
-    statusFilter.addEventListener(
-        'change',
-        renderRecords
-    );
+function getStatusInfo(
+    status
+) {
+
+    switch (status) {
+
+        case ATTENDANCE_STATUS.PRESENT:
+
+            return {
+
+                icon: '✅',
+
+                label: 'حاضر',
+
+                className:
+                    'status-present'
+            };
+
+
+        case ATTENDANCE_STATUS.ABSENT:
+
+            return {
+
+                icon: '❌',
+
+                label: 'غائب',
+
+                className:
+                    'status-absent'
+            };
+
+
+        case ATTENDANCE_STATUS.LEAVE:
+
+            return {
+
+                icon: '🔵',
+
+                label: 'إجازة',
+
+                className:
+                    'status-leave'
+            };
+
+
+        case ATTENDANCE_STATUS.EXCUSED:
+
+            return {
+
+                icon: '🟠',
+
+                label: 'مستأذن',
+
+                className:
+                    'status-excused'
+            };
+
+
+        default:
+
+            return {
+
+                icon: '📌',
+
+                label:
+                    status ||
+                    'غير محدد',
+
+                className:
+                    'status-unknown'
+            };
+    }
 
 }
 
-/* =========================================================
-   فتح التعديل
-   ========================================================= */
 
-function openEditModal(record) {
+// ============================================================
+// فتح نافذة التعديل
+// ============================================================
 
-    if (!modal) return;
+function openEditModal(
+    record
+) {
+
+    if (!modal) {
+        return;
+    }
+
 
     currentRecordId =
         record.id;
 
-    const setValue =
-        (id, value) => {
 
-            const element =
-                document.getElementById(id);
+    currentRecord =
+        record;
 
-            if (element) {
-                element.value =
-                    value ?? '';
-            }
 
-        };
+    // ========================================================
+    // البيانات الأساسية
+    // ========================================================
 
     setValue(
         'editRecordId',
         record.id
     );
 
-    setValue(
-        'editRecordStudentName',
-        record.studentName || 'طالب غير معروف'
-    );
 
-    setValue(
-        'editRecordDate',
-        record.date || ''
-    );
+    if (studentNameInput) {
 
-    setValue(
-        'editRecordSurah',
-        record.surah || ''
-    );
+        studentNameInput.value =
+            record.studentName ||
+            'طالب غير معروف';
+    }
 
-    setValue(
-        'editRecordFromAyah',
-        record.fromAyah || ''
-    );
 
-    setValue(
-        'editRecordToAyah',
-        record.toAyah || ''
-    );
+    if (halaqaNameInput) {
 
-    setValue(
-        'editRecordPoints',
-        record.pointsGiven || 0
-    );
+        halaqaNameInput.value =
+            record.halaqaName ||
+            'حلقة غير محددة';
+    }
 
-    setValue(
-        'editRecordLines',
-        record.linesGiven || 0
-    );
+
+    if (dateInput) {
+
+        dateInput.value =
+            record.date ||
+            '';
+    }
+
+
+    // ========================================================
+    // الحالة
+    // ========================================================
 
     if (statusSelect) {
 
+        const status =
+            normalizeStatus(
+                record.status
+            );
+
+
         statusSelect.value =
-            record.status || 'حاضر';
-
+            status;
     }
 
-    if (surahFields) {
 
-        surahFields.style.display =
-            record.status === 'حاضر'
-                ? 'block'
-                : 'none';
+    // ========================================================
+    // التسميع
+    // ========================================================
 
+    if (surahInput) {
+
+        surahInput.value =
+            record.status ===
+            ATTENDANCE_STATUS.PRESENT
+
+                ? (
+                    record.surah || ''
+                )
+
+                : '';
     }
 
-    modal.style.display = 'flex';
+
+    if (fromAyahInput) {
+
+        fromAyahInput.value =
+            record.fromAyah ||
+            '';
+    }
+
+
+    if (toAyahInput) {
+
+        toAyahInput.value =
+            record.toAyah ||
+            '';
+    }
+
+
+    // ========================================================
+    // المطلوب غداً
+    // ========================================================
+
+    if (
+        tomorrowRequirementInput
+    ) {
+
+        const requirement =
+            record.tomorrowRequirement;
+
+
+        tomorrowRequirementInput.value =
+            requirement &&
+            requirement !== 'لا يوجد'
+
+                ? requirement
+
+                : '';
+    }
+
+
+    // ========================================================
+    // الملاحظات
+    // ========================================================
+
+    if (notesInput) {
+
+        notesInput.value =
+            record.notes ||
+            '';
+    }
+
+
+    // ========================================================
+    // النقاط
+    // ========================================================
+
+    if (pointsInput) {
+
+        pointsInput.value =
+            Number(
+                record.pointsGiven ||
+                0
+            );
+    }
+
+
+    // ========================================================
+    // الأسطر
+    // ========================================================
+
+    if (linesInput) {
+
+        linesInput.value =
+            Number(
+                record.linesGiven ||
+                0
+            );
+    }
+
+
+    // ========================================================
+    // التقييم
+    // ========================================================
+
+    setEvaluationCheckboxes(
+        record.grade
+    );
+
+
+    // ========================================================
+    // تحديث الحقول
+    // ========================================================
+
+    updateStatusFields();
+
+
+    // لا نريد أن تصفر النقاط أثناء فتح السجل
+
+    if (pointsInput) {
+
+        pointsInput.value =
+            Number(
+                record.pointsGiven ||
+                0
+            );
+    }
+
+
+    modal.style.display =
+        'flex';
+
 }
 
-/* =========================================================
-   حفظ التعديل
-   ========================================================= */
+
+// ============================================================
+// تعيين قيمة عنصر
+// ============================================================
+
+function setValue(
+    id,
+    value
+) {
+
+    const element =
+        document.getElementById(
+            id
+        );
+
+
+    if (element) {
+
+        element.value =
+            value ?? '';
+    }
+
+}
+
+
+// ============================================================
+// تطبيع الحالة
+// ============================================================
+
+function normalizeStatus(
+    status
+) {
+
+    switch (status) {
+
+        case 'حاضر':
+            return 'حاضر';
+
+        case 'غائب':
+            return 'غائب';
+
+        case 'إجازة':
+            return 'إجازة';
+
+        case 'مستأذن':
+            return 'مستأذن';
+
+        default:
+            return 'حاضر';
+    }
+
+}
+
+
+// ============================================================
+// التقييم
+// ============================================================
+
+function setEvaluationCheckboxes(
+    grade
+) {
+
+    const values =
+        String(
+            grade || ''
+        )
+        .split(' - ')
+        .map(
+            value =>
+                value.trim()
+        )
+        .filter(
+            Boolean
+        );
+
+
+    document
+        .querySelectorAll(
+            '.eval-check'
+        )
+        .forEach(
+            checkbox => {
+
+                checkbox.checked =
+                    values.includes(
+                        checkbox.value
+                    );
+            }
+        );
+
+}
+
+
+// ============================================================
+// استخراج التقييم
+// ============================================================
+
+function getGrade(
+    status
+) {
+
+    if (
+        status !==
+        ATTENDANCE_STATUS.PRESENT
+    ) {
+
+        return '-';
+    }
+
+
+    const evaluations = [];
+
+
+    document
+        .querySelectorAll(
+            '.eval-check:checked'
+        )
+        .forEach(
+            checkbox => {
+
+                evaluations.push(
+                    checkbox.value
+                );
+            }
+        );
+
+
+    if (
+        evaluations.length > 0
+    ) {
+
+        return evaluations.join(
+            ' - '
+        );
+    }
+
+
+    return 'جيد';
+
+}
+
+
+// ============================================================
+// التحقق من البيانات
+// ============================================================
+
+function validateForm() {
+
+    if (!currentRecordId) {
+
+        showMessage(
+            '⚠️ لم يتم تحديد السجل.'
+        );
+
+        return false;
+    }
+
+
+    const status =
+        statusSelect
+            ? statusSelect.value
+            : 'حاضر';
+
+
+    // ========================================================
+    // التحقق من الحالة
+    // ========================================================
+
+    const allowedStatuses =
+        Object.values(
+            ATTENDANCE_STATUS
+        );
+
+
+    if (
+        !allowedStatuses.includes(
+            status
+        )
+    ) {
+
+        showMessage(
+            '⚠️ حالة الحضور غير صحيحة.'
+        );
+
+        return false;
+    }
+
+
+    // ========================================================
+    // التحقق من الحاضر
+    // ========================================================
+
+    if (
+        status ===
+        ATTENDANCE_STATUS.PRESENT
+    ) {
+
+        const surah =
+            surahInput
+                ? surahInput.value.trim()
+                : '';
+
+
+        if (!surah) {
+
+            showMessage(
+                '⚠️ يرجى إدخال اسم السورة.'
+            );
+
+
+            if (surahInput) {
+                surahInput.focus();
+            }
+
+
+            return false;
+        }
+
+
+        const from =
+            Number(
+                fromAyahInput?.value ||
+                0
+            );
+
+
+        const to =
+            Number(
+                toAyahInput?.value ||
+                0
+            );
+
+
+        if (
+            from < 0 ||
+            to < 0
+        ) {
+
+            showMessage(
+                '⚠️ أرقام الآيات لا يمكن أن تكون سالبة.'
+            );
+
+            return false;
+        }
+
+
+        if (
+            from > 0 &&
+            to > 0 &&
+            from > to
+        ) {
+
+            showMessage(
+                '⚠️ آية البداية يجب أن تكون قبل آية النهاية.'
+            );
+
+            return false;
+        }
+
+    }
+
+
+    // ========================================================
+    // النقاط
+    // ========================================================
+
+    const points =
+        Number(
+            pointsInput?.value ||
+            0
+        );
+
+
+    if (
+        !Number.isFinite(
+            points
+        ) ||
+        points < 0
+    ) {
+
+        showMessage(
+            '⚠️ يرجى إدخال عدد نقاط صحيح.'
+        );
+
+        if (pointsInput) {
+            pointsInput.focus();
+        }
+
+        return false;
+    }
+
+
+    // ========================================================
+    // الأسطر
+    // ========================================================
+
+    const lines =
+        Number(
+            linesInput?.value ||
+            0
+        );
+
+
+    if (
+        !Number.isFinite(
+            lines
+        ) ||
+        lines < 0
+    ) {
+
+        showMessage(
+            '⚠️ يرجى إدخال عدد أسطر صحيح.'
+        );
+
+        if (linesInput) {
+            linesInput.focus();
+        }
+
+        return false;
+    }
+
+
+    return true;
+
+}
+
+
+// ============================================================
+// تجهيز بيانات السجل
+// ============================================================
+
+function buildUpdatedRecordData() {
+
+    const status =
+        statusSelect
+            ? statusSelect.value
+            : ATTENDANCE_STATUS.PRESENT;
+
+
+    let surah =
+        surahInput
+            ? surahInput.value.trim()
+            : '';
+
+
+    let fromAyah =
+        fromAyahInput
+            ? fromAyahInput.value.trim()
+            : '';
+
+
+    let toAyah =
+        toAyahInput
+            ? toAyahInput.value.trim()
+            : '';
+
+
+    let tomorrowRequirement =
+        tomorrowRequirementInput
+            ? tomorrowRequirementInput.value.trim()
+            : '';
+
+
+    let notes =
+        notesInput
+            ? notesInput.value.trim()
+            : '';
+
+
+    let points =
+        Number(
+            pointsInput?.value ||
+            0
+        );
+
+
+    let lines =
+        Number(
+            linesInput?.value ||
+            0
+        );
+
+
+    // ========================================================
+    // الحالات غير الحاضرة
+    // ========================================================
+
+    if (
+        status !==
+        ATTENDANCE_STATUS.PRESENT
+    ) {
+
+        surah =
+            status;
+
+        fromAyah =
+            '0';
+
+        toAyah =
+            '0';
+
+        tomorrowRequirement =
+            'لا يوجد';
+
+        points =
+            0;
+
+        lines =
+            0;
+
+        notes =
+            notes || '';
+    }
+
+
+    // ========================================================
+    // الحاضر
+    // ========================================================
+
+    if (
+        status ===
+        ATTENDANCE_STATUS.PRESENT
+    ) {
+
+        fromAyah =
+            fromAyah ||
+            '0';
+
+
+        toAyah =
+            toAyah ||
+            '0';
+
+
+        tomorrowRequirement =
+            tomorrowRequirement ||
+            'لا يوجد';
+    }
+
+
+    const grade =
+        getGrade(
+            status
+        );
+
+
+    return {
+
+        status,
+
+        surah,
+
+        fromAyah,
+
+        toAyah,
+
+        grade,
+
+        tomorrowRequirement,
+
+        notes,
+
+        pointsGiven:
+            points,
+
+        linesGiven:
+            lines,
+
+        updatedAt:
+            new Date()
+    };
+
+}
+
+
+// ============================================================
+// حفظ التعديل
+// ============================================================
 
 async function handleSave() {
 
     if (!currentRecordId) {
+
+        showMessage(
+            '⚠️ لم يتم تحديد السجل.'
+        );
+
         return;
     }
 
-    const status =
-        statusSelect?.value || 'حاضر';
 
-    const surah =
-        document
-            .getElementById('editRecordSurah')
-            ?.value
-            .trim() || '';
+    if (
+        saveBtn &&
+        saveBtn.disabled
+    ) {
 
-    const fromAyah =
-        document
-            .getElementById('editRecordFromAyah')
-            ?.value
-            .trim() || '0';
+        return;
+    }
 
-    const toAyah =
-        document
-            .getElementById('editRecordToAyah')
-            ?.value
-            .trim() || '0';
 
-    const points =
-        parseInt(
-            document
-                .getElementById('editRecordPoints')
-                ?.value
-        ) || 0;
+    if (!validateForm()) {
+        return;
+    }
 
-    const lines =
-        parseInt(
-            document
-                .getElementById('editRecordLines')
-                ?.value
-        ) || 0;
+
+    const updatedData =
+        buildUpdatedRecordData();
+
+
+    const oldPoints =
+        Number(
+            currentRecord?.pointsGiven ||
+            0
+        );
+
+
+    const newPoints =
+        Number(
+            updatedData.pointsGiven ||
+            0
+        );
+
+
+    const pointsDifference =
+        newPoints -
+        oldPoints;
+
+
+    if (saveBtn) {
+
+        saveBtn.disabled =
+            true;
+
+        saveBtn.dataset.originalText =
+            saveBtn.innerHTML;
+
+        saveBtn.innerHTML = `
+            ⏳ جاري الحفظ...
+        `;
+    }
+
 
     try {
 
-        saveBtn.disabled = true;
-        saveBtn.textContent =
-            'جاري الحفظ...';
+        // ====================================================
+        // تحديث السجل
+        // ====================================================
 
         await updateDoc(
+
             doc(
                 db,
                 'records',
                 currentRecordId
             ),
-            {
-                status,
 
-                surah:
-                    status === 'حاضر'
-                        ? surah
-                        : status,
-
-                fromAyah,
-                toAyah,
-
-                pointsGiven: points,
-                linesGiven: lines
-            }
+            updatedData
         );
 
-        /*
-         * تحديث الكاش مباشرة
-         * بدون إعادة تحميل Firestore.
-         */
 
-        const index =
-            allRecordsCache.findIndex(
-                record =>
-                    record.id === currentRecordId
+        // ====================================================
+        // تحديث مجموع نقاط الطالب
+        // ====================================================
+
+        if (
+            pointsDifference !== 0 &&
+            currentRecord?.studentId
+        ) {
+
+            await updateDoc(
+
+                doc(
+                    db,
+                    'students',
+                    currentRecord.studentId
+                ),
+
+                {
+                    totalPoints:
+                        incrementValue(
+                            pointsDifference
+                        )
+                }
             );
-
-        if (index !== -1) {
-
-            allRecordsCache[index] = {
-
-                ...allRecordsCache[index],
-
-                status,
-
-                surah:
-                    status === 'حاضر'
-                        ? surah
-                        : status,
-
-                fromAyah,
-                toAyah,
-
-                pointsGiven: points,
-                linesGiven: lines
-            };
-
         }
 
-        updateStatistics(
-            allRecordsCache
+
+        // ====================================================
+        // رسالة النجاح
+        // ====================================================
+
+        const statusInfo =
+            getStatusInfo(
+                updatedData.status
+            );
+
+
+        showMessage(
+
+            `✅ تم تعديل السجل بنجاح\n\n` +
+
+            `👤 الطالب: ${
+                currentRecord?.studentName ||
+                'غير معروف'
+            }\n` +
+
+            `📌 الحالة: ${
+                statusInfo.icon
+            } ${
+                updatedData.status
+            }\n` +
+
+            `⭐ النقاط: ${
+                newPoints
+            }\n` +
+
+            `📊 التقييم: ${
+                updatedData.grade
+            }`
+
         );
 
-        renderRecords();
 
         closeModal();
 
-        alert(
-            '✅ تم تحديث السجل بنجاح'
-        );
+
+        // إعادة تحميل القائمة
+
+        await init();
+
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            'Save Record Error:',
+            error
+        );
 
-        alert(
-            '❌ خطأ أثناء الحفظ: ' +
-            error.message
+
+        showMessage(
+
+            '❌ حدث خطأ أثناء حفظ التعديلات.\n\n' +
+            (
+                error.message ||
+                error
+            )
+
         );
 
     } finally {
 
         if (saveBtn) {
 
-            saveBtn.disabled = false;
+            saveBtn.disabled =
+                false;
 
-            saveBtn.textContent =
+            saveBtn.innerHTML =
+                saveBtn.dataset.originalText ||
                 '💾 حفظ التعديلات';
-
         }
-
     }
+
 }
 
-/* =========================================================
-   ربط الحفظ
-   ========================================================= */
 
-if (saveBtn) {
+// ============================================================
+// increment
+// ============================================================
+// نستخدم increment من Firestore بشكل ديناميكي لتجنب الحاجة
+// إلى إعادة تحميل الصفحة.
+// ============================================================
 
-    saveBtn.addEventListener(
-        'click',
-        handleSave
+import {
+    increment as firestoreIncrement
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+
+function incrementValue(
+    value
+) {
+
+    return firestoreIncrement(
+        value
+    );
+}
+
+
+// ============================================================
+// حذف السجل
+// ============================================================
+
+async function deleteRecord(
+    record
+) {
+
+    if (!record?.id) {
+
+        showMessage(
+            '❌ معرف السجل غير موجود.'
+        );
+
+        return;
+    }
+
+
+    const studentName =
+        record.studentName ||
+        'الطالب';
+
+
+    const statusInfo =
+        getStatusInfo(
+            record.status
+        );
+
+
+    const confirmed =
+        confirm(
+
+            `⚠️ هل أنت متأكد من حذف هذا السجل؟\n\n` +
+
+            `👤 الطالب: ${studentName}\n` +
+
+            `📅 التاريخ: ${
+                record.date ||
+                'غير محدد'
+            }\n` +
+
+            `📌 الحالة: ${
+                statusInfo.label
+            }\n\n` +
+
+            `سيتم خصم نقاط هذا السجل من مجموع نقاط الطالب إذا كانت موجودة.`
+
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        const pointsToRemove =
+            Number(
+                record.pointsGiven ||
+                0
+            );
+
+
+        // ====================================================
+        // حذف السجل
+        // ====================================================
+
+        await deleteDoc(
+
+            doc(
+                db,
+                'records',
+                record.id
+            )
+        );
+
+
+        // ====================================================
+        // خصم نقاط السجل
+        // ====================================================
+
+        if (
+            pointsToRemove !== 0 &&
+            record.studentId
+        ) {
+
+            try {
+
+                await updateDoc(
+
+                    doc(
+                        db,
+                        'students',
+                        record.studentId
+                    ),
+
+                    {
+                        totalPoints:
+                            incrementValue(
+                                -pointsToRemove
+                            )
+                    }
+                );
+
+            } catch (pointsError) {
+
+                console.error(
+                    'Points Update Error:',
+                    pointsError
+                );
+
+
+                showMessage(
+
+                    '⚠️ تم حذف السجل، لكن تعذر تحديث مجموع نقاط الطالب.\n\n' +
+                    pointsError.message
+
+                );
+
+                await init();
+
+                return;
+            }
+        }
+
+
+        showMessage(
+            '✅ تم حذف السجل وتحديث نقاط الطالب بنجاح.'
+        );
+
+
+        await init();
+
+    } catch (error) {
+
+        console.error(
+            'Delete Record Error:',
+            error
+        );
+
+
+        showMessage(
+
+            '❌ حدث خطأ أثناء حذف السجل.\n\n' +
+            (
+                error.message ||
+                error
+            )
+
+        );
+    }
+
+}
+
+
+// ============================================================
+// حماية HTML
+// ============================================================
+
+function escapeHtml(
+    value
+) {
+
+    return String(
+        value ?? ''
+    )
+
+        .replace(
+            /&/g,
+            '&amp;'
+        )
+
+        .replace(
+            /</g,
+            '&lt;'
+        )
+
+        .replace(
+            />/g,
+            '&gt;'
+        )
+
+        .replace(
+            /"/g,
+            '&quot;'
+        )
+
+        .replace(
+            /'/g,
+            '&#039;'
+        );
+
+}
+
+
+// ============================================================
+// رسالة
+// ============================================================
+
+function showMessage(
+    message
+) {
+
+    alert(
+        message
     );
 
 }
 
-/* =========================================================
-   حذف السجل
-   ========================================================= */
 
-async function deleteRecord(id) {
-
-    const record =
-        allRecordsCache.find(
-            item => item.id === id
-        );
-
-    if (!record) return;
-
-    const confirmed =
-        confirm(
-            `هل أنت متأكد من حذف سجل الطالب (${record.studentName})؟`
-        );
-
-    if (!confirmed) return;
-
-    try {
-
-        await deleteDoc(
-            doc(
-                db,
-                'records',
-                id
-            )
-        );
-
-        /*
-         * حذف من الذاكرة مباشرة
-         */
-
-        allRecordsCache =
-            allRecordsCache.filter(
-                item => item.id !== id
-            );
-
-        updateStatistics(
-            allRecordsCache
-        );
-
-        renderRecords();
-
-        alert(
-            '✅ تم حذف السجل بنجاح'
-        );
-
-    } catch (error) {
-
-        console.error(error);
-
-        alert(
-            '❌ خطأ أثناء الحذف: ' +
-            error.message
-        );
-
-    }
-}
-
-/* =========================================================
-   التشغيل
-   ========================================================= */
+// ============================================================
+// تشغيل الصفحة
+// ============================================================
 
 if (
-    document.readyState === 'loading'
+    document.readyState ===
+    'loading'
 ) {
 
     document.addEventListener(
@@ -890,5 +2079,4 @@ if (
 } else {
 
     init();
-
 }
