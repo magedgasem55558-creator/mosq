@@ -25,7 +25,9 @@ const $ = id =>
     document.getElementById(id);
 
 
+// ============================================================
 // التحكم
+// ============================================================
 
 const scopeSelect =
     $('scopeSelect');
@@ -61,7 +63,9 @@ const previewStatus =
     $('previewStatus');
 
 
+// ============================================================
 // التقرير
+// ============================================================
 
 const pdfReportBadge =
     $('pdfReportBadge');
@@ -85,7 +89,9 @@ const pdfMonth =
     $('pdfMonth');
 
 
+// ============================================================
 // الإحصائيات
+// ============================================================
 
 const pdfAttendCount =
     $('pdfAttendCount');
@@ -115,7 +121,9 @@ const pdfRecordsCount =
     $('pdfRecordsCount');
 
 
+// ============================================================
 // الحالات
+// ============================================================
 
 const pdfPresentStatus =
     $('pdfPresentStatus');
@@ -133,7 +141,9 @@ const pdfReviewStatus =
     $('pdfReviewStatus');
 
 
+// ============================================================
 // الأقسام
+// ============================================================
 
 const studentSummarySection =
     $('studentSummarySection');
@@ -657,7 +667,7 @@ async function generateStudentReport(
                     : 'تقرير أداء تفصيلي',
 
             title:
-                `تقرير أداء الطالب`,
+                'تقرير أداء الطالب',
 
             type:
                 'تقرير طالب',
@@ -709,7 +719,6 @@ async function generateStudentReport(
             records,
             stats
         );
-
     }
 
 
@@ -790,7 +799,6 @@ async function generateHalaqaReport(
 
     /*
      * جلب سجلات الحلقة كلها مرة واحدة.
-     * أفضل بكثير من عمل query لكل طالب.
      */
 
     const allRecords =
@@ -904,7 +912,6 @@ async function generateHalaqaReport(
         generateHalaqaSummaryReport(
             studentData
         );
-
     }
 
 
@@ -960,6 +967,10 @@ async function fetchStudentRecordsForMonth(
                 const data =
                     docSnap.data();
 
+
+                /*
+                 * date أصبح Firestore Timestamp
+                 */
 
                 if (
                     isRecordInMonth(
@@ -1035,6 +1046,10 @@ async function fetchHalaqaRecordsForMonth(
                     docSnap.data();
 
 
+                /*
+                 * date أصبح Firestore Timestamp
+                 */
+
                 if (
                     isRecordInMonth(
                         data.date,
@@ -1071,18 +1086,203 @@ async function fetchHalaqaRecordsForMonth(
 
 
 // ============================================================
+// تحويل Timestamp إلى Date
+// ============================================================
+
+function timestampToDate(
+    value
+) {
+
+    if (!value) {
+        return null;
+    }
+
+
+    /*
+     * Firestore Timestamp
+     *
+     * يحتوي على:
+     *
+     * toDate()
+     */
+
+    if (
+        typeof value.toDate === 'function'
+    ) {
+
+        const date =
+            value.toDate();
+
+        return isNaN(
+            date.getTime()
+        )
+            ? null
+            : date;
+    }
+
+
+    /*
+     * JavaScript Date
+     */
+
+    if (
+        value instanceof Date
+    ) {
+
+        return isNaN(
+            value.getTime()
+        )
+            ? null
+            : value;
+    }
+
+
+    /*
+     * Timestamp بصيغة:
+     *
+     * {
+     *   seconds,
+     *   nanoseconds
+     * }
+     */
+
+    if (
+        typeof value === 'object' &&
+        typeof value.seconds === 'number'
+    ) {
+
+        const milliseconds =
+            value.seconds * 1000 +
+            Math.floor(
+                (Number(value.nanoseconds) || 0) /
+                1000000
+            );
+
+
+        const date =
+            new Date(
+                milliseconds
+            );
+
+
+        return isNaN(
+            date.getTime()
+        )
+            ? null
+            : date;
+    }
+
+
+    /*
+     * في حال كان التاريخ رقمًا
+     */
+
+    if (
+        typeof value === 'number'
+    ) {
+
+        const date =
+            new Date(value);
+
+
+        return isNaN(
+            date.getTime()
+        )
+            ? null
+            : date;
+    }
+
+
+    /*
+     * دعم التاريخ النصي القديم
+     * حتى لا تنكسر السجلات القديمة.
+     */
+
+    if (
+        typeof value === 'string'
+    ) {
+
+        /*
+         * YYYY-MM-DD
+         */
+
+        if (
+            /^\d{4}-\d{2}-\d{2}$/.test(value)
+        ) {
+
+            const [
+                year,
+                month,
+                day
+            ] =
+                value.split('-')
+                    .map(Number);
+
+
+            const date =
+                new Date(
+                    year,
+                    month - 1,
+                    day
+                );
+
+
+            return isNaN(
+                date.getTime()
+            )
+                ? null
+                : date;
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        return isNaN(
+            date.getTime()
+        )
+            ? null
+            : date;
+    }
+
+
+    return null;
+}
+
+
+// ============================================================
 // هل السجل في الشهر؟
- // ============================================================
+// ============================================================
 
 function isRecordInMonth(
-    date,
+    dateValue,
     month
 ) {
 
-    return String(
-        date || ''
-    ).startsWith(
+    const date =
+        timestampToDate(
+            dateValue
+        );
+
+
+    if (!date || !month) {
+        return false;
+    }
+
+
+    const [
+        year,
+        monthNumber
+    ] =
         month
+            .split('-')
+            .map(Number);
+
+
+    return (
+        date.getFullYear() === year &&
+        date.getMonth() + 1 === monthNumber
     );
 }
 
@@ -1096,11 +1296,37 @@ function sortRecords(
 ) {
 
     return records.sort(
-        (a, b) =>
-            String(a.date || '')
-                .localeCompare(
-                    String(b.date || '')
-                )
+        (a, b) => {
+
+            const dateA =
+                timestampToDate(
+                    a.date
+                );
+
+            const dateB =
+                timestampToDate(
+                    b.date
+                );
+
+
+            if (!dateA && !dateB) {
+                return 0;
+            }
+
+            if (!dateA) {
+                return 1;
+            }
+
+            if (!dateB) {
+                return -1;
+            }
+
+
+            return (
+                dateA.getTime() -
+                dateB.getTime()
+            );
+        }
     );
 }
 
@@ -1195,12 +1421,6 @@ function calculateStats(
         }
     );
 
-
-    /*
-     * نسبة الحضور الحقيقية:
-     *
-     * الحضور / كل سجلات الحضور والغياب
-     */
 
     const attendanceBase =
         stats.attendance +
@@ -1474,7 +1694,7 @@ function generateStudentSummary(
             <strong>${stats.absence}</strong>
             غيابًا، مع نسبة حضور بلغت
             <strong>${stats.attendanceRate}%</strong>.
-            
+
             وقد بلغ إجمالي النقاط
             <strong>${stats.points}</strong>
             نقطة.
@@ -2267,28 +2487,47 @@ function formatMonth(
 
 
 // ============================================================
-// التاريخ
+// التاريخ - Timestamp
 // ============================================================
 
 function formatDate(
-    date
+    dateValue
 ) {
+
+    const date =
+        timestampToDate(
+            dateValue
+        );
+
 
     if (!date) {
         return '-';
     }
 
 
-    const parts =
-        String(date).split('-');
+    const day =
+        String(
+            date.getDate()
+        ).padStart(
+            2,
+            '0'
+        );
 
 
-    if (parts.length !== 3) {
-        return date;
-    }
+    const month =
+        String(
+            date.getMonth() + 1
+        ).padStart(
+            2,
+            '0'
+        );
 
 
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    const year =
+        date.getFullYear();
+
+
+    return `${day}/${month}/${year}`;
 }
 
 
@@ -2464,11 +2703,6 @@ async function downloadPDF() {
 
 
     try {
-
-        /*
-         * انتظار بسيط حتى تكتمل
-         * إعادة رسم الجداول.
-         */
 
         await new Promise(
             resolve =>
