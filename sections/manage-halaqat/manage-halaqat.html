@@ -1,48 +1,263 @@
-<!DOCTYPE html>
-<html lang="ar">
-<head>
-    <meta charset="UTF-8">
-    <link rel="stylesheet" href="../../style.css">
-    <link rel="stylesheet" href="manage-halaqat.css">
-</head>
-<body>
-    <h1>📋 إدارة الحلقات</h1>
-    <p class="subtitle">تعديل أو حذف الحلقات القرآنية</p>
-    <div class="card">
-        <div id="manageHalaqatList" class="manage-list">
-            <div class="loading">جاري التحميل...</div>
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<meta
+    name="theme-color"
+    content="#087f5b"
+>
+
+<title>إدارة الحلقات</title>
+
+<link rel="stylesheet" href="../../style.css">
+<link rel="stylesheet" href="manage-halaqat.css">
+
+</head><body><h1>📋 إدارة الحلقات</h1>
+
+<p class="subtitle">
+    إدارة الحلقات القرآنية والشيوخ وبيانات التواصل
+</p>
+
+
+<!-- =====================================================
+     الإحصائيات
+     ===================================================== -->
+
+<div class="halaqat-stats">
+
+    <div class="stat-card stat-total">
+
+        <div class="stat-icon">
+            🏫
         </div>
+
+        <div class="stat-info">
+
+            <span
+                class="stat-number"
+                id="totalHalaqatCount"
+            >
+                0
+            </span>
+
+            <span class="stat-label">
+                إجمالي الحلقات
+            </span>
+
+        </div>
+
     </div>
 
-    <!-- نافذة تعديل الحلقة -->
-    <div id="editHalaqaModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>✏️ تعديل بيانات الحلقة</h3>
-                <button class="modal-close" id="closeModalBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="editHalaqaId">
-                <div class="form-group">
-                    <label>🏫 اسم الحلقة:</label>
-                    <input type="text" id="editHalaqaName" placeholder="اسم الحلقة">
-                </div>
-                <div class="form-group">
-                    <label>👨‍🏫 اسم الشيخ:</label>
-                    <input type="text" id="editTeacherName" placeholder="اسم المدرس">
-                </div>
-                <div class="form-group">
-                    <label>📞 رقم واتساب المدرس:</label>
-                    <input type="text" id="editTeacherPhone" placeholder="رقم الهاتف">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-cancel" id="cancelEditBtn">إلغاء</button>
-                <button class="btn-save" id="saveHalaqaBtn">💾 حفظ التعديلات</button>
-            </div>
+
+    <div class="stat-card stat-teachers">
+
+        <div class="stat-icon">
+            👨‍🏫
         </div>
+
+        <div class="stat-info">
+
+            <span
+                class="stat-number"
+                id="totalTeachersCount"
+            >
+                0
+            </span>
+
+            <span class="stat-label">
+                عدد الشيوخ
+            </span>
+
+        </div>
+
     </div>
 
-    <script type="module" src="manage-halaqat.js"></script>
-</body>
-</html>
+
+    <div class="stat-card stat-whatsapp">
+
+        <div class="stat-icon">
+            📞
+        </div>
+
+        <div class="stat-info">
+
+            <span
+                class="stat-number"
+                id="halaqatWithPhoneCount"
+            >
+                0
+            </span>
+
+            <span class="stat-label">
+                لديها رقم واتساب
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     البحث
+     ===================================================== -->
+
+<div class="halaqat-toolbar">
+
+    <div class="search-wrapper">
+
+        <span class="search-icon">
+            🔍
+        </span>
+
+        <input
+            type="search"
+            id="halaqaSearchInput"
+            placeholder="ابحث باسم الحلقة أو الشيخ..."
+            autocomplete="off"
+        >
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     القائمة
+     ===================================================== -->
+
+<div class="card">
+
+    <div
+        id="manageHalaqatList"
+        class="manage-list"
+    >
+
+        <div class="loading">
+            جاري تحميل الحلقات...
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     نافذة تعديل الحلقة
+     ===================================================== -->
+
+<div
+    id="editHalaqaModal"
+    class="modal"
+>
+
+    <div class="modal-content">
+
+        <div class="modal-header">
+
+            <h3>
+                ✏️ تعديل بيانات الحلقة
+            </h3>
+
+            <button
+                class="modal-close"
+                id="closeModalBtn"
+                type="button"
+            >
+                &times;
+            </button>
+
+        </div>
+
+
+        <div class="modal-body">
+
+            <input
+                type="hidden"
+                id="editHalaqaId"
+            >
+
+
+            <div class="form-group">
+
+                <label>
+                    🏫 اسم الحلقة:
+                </label>
+
+                <input
+                    type="text"
+                    id="editHalaqaName"
+                    placeholder="اسم الحلقة"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    👨‍🏫 اسم الشيخ:
+                </label>
+
+                <input
+                    type="text"
+                    id="editTeacherName"
+                    placeholder="اسم الشيخ"
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label>
+                    📞 رقم واتساب الشيخ:
+                </label>
+
+                <input
+                    type="tel"
+                    id="editTeacherPhone"
+                    placeholder="رقم الهاتف"
+                    inputmode="tel"
+                >
+
+            </div>
+
+        </div>
+
+
+        <div class="modal-footer">
+
+            <button
+                class="btn-cancel"
+                id="cancelEditBtn"
+                type="button"
+            >
+                إلغاء
+            </button>
+
+            <button
+                class="btn-save"
+                id="saveHalaqaBtn"
+                type="button"
+            >
+                💾 حفظ التعديلات
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script
+    type="module"
+    src="manage-halaqat.js"
+></script>
+
+</body></html>
