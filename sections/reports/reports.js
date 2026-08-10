@@ -8,7 +8,9 @@ import {
     collection,
     query,
     where,
-    getDocs
+    getDocs,
+    doc,
+    getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 import {
@@ -230,7 +232,9 @@ async function init() {
         );
 
 
+        // ====================================================
         // الشهر الحالي
+        // ====================================================
 
         const now =
             new Date();
@@ -246,7 +250,9 @@ async function init() {
             currentMonth;
 
 
-        // تحميل الطلاب فقط
+        // ====================================================
+        // تحميل الطلاب
+        // ====================================================
 
         const students =
             await loadAllStudents();
@@ -273,9 +279,17 @@ async function init() {
 
                             ...student,
 
+                            /*
+                             * إذا كان اسم الحلقة موجودًا
+                             * سيتم استخدامه مباشرة.
+                             *
+                             * وإذا لم يكن موجودًا سيتم
+                             * جلبه لاحقًا من halaqaId.
+                             */
+
                             halaqaName:
                                 student.halaqaName ||
-                                'غير محدد'
+                                ''
 
                         })
                     )
@@ -322,8 +336,6 @@ async function init() {
 
 function setupStudentSearch() {
 
-    // فتح القائمة عند الضغط
-
     studentSearchInput.addEventListener(
         'focus',
         () => {
@@ -353,8 +365,6 @@ function setupStudentSearch() {
         }
     );
 
-
-    // البحث أثناء الكتابة
 
     studentSearchInput.addEventListener(
         'input',
@@ -402,8 +412,6 @@ function setupStudentSearch() {
     );
 
 
-    // زر المسح
-
     studentSearchClear.addEventListener(
         'click',
         event => {
@@ -439,8 +447,6 @@ function setupStudentSearch() {
         }
     );
 
-
-    // إغلاق القائمة عند الضغط خارجها
 
     document.addEventListener(
         'click',
@@ -494,8 +500,6 @@ function updateStudentDropdown(
             );
 
 
-    // البحث بالاسم
-
     if (search) {
 
         students =
@@ -516,8 +520,6 @@ function updateStudentDropdown(
             );
     }
 
-
-    // لا توجد نتائج
 
     if (!students.length) {
 
@@ -545,8 +547,6 @@ function updateStudentDropdown(
         return;
     }
 
-
-    // عرض النتائج
 
     students.forEach(
         student => {
@@ -595,7 +595,7 @@ function updateStudentDropdown(
                     <small>
                         ${escapeHtml(
                             student.halaqaName ||
-                            'غير محدد'
+                            'سيتم جلب الحلقة'
                         )}
                     </small>
 
@@ -788,6 +788,123 @@ async function updateReportPreview() {
 
 
 // ============================================================
+// جلب اسم حلقة الطالب
+// ============================================================
+
+async function getStudentHalaqaName(
+    student
+) {
+
+    /*
+     * الحالة الأولى:
+     *
+     * الطالب لديه اسم الحلقة مباشرة.
+     */
+
+    if (
+        student.halaqaName &&
+        String(
+            student.halaqaName
+        ).trim()
+    ) {
+
+        return String(
+            student.halaqaName
+        ).trim();
+    }
+
+
+    /*
+     * الحالة الثانية:
+     *
+     * الطالب لديه halaqaId
+     * ونحتاج جلب بيانات الحلقة.
+     */
+
+    const halaqaId =
+        student.halaqaId;
+
+
+    if (!halaqaId) {
+
+        return 'غير محدد';
+    }
+
+
+    try {
+
+        /*
+         * نفترض أن الحلقات موجودة
+         * داخل collection باسم:
+         *
+         * halaqat
+         */
+
+        const halaqaRef =
+            doc(
+                db,
+                'halaqat',
+                String(
+                    halaqaId
+                )
+            );
+
+
+        const halaqaSnap =
+            await getDoc(
+                halaqaRef
+            );
+
+
+        if (
+            !halaqaSnap.exists()
+        ) {
+
+            console.warn(
+                'Halaqa not found:',
+                halaqaId
+            );
+
+
+            return 'غير محدد';
+        }
+
+
+        const halaqa =
+            halaqaSnap.data();
+
+
+        /*
+         * يدعم أكثر من اسم محتمل
+         * للحقل الذي يحتوي اسم الحلقة.
+         */
+
+        return (
+
+            halaqa.name ||
+
+            halaqa.halaqaName ||
+
+            halaqa.title ||
+
+            'غير محدد'
+
+        );
+
+    } catch (error) {
+
+        console.error(
+            'Get Student Halaqa Error:',
+            error
+        );
+
+
+        return 'غير محدد';
+    }
+}
+
+
+// ============================================================
 // تقرير الطالب
 // ============================================================
 
@@ -808,7 +925,9 @@ async function generateStudentReport(
         `الفترة: ${formatMonth(month)}`;
 
 
+    // ========================================================
     // لم يتم اختيار طالب
+    // ========================================================
 
     if (!studentId) {
 
@@ -858,6 +977,10 @@ async function generateStudentReport(
     }
 
 
+    // ========================================================
+    // البحث عن الطالب
+    // ========================================================
+
     const student =
         studentsCache.find(
             item =>
@@ -873,12 +996,30 @@ async function generateStudentReport(
         studentSelect.value =
             '';
 
-
         return;
     }
 
 
+    // ========================================================
+    // جلب اسم الحلقة
+    // ========================================================
+
+    const halaqaName =
+        await getStudentHalaqaName(
+            student
+        );
+
+
+    // حفظ اسم الحلقة مؤقتًا
+    // حتى يظهر أيضًا في قائمة الطالب
+
+    student.halaqaName =
+        halaqaName;
+
+
+    // ========================================================
     // جلب سجلات الطالب
+    // ========================================================
 
     const records =
         await fetchStudentRecordsForMonth(
@@ -887,7 +1028,9 @@ async function generateStudentReport(
         );
 
 
+    // ========================================================
     // حساب الإحصائيات
+    // ========================================================
 
     const stats =
         calculateStats(
@@ -895,7 +1038,9 @@ async function generateStudentReport(
         );
 
 
+    // ========================================================
     // الرأس
+    // ========================================================
 
     fillHeader({
 
@@ -915,15 +1060,16 @@ async function generateStudentReport(
             'طالب بدون اسم',
 
         halaqa:
-            student.halaqaName ||
-            'غير محدد',
+            halaqaName,
 
         month
 
     });
 
 
+    // ========================================================
     // الإحصائيات
+    // ========================================================
 
     fillStats(
         stats,
@@ -932,7 +1078,9 @@ async function generateStudentReport(
     );
 
 
+    // ========================================================
     // الأقسام
+    // ========================================================
 
     studentSummarySection.style.display =
         reportType === 'summary'
@@ -950,7 +1098,9 @@ async function generateStudentReport(
         'block';
 
 
+    // ========================================================
     // المحتوى
+    // ========================================================
 
     if (
         reportType === 'summary'
@@ -1068,8 +1218,6 @@ function timestampToDate(
     }
 
 
-    // Firestore Timestamp
-
     if (
         typeof value.toDate ===
         'function'
@@ -1087,8 +1235,6 @@ function timestampToDate(
     }
 
 
-    // Date
-
     if (
         value instanceof Date
     ) {
@@ -1100,8 +1246,6 @@ function timestampToDate(
             : value;
     }
 
-
-    // Firestore Timestamp object
 
     if (
         typeof value === 'object' &&
@@ -1131,8 +1275,6 @@ function timestampToDate(
     }
 
 
-    // رقم
-
     if (
         typeof value === 'number'
     ) {
@@ -1149,13 +1291,9 @@ function timestampToDate(
     }
 
 
-    // نص
-
     if (
         typeof value === 'string'
     ) {
-
-        // YYYY-MM-DD
 
         if (
             /^\d{4}-\d{2}-\d{2}$/.test(
@@ -1459,7 +1597,7 @@ function fillHeader(
 
 
     pdfHalaqaName.textContent =
-        data.halaqa || '-';
+        data.halaqa || 'غير محدد';
 
 
     pdfMonth.textContent =
@@ -2539,4 +2677,4 @@ async function downloadPDF() {
         generatePdfBtn.disabled =
             false;
     }
-}
+        }
